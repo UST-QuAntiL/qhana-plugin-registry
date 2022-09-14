@@ -58,11 +58,7 @@ class SeedPageKeyGenerator(KeyGenerator, resource_type=Seed, page=True):
 
 class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
     def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]],
-        ignore_deleted: bool = False,
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
@@ -85,11 +81,7 @@ class SeedPageUpLinkGenerator(
     LinkGenerator, resource_type=Seed, page=True, relation=UP_REL
 ):
     def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         link = LinkGenerator.get_link_of(parent_resource, query_params=query_params)
@@ -102,11 +94,7 @@ class SeedPageCreateSeedLinkGenerator(
     LinkGenerator, resource_type=Seed, page=True, relation=CREATE_REL
 ):
     def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         link = LinkGenerator.get_link_of(resource)
         assert link is not None
@@ -128,11 +116,7 @@ class SeedKeyGenerator(KeyGenerator, resource_type=Seed):
 
 class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
     def generate_link(
-        self,
-        resource: Seed,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[Seed]
 
@@ -147,11 +131,7 @@ class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
 
 class SeedUpLinkGenerator(LinkGenerator, resource_type=Seed, relation=UP_REL):
     def generate_link(
-        self,
-        resource: Seed,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(Seed, page_number=1),
@@ -161,11 +141,7 @@ class SeedUpLinkGenerator(LinkGenerator, resource_type=Seed, relation=UP_REL):
 
 class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE_REL):
     def generate_link(
-        self,
-        resource: Seed,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         link = LinkGenerator.get_link_of(resource)
         if link is None:
@@ -176,10 +152,7 @@ class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE
 
 class SeedApiObjectGenerator(ApiObjectGenerator, resource_type=Seed):
     def generate_api_object(
-        self,
-        resource: Seed,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
+        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[SeedData]:
         assert isinstance(resource, Seed)
 

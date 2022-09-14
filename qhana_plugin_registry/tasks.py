@@ -28,5 +28,5 @@ TASK_LOGGER = get_task_logger(_name)
 
 
 @CELERY.task(name=f"{_name}.discover_plugins", bind=True, ignore_result=True)
-def add_step(self):
+def discover_plugins(self):
     TASK_LOGGER.debug("Discovery plugins...")  # TODO implement!

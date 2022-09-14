@@ -42,7 +42,7 @@ class SeedView(MethodView):
             abort(HTTPStatus.BAD_REQUEST, message="The seedId is in the wrong format!")
         found_seed = Seed.get_by_id(int(seed_id))
         if not found_seed:
-            abort(HTTPStatus.NOT_FOUND, "Seed not found.")
+            abort(HTTPStatus.NOT_FOUND, message="Seed not found.")
 
         return ApiResponseGenerator.get_api_response(found_seed)
 

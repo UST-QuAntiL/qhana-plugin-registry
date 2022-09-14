@@ -42,11 +42,7 @@ class RootKeyGenerator(KeyGenerator, resource_type=RootDataRaw):
 
 class RootDataLinkGenerator(LinkGenerator, resource_type=RootDataRaw):
     def generate_link(
-        self,
-        resource: RootDataRaw,
-        *,
-        query_params: Optional[Dict[str, str]],
-        ignore_deleted: bool = False,
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[RootDataRaw]
 
@@ -64,11 +60,7 @@ class RootDataSeedsNavLinkGenerator(
     LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Seed].rel_type
 ):
     def generate_link(
-        self,
-        resource: RootDataRaw,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(Seed, resource=resource, page_number=1),
@@ -81,7 +73,7 @@ class RootDataApiObjectGenerator(ApiObjectGenerator, resource_type=RootDataRaw):
         self,
         resource: RootDataRaw,
         *,
-        query_params: Optional[Dict[str, str]] = None,
+        query_params: Optional[Dict[str, str]] = None
     ) -> Optional[RootData]:
         assert isinstance(resource, RootDataRaw)
 

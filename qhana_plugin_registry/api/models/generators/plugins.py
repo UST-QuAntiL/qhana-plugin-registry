@@ -55,11 +55,7 @@ class PluginPageKeyGenerator(KeyGenerator, resource_type=RAMP, page=True):
 
 class PluginPageLinkGenerator(LinkGenerator, resource_type=RAMP, page=True):
     def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]],
-        ignore_deleted: bool = False,
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
@@ -82,11 +78,7 @@ class PluginPageUpLinkGenerator(
     LinkGenerator, resource_type=RAMP, page=True, relation=UP_REL
 ):
     def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         link = LinkGenerator.get_link_of(parent_resource, query_params=query_params)
@@ -109,11 +101,7 @@ class PluginKeyGenerator(KeyGenerator, resource_type=RAMP):
 
 class PluginSelfLinkGenerator(LinkGenerator, resource_type=RAMP):
     def generate_link(
-        self,
-        resource: RAMP,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: RAMP, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[RAMP]
 
@@ -128,11 +116,7 @@ class PluginSelfLinkGenerator(LinkGenerator, resource_type=RAMP):
 
 class PluginUpLinkGenerator(LinkGenerator, resource_type=RAMP, relation=UP_REL):
     def generate_link(
-        self,
-        resource: RAMP,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource: RAMP, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(RAMP, page_number=1),
@@ -145,7 +129,7 @@ class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
         self,
         resource: RAMP,
         *,
-        query_params: Optional[Dict[str, str]] = None,
+        query_params: Optional[Dict[str, str]] = None
     ) -> Optional[PluginData]:
         assert isinstance(resource, RAMP)
 

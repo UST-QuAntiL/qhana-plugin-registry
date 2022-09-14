@@ -213,7 +213,7 @@ class LinkGenerator:
     Implement a new Generator:
 
     >>> class MyResourceLinkGenerator(LinkGenerator, resource_type=MyResource, relation="create", page=True):
-    >>>     def generate_link(self, resource, *, query_params: Optional[Dict[str, str]] = None, ignore_deleted: bool = False) -> Optional[ApiLink]:
+    >>>     def generate_link(self, resource, *, query_params: Optional[Dict[str, str]] = None) -> Optional[ApiLink]:
     >>>         ...
     >>>         return ApiLink(...)
     """
@@ -326,9 +326,7 @@ class LinkGenerator:
         )
 
         if generator is not None:
-            link = generator.generate_link(
-                resource, query_params=query_params, ignore_deleted=ignore_deleted
-            )
+            link = generator.generate_link(resource, query_params=query_params)
 
             if link is None:
                 return None
@@ -358,11 +356,7 @@ class LinkGenerator:
         )
 
     def generate_link(
-        self,
-        resource,
-        *,
-        query_params: Optional[Dict[str, str]] = None,
-        ignore_deleted: bool = False,
+        self, resource, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         """Generate a the api link for the (resource, relation) key of this LinkGenerator.
 
@@ -584,7 +578,7 @@ class ApiResponseGenerator:
 
 
     Implement a new Generator:
-    
+
     >>> class MyResourceApiResponseGenerator(ApiResponseGenerator, resource_type=MyResource):
     >>>     def generate_api_response(self, resource, *, query_params: Optional[Dict[str, str]] = None) -> Optional[ApiResponse]:
     >>>         ...
