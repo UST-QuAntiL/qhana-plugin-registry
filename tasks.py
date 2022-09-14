@@ -220,6 +220,7 @@ def update_dependencies(c):
                 "poetry",
                 "export",
                 "--dev",
+                "--without-hashes",
                 "--format",
                 "requirements.txt",
                 "--output",
