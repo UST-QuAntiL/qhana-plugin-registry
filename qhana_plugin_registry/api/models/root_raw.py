@@ -19,6 +19,6 @@ from dataclasses import dataclass
 __all__ = ["RootDataRaw"]
 
 
-@dataclass(slots=True)
+@dataclass()
 class RootDataRaw:
     title: str

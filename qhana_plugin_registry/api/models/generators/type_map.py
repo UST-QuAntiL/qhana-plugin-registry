@@ -28,7 +28,7 @@ from ....db.models.plugins import RAMP
 from ....db.models.seeds import Seed
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ResourceMetadata:
     rel_type: str
     extra_link_rels: Sequence[str]
