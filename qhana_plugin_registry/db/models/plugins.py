@@ -137,6 +137,7 @@ class DataToRAMP(IdMixin):
         metadata={"sa": Column(sql.Integer, ForeignKey(RAMP.id), nullable=False)},
     )
     identifier: str = field(default="", metadata={"sa": Column(sql.String(255))})
+    required: bool = field(default=False, metadata={"sa": Column(sql.Boolean())})
     relation: str = field(
         default="", metadata={"sa": Column(sql.String(100))}
     )  # "produced"/"consumed"
