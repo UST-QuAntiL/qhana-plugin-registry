@@ -32,7 +32,7 @@ from .constants import (
 )
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse
-from ..plugins import PluginData
+from ..plugins import EntryPoint, PluginData, InputDataMetadata, DataMetadata
 from ..request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
@@ -126,10 +126,7 @@ class PluginUpLinkGenerator(LinkGenerator, resource_type=RAMP, relation=UP_REL):
 
 class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
     def generate_api_object(
-        self,
-        resource: RAMP,
-        *,
-        query_params: Optional[Dict[str, str]] = None
+        self, resource: RAMP, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[PluginData]:
         assert isinstance(resource, RAMP)
 
@@ -137,7 +134,49 @@ class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
 
         assert self_link is not None
 
-        return PluginData(self=self_link, title=resource.name)  # FIXME, better conversion
+        input_data = [
+            InputDataMetadata(
+                required=d.required,
+                content_type=[
+                    f"{c.content_type_start}/{c.content_type_end}"
+                    for c in d.content_types
+                ],
+                data_type=f"{d.data_type_start}/{d.data_type_end}",
+                parameter=d.identifier,
+            )
+            for d in resource.data_consumed
+        ]
+
+        output_data = [
+            DataMetadata(  # FIXME identifier/output name not used (not provided by plugins??)
+                required=d.required,
+                content_type=[
+                    f"{c.content_type_start}/{c.content_type_end}"
+                    for c in d.content_types
+                ],
+                data_type=f"{d.data_type_start}/{d.data_type_end}",
+            )
+            for d in resource.data_produced
+        ]
+
+        entry_point = EntryPoint(
+            href=resource.entry_url,
+            ui_href=resource.ui_url,
+            data_input=input_data,
+            data_output=output_data,
+            plugin_dependencies=[],  # FIXME, better conversion
+        )
+
+        return PluginData(
+            self=self_link,
+            identifier=resource.plugin_id,
+            version=resource.version,
+            title=resource.name,
+            description=resource.description,
+            plugin_type=resource.plugin_type,
+            tags=[tag.tag for tag in resource.tags],
+            entry_point=entry_point,
+        )
 
 
 class PluginApiResponseGenerator(ApiResponseGenerator, resource_type=RAMP):
