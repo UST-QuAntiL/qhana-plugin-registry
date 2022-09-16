@@ -52,10 +52,8 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         default=None, metadata={"sa": Column(sql.Integer, ForeignKey(Seed.id))}
     )
 
-    plugin_id: Optional[str] = field(
-        default=None, metadata={"sa": Column(sql.String(255))}
-    )
-    version: Optional[str] = field(default=None, metadata={"sa": Column(sql.String(100))})
+    plugin_id: str = field(default="", metadata={"sa": Column(sql.String(255))})
+    version: str = field(default="v0", metadata={"sa": Column(sql.String(100))})
     plugin_type: str = field(
         default="processing", metadata={"sa": Column(sql.String(100))}
     )
@@ -136,7 +134,7 @@ class DataToRAMP(IdMixin):
 
     ramp_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(RAMP.id), primary_key=True)},
+        metadata={"sa": Column(sql.Integer, ForeignKey(RAMP.id), nullable=False)},
     )
     identifier: str = field(default="", metadata={"sa": Column(sql.String(255))})
     relation: str = field(
@@ -162,7 +160,7 @@ class ContentTypeToData(IdMixin):
 
     data_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(DataToRAMP.id), primary_key=True)},
+        metadata={"sa": Column(sql.Integer, ForeignKey(DataToRAMP.id), nullable=False)},
     )
     content_type_start: str = field(default="*", metadata={"sa": Column(sql.String(255))})
     content_type_end: str = field(default="*", metadata={"sa": Column(sql.String(255))})
