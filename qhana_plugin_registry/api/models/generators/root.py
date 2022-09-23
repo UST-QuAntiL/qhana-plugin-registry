@@ -27,10 +27,13 @@ from ..request_helpers import (
     KeyGenerator,
     LinkGenerator,
     PageResource,
+    CollectionResource,
 )
 from ..root import RootData
 from ..root_raw import RootDataRaw
+from ....db.models.env import Env
 from ....db.models.seeds import Seed
+from ....db.models.services import Service
 
 # Root #########################################################################
 
@@ -68,12 +71,33 @@ class RootDataSeedsNavLinkGenerator(
         )
 
 
+class RootDataEnvNavLinkGenerator(
+    LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Env].rel_type
+):
+    def generate_link(
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            CollectionResource(Env, resource=resource),
+            extra_relations=(NAV_REL, API_REL),
+        )
+
+
+class RootDataServicesNavLinkGenerator(
+    LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Service].rel_type
+):
+    def generate_link(
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(Service, resource=resource, page_number=1),
+            extra_relations=(NAV_REL, API_REL),
+        )
+
+
 class RootDataApiObjectGenerator(ApiObjectGenerator, resource_type=RootDataRaw):
     def generate_api_object(
-        self,
-        resource: RootDataRaw,
-        *,
-        query_params: Optional[Dict[str, str]] = None
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[RootData]:
         assert isinstance(resource, RootDataRaw)
 

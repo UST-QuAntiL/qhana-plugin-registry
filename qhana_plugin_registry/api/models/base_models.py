@@ -328,6 +328,12 @@ class NewApiObject(BaseApiObject):
 
 
 @dataclass
+class ChangedApiObjectRaw:
+    self: Optional[Any]
+    changed: Any
+
+
+@dataclass
 class ChangedApiObject(BaseApiObject):
     changed: ApiLink
 

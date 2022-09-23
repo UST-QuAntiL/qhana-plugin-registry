@@ -18,7 +18,10 @@ from flask import Flask
 
 from .blueprint import API, ROOT_ENDPOINT
 from .plugins import PLUGINS_API
+from .env import ENV_API
 from .seeds import SEEDS_API
+from .services import SERVICES_API
+from .templates import TEMPLATES_API
 
 from . import root  # noqa
 
@@ -32,4 +35,7 @@ def register_root_api(app: Flask):
     # register API blueprints (only do this after the API is registered with flask!)
     API.register_blueprint(ROOT_ENDPOINT)
     API.register_blueprint(PLUGINS_API)
+    API.register_blueprint(ENV_API)
     API.register_blueprint(SEEDS_API)
+    API.register_blueprint(SERVICES_API)
+    API.register_blueprint(TEMPLATES_API)

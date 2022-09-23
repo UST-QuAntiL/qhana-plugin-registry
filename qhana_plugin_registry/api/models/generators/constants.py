@@ -58,6 +58,12 @@ PERMANENT_REL = "permanent"
 PLUGIN_ID_KEY = "pluginId"
 PLUGIN_VERSION_KEY = "pluginVersion"
 
+ENV_ID_KEY = "envId"
+
+SERVICE_ID_KEY = "serviceId"
+
+TEMPLATE_ID_KEY = "wsTemplateId"
+
 SEED_ID_KEY = "seedId"
 
 PLUGIN_ID_KEY = "pluginId"
@@ -75,6 +81,12 @@ ITEM_COUNT_DEFAULT = "25"
 
 ROOT_REL_TYPE = "api-root"
 
+ENV_REL_TYPE = "env"
+
+SERVICE_REL_TYPE = "service"
+
+TEMPLATE_REL_TYPE = "ws-template"
+
 SEED_REL_TYPE = "seed"
 
 PLUGIN_REL_TYPE = "plugin"
@@ -82,6 +94,12 @@ PLUGIN_REL_TYPE = "plugin"
 # link to relations ############################################################
 
 ROOT_EXTRA_LINK_RELATIONS = (SEED_REL_TYPE,)
+
+ENV_EXTRA_LINK_RELATIONS = tuple()
+
+SERVICE_EXTRA_LINK_RELATIONS = tuple()
+
+TEMPLATE_EXTRA_LINK_RELATIONS = tuple()
 
 SEED_EXTRA_LINK_RELATIONS = tuple()
 
@@ -97,6 +115,15 @@ PAGE_SCHEMA = "PageApiObject"
 
 API_SPEC_RESOURCE = "api-docs.openapi_json"
 ROOT_RESOURCE = "api-root.RootView"
+
+ENV_COLLECTION_RESOURCE = "api-env.EnvRootView"
+ENV_RESOURCE = "api-env.EnvView"
+
+SERVICE_PAGE_RESOURCE = "api-services.ServicesRootView"
+SERVICE_RESOURCE = "api-services.ServiceView"
+
+TEMPLATE_PAGE_RESOURCE = "api-templates.TemplatesRootView"
+TEMPLATE_RESOURCE = "api-templates.TemplateView"
 
 SEED_PAGE_RESOURCE = "api-seeds.SeedsRootView"
 SEED_RESOURCE = "api-seeds.SeedView"

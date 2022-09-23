@@ -12,12 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module containing link, api key and resource generators."""
+from dataclasses import dataclass
 
-# make sure all modules containing generators are imported!
-from . import root  # noqa
-from . import env  # noqa
-from . import seeds  # noqa
-from . import services  # noqa
-from . import templates  # noqa
-from . import plugins  # noqa
+import marshmallow as ma
+from marshmallow.validate import Length
+
+from .base_models import ApiObjectSchema, BaseApiObject
+
+__all__ = [
+    "EnvSchema",
+    "EnvData",
+]
+
+
+class EnvSchema(ApiObjectSchema):
+    name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
+    value = ma.fields.String(required=True, allow_none=False)
+
+
+@dataclass
+class EnvData(BaseApiObject):
+    name: str
+    value: str

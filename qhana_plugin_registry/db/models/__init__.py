@@ -17,3 +17,5 @@
 # make sure to import all modules containing models!
 from . import plugins  # noqa
 from . import seeds  # noqa
+from . import services  # noqa
+from . import env  # noqa

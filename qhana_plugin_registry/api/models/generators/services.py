@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generators for all Seed resources."""
+"""Generators for all Service resources."""
 
 from typing import Dict, Iterable, Optional
 
@@ -30,7 +30,7 @@ from .constants import (
     PAGE_SCHEMA,
     POST_REL,
     ROOT_RESOURCE_DUMMY,
-    SEED_ID_KEY,
+    SERVICE_ID_KEY,
     UP_REL,
 )
 from .type_map import TYPE_TO_METADATA
@@ -42,13 +42,13 @@ from ..request_helpers import (
     LinkGenerator,
     PageResource,
 )
-from ..seeds import SeedData
-from ....db.models.seeds import Seed
+from ..service import ServiceData
+from ....db.models.services import Service
 
-# Seed Page ####################################################################
+# Service Page #################################################################
 
 
-class SeedPageKeyGenerator(KeyGenerator, resource_type=Seed, page=True):
+class ServicePageKeyGenerator(KeyGenerator, resource_type=Service, page=True):
     def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         parent_key = KeyGenerator.generate_key(parent_resource)
@@ -56,14 +56,14 @@ class SeedPageKeyGenerator(KeyGenerator, resource_type=Seed, page=True):
         return key
 
 
-class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
+class ServicePageLinkGenerator(LinkGenerator, resource_type=Service, page=True):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
 
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[Service]
 
         endpoint = meta.collection_endpoint
         assert endpoint is not None
@@ -77,8 +77,8 @@ class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
         )
 
 
-class SeedPageUpLinkGenerator(
-    LinkGenerator, resource_type=Seed, page=True, relation=UP_REL
+class ServicePageUpLinkGenerator(
+    LinkGenerator, resource_type=Service, page=True, relation=UP_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -90,8 +90,8 @@ class SeedPageUpLinkGenerator(
         return link
 
 
-class SeedPageCreateSeedLinkGenerator(
-    LinkGenerator, resource_type=Seed, page=True, relation=CREATE_REL
+class ServicePageCreateServiceLinkGenerator(
+    LinkGenerator, resource_type=Service, page=True, relation=CREATE_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -102,26 +102,28 @@ class SeedPageCreateSeedLinkGenerator(
         return link
 
 
-# Seed #########################################################################
+# Service ######################################################################
 
 
-class SeedKeyGenerator(KeyGenerator, resource_type=Seed):
-    def update_key(self, key: Dict[str, str], resource: Seed) -> Dict[str, str]:
-        assert isinstance(resource, Seed)
-        parent_key = KeyGenerator.generate_key(PageResource(Seed, page_number=1))
+class ServiceKeyGenerator(KeyGenerator, resource_type=Service):
+    def update_key(self, key: Dict[str, str], resource: Service) -> Dict[str, str]:
+        assert isinstance(resource, Service)
+        parent_key = KeyGenerator.generate_key(PageResource(Service, page_number=1))
         key.update(parent_key)
-        key[SEED_ID_KEY] = str(resource.id)
+        key[SERVICE_ID_KEY] = str(resource.id)
         return key
 
 
-class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
+class ServiceSelfLinkGenerator(LinkGenerator, resource_type=Service):
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self, resource: Service, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[Service]
 
         return ApiLink(
-            href=url_for(meta.endpoint, seed_id=str(resource.id), _external=True),
+            href=url_for(
+                meta.endpoint, service_id=str(resource.service_id), _external=True
+            ),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
@@ -129,19 +131,21 @@ class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
         )
 
 
-class SeedUpLinkGenerator(LinkGenerator, resource_type=Seed, relation=UP_REL):
+class ServiceUpLinkGenerator(LinkGenerator, resource_type=Service, relation=UP_REL):
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self, resource: Service, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
-            PageResource(Seed, page_number=1),
+            PageResource(Service, page_number=1),
             extra_relations=(UP_REL,),
         )
 
 
-class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE_REL):
+class DeleteServiceLinkGenerator(
+    LinkGenerator, resource_type=Service, relation=DELETE_REL
+):
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self, resource: Service, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         link = LinkGenerator.get_link_of(resource)
         if link is None:
@@ -150,24 +154,30 @@ class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE
         return link
 
 
-class SeedApiObjectGenerator(ApiObjectGenerator, resource_type=Seed):
+class ServiceApiObjectGenerator(ApiObjectGenerator, resource_type=Service):
     def generate_api_object(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
-    ) -> Optional[SeedData]:
-        assert isinstance(resource, Seed)
+        self, resource: Service, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ServiceData]:
+        assert isinstance(resource, Service)
 
         self_link = LinkGenerator.get_link_of(resource)
 
         assert self_link is not None
 
-        return SeedData(self=self_link, url=resource.url)
+        return ServiceData(
+            self=self_link,
+            service_id=resource.service_id,
+            url=resource.url,
+            name=resource.name,
+            description=resource.description,
+        )
 
 
-class SeedDataApiResponseGenerator(ApiResponseGenerator, resource_type=Seed):
+class ServiceDataApiResponseGenerator(ApiResponseGenerator, resource_type=Service):
     def generate_api_response(
-        self, resource: Seed, *, link_to_relations: Optional[Iterable[str]], **kwargs
+        self, resource: Service, *, link_to_relations: Optional[Iterable[str]], **kwargs
     ) -> Optional[ApiResponse]:
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[Service]
         link_to_relations = (
             meta.extra_link_rels if link_to_relations is None else link_to_relations
         )

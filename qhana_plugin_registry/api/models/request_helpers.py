@@ -28,6 +28,8 @@ from .base_models import (
     DeletedApiObjectRaw,
     NewApiObject,
     NewApiObjectRaw,
+    ChangedApiObject,
+    ChangedApiObjectRaw,
 )
 
 
@@ -766,6 +768,45 @@ class NewApiObjectApiResponseGenerator(
         )
 
 
+class ChangedApiObjectApiResponseGenerator(
+    ApiResponseGenerator, resource_type=ChangedApiObjectRaw
+):
+    """An api response generator for "changed" api objects."""
+
+    def generate_api_response(
+        self,
+        resource: ChangedApiObjectRaw,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        link_to_relations: Optional[Iterable[str]] = None,
+        include_default_relations: bool = True,
+    ) -> Optional[ApiResponse]:
+        embedded_response = ApiResponseGenerator.get_api_response(
+            EmbeddedResource(resource.changed)
+        )
+        assert embedded_response is not None
+        changed_link = LinkGenerator.get_link_of(resource.changed)
+        assert isinstance(changed_link, ApiLink)
+
+        self_link = LinkGenerator.get_link_of(
+            resource.self,
+            query_params=query_params,
+            extra_relations=(CREATE_REL, POST_REL, changed_link.resource_type),
+        )
+        assert self_link is not None
+        self_link.resource_type = CHANGED_REL
+        return ApiResponse(
+            links=LinkGenerator.get_links_for(
+                resource.self if resource.self else resource.changed,
+                relations=link_to_relations,
+                include_default_relations=include_default_relations,
+            )
+            + [changed_link],
+            data=ChangedApiObject(self=self_link, changed=changed_link),
+            embedded=[embedded_response],
+        )
+
+
 class DeletedApiObjectApiResponseGenerator(
     ApiResponseGenerator, resource_type=DeletedApiObjectRaw
 ):
@@ -795,6 +836,7 @@ from .generators.constants import (  # isort:skip
     DELETE_REL,
     DELETED_REL,
     NEW_REL,
+    CHANGED_REL,
     POST_REL,
 )
 from .generators import type_map as tm  # isort:skip

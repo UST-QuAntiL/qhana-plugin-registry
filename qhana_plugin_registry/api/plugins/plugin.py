@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module containing the root endpoint of the v1 API."""
+"""Module containing the resource endpoint of the seeds API."""
 
 from http import HTTPStatus
 
 from flask.views import MethodView
 from flask_smorest import abort
 
-from . import PLUGINS_API
+from .root import PLUGINS_API
 from ..models.base_models import get_api_response_schema
 from ..models.plugins import PluginSchema
 from ..models.request_helpers import ApiResponseGenerator

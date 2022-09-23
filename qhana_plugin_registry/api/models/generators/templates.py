@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generators for all Seed resources."""
+"""Generators for all Template resources."""
 
 from typing import Dict, Iterable, Optional
 
@@ -22,6 +22,7 @@ from .constants import (
     API_SPEC_RESOURCE,
     COLLECTION_REL,
     CREATE_REL,
+    UPDATE_REL,
     DELETE_REL,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
@@ -29,8 +30,9 @@ from .constants import (
     PAGE_REL,
     PAGE_SCHEMA,
     POST_REL,
+    PUT_REL,
     ROOT_RESOURCE_DUMMY,
-    SEED_ID_KEY,
+    TEMPLATE_ID_KEY,
     UP_REL,
 )
 from .type_map import TYPE_TO_METADATA
@@ -42,13 +44,13 @@ from ..request_helpers import (
     LinkGenerator,
     PageResource,
 )
-from ..seeds import SeedData
-from ....db.models.seeds import Seed
+from ..templates import TemplateData, TemplateTabData
+from ....db.models.templates import WorkspaceTemplate
 
-# Seed Page ####################################################################
+# Template Page ################################################################
 
 
-class SeedPageKeyGenerator(KeyGenerator, resource_type=Seed, page=True):
+class TemplatePageKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate, page=True):
     def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         parent_key = KeyGenerator.generate_key(parent_resource)
@@ -56,14 +58,16 @@ class SeedPageKeyGenerator(KeyGenerator, resource_type=Seed, page=True):
         return key
 
 
-class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
+class TemplatePageLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, page=True
+):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
 
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[WorkspaceTemplate]
 
         endpoint = meta.collection_endpoint
         assert endpoint is not None
@@ -77,8 +81,8 @@ class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
         )
 
 
-class SeedPageUpLinkGenerator(
-    LinkGenerator, resource_type=Seed, page=True, relation=UP_REL
+class TemplatePageUpLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=UP_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -90,8 +94,8 @@ class SeedPageUpLinkGenerator(
         return link
 
 
-class SeedPageCreateSeedLinkGenerator(
-    LinkGenerator, resource_type=Seed, page=True, relation=CREATE_REL
+class TemplatePageCreateTemplateLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=CREATE_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -102,26 +106,33 @@ class SeedPageCreateSeedLinkGenerator(
         return link
 
 
-# Seed #########################################################################
+# Template #####################################################################
 
 
-class SeedKeyGenerator(KeyGenerator, resource_type=Seed):
-    def update_key(self, key: Dict[str, str], resource: Seed) -> Dict[str, str]:
-        assert isinstance(resource, Seed)
-        parent_key = KeyGenerator.generate_key(PageResource(Seed, page_number=1))
+class TemplateKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate):
+    def update_key(
+        self, key: Dict[str, str], resource: WorkspaceTemplate
+    ) -> Dict[str, str]:
+        assert isinstance(resource, WorkspaceTemplate)
+        parent_key = KeyGenerator.generate_key(
+            PageResource(WorkspaceTemplate, page_number=1)
+        )
         key.update(parent_key)
-        key[SEED_ID_KEY] = str(resource.id)
+        key[TEMPLATE_ID_KEY] = str(resource.id)
         return key
 
 
-class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
+class TemplateSelfLinkGenerator(LinkGenerator, resource_type=WorkspaceTemplate):
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[WorkspaceTemplate]
 
         return ApiLink(
-            href=url_for(meta.endpoint, seed_id=str(resource.id), _external=True),
+            href=url_for(meta.endpoint, template_id=str(resource.id), _external=True),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
@@ -129,19 +140,45 @@ class SeedSelfLinkGenerator(LinkGenerator, resource_type=Seed):
         )
 
 
-class SeedUpLinkGenerator(LinkGenerator, resource_type=Seed, relation=UP_REL):
+class TemplateUpLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, relation=UP_REL
+):
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
-            PageResource(Seed, page_number=1),
+            PageResource(WorkspaceTemplate, page_number=1),
             extra_relations=(UP_REL,),
         )
 
 
-class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE_REL):
+class UpdateTemplateLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, relation=UPDATE_REL
+):  # TODO check action relation
     def generate_link(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[ApiLink]:
+        link = LinkGenerator.get_link_of(resource)
+        if link is None:
+            return None
+        link.rel = (UPDATE_REL, PUT_REL)  # TODO check rels
+        return link
+
+
+class DeleteTemplateLinkGenerator(
+    LinkGenerator, resource_type=WorkspaceTemplate, relation=DELETE_REL
+):
+    def generate_link(
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         link = LinkGenerator.get_link_of(resource)
         if link is None:
@@ -150,24 +187,49 @@ class DeleteSeedLinkGenerator(LinkGenerator, resource_type=Seed, relation=DELETE
         return link
 
 
-class SeedApiObjectGenerator(ApiObjectGenerator, resource_type=Seed):
+class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=WorkspaceTemplate):
     def generate_api_object(
-        self, resource: Seed, *, query_params: Optional[Dict[str, str]] = None
-    ) -> Optional[SeedData]:
-        assert isinstance(resource, Seed)
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[TemplateData]:
+        assert isinstance(resource, WorkspaceTemplate)
 
         self_link = LinkGenerator.get_link_of(resource)
 
         assert self_link is not None
 
-        return SeedData(self=self_link, url=resource.url)
+        tabs = [
+            TemplateTabData(
+                name=tab.name,
+                description=tab.description,
+                plugin_filter=tab.plugin_filter,
+                plugins=[],  # FIXME
+            )
+            for tab in resource.tabs
+        ]
+
+        return TemplateData(
+            self=self_link,
+            name=resource.name,
+            description=resource.description,
+            tags=resource.tags,
+            tabs=tabs,
+        )
 
 
-class SeedDataApiResponseGenerator(ApiResponseGenerator, resource_type=Seed):
+class TemplateDataApiResponseGenerator(
+    ApiResponseGenerator, resource_type=WorkspaceTemplate
+):
     def generate_api_response(
-        self, resource: Seed, *, link_to_relations: Optional[Iterable[str]], **kwargs
+        self,
+        resource: WorkspaceTemplate,
+        *,
+        link_to_relations: Optional[Iterable[str]],
+        **kwargs,
     ) -> Optional[ApiResponse]:
-        meta = TYPE_TO_METADATA[Seed]
+        meta = TYPE_TO_METADATA[WorkspaceTemplate]
         link_to_relations = (
             meta.extra_link_rels if link_to_relations is None else link_to_relations
         )

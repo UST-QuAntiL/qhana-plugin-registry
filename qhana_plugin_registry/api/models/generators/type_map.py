@@ -24,8 +24,14 @@ from ..plugins import PluginSchema
 from ..root import RootSchema
 from ..root_raw import RootDataRaw
 from ..seeds import SeedSchema
+from ..env import EnvSchema
+from ..service import ServiceSchema
+from ..templates import TemplateSchema
 from ....db.models.plugins import RAMP
 from ....db.models.seeds import Seed
+from ....db.models.env import Env
+from ....db.models.services import Service
+from ....db.models.templates import WorkspaceTemplate
 
 
 @dataclass(frozen=True)
@@ -46,6 +52,30 @@ TYPE_TO_METADATA = {
         schema=RootSchema,
         schema_id=RootSchema.schema_name(),
         collection_endpoint=None,
+    ),
+    Env: ResourceMetadata(
+        rel_type=c.ENV_REL_TYPE,
+        extra_link_rels=c.ENV_EXTRA_LINK_RELATIONS,
+        endpoint=c.ENV_RESOURCE,
+        schema=EnvSchema,
+        schema_id=EnvSchema.schema_name(),
+        collection_endpoint=c.ENV_COLLECTION_RESOURCE,
+    ),
+    Service: ResourceMetadata(
+        rel_type=c.SERVICE_REL_TYPE,
+        extra_link_rels=c.SERVICE_EXTRA_LINK_RELATIONS,
+        endpoint=c.SERVICE_RESOURCE,
+        schema=ServiceSchema,
+        schema_id=ServiceSchema.schema_name(),
+        collection_endpoint=c.SERVICE_PAGE_RESOURCE,
+    ),
+    WorkspaceTemplate: ResourceMetadata(
+        rel_type=c.TEMPLATE_REL_TYPE,
+        extra_link_rels=c.TEMPLATE_EXTRA_LINK_RELATIONS,
+        endpoint=c.TEMPLATE_RESOURCE,
+        schema=TemplateSchema,
+        schema_id=TemplateSchema.schema_name(),
+        collection_endpoint=c.TEMPLATE_PAGE_RESOURCE,
     ),
     Seed: ResourceMetadata(
         rel_type=c.SEED_REL_TYPE,

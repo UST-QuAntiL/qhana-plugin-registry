@@ -67,13 +67,23 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         default_factory=datetime.utcnow,
         metadata={"sa": Column(sql.TIMESTAMP(timezone=True))},
     )
-    _tags = relationship(lambda: TagToRAMP, lazy="selectin")
+    _tags = relationship(
+        lambda: TagToRAMP,
+        lazy="selectin",
+        cascade="all, delete, delete-orphan",
+        passive_deletes=True,
+    )
 
     seed = relationship(Seed, lazy="select")
 
     tags = association_proxy("_tags", "tag")
 
-    data = relationship(lambda: DataToRAMP, lazy="select")
+    data = relationship(
+        lambda: DataToRAMP,
+        lazy="select",
+        cascade="all, delete, delete-orphan",
+        passive_deletes=True,
+    )
     data_consumed = relationship(
         lambda: DataToRAMP,
         lazy="select",
@@ -96,8 +106,8 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
 
 @REGISTRY.mapped
 @dataclass
-class Tag(IdMixin, ExistsMixin):
-    __tablename__ = "Tag"
+class PluginTag(IdMixin, ExistsMixin):
+    __tablename__ = "PluginTag"
 
     __sa_dataclass_metadata_key__ = "sa"
 
@@ -114,15 +124,19 @@ class TagToRAMP:
 
     ramp_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(RAMP.id), primary_key=True)},
+        metadata={
+            "sa": Column(
+                sql.Integer, ForeignKey(RAMP.id, ondelete="CASCADE"), primary_key=True
+            )
+        },
     )
     tag_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(Tag.id), primary_key=True)},
+        metadata={"sa": Column(sql.Integer, ForeignKey(PluginTag.id), primary_key=True)},
     )
 
     ramp = relationship(RAMP, innerjoin=True, lazy="select")
-    tag = relationship(Tag, innerjoin=True, lazy="joined")
+    tag = relationship(PluginTag, innerjoin=True, lazy="joined")
 
 
 @REGISTRY.mapped
@@ -134,7 +148,11 @@ class DataToRAMP(IdMixin):
 
     ramp_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(RAMP.id), nullable=False)},
+        metadata={
+            "sa": Column(
+                sql.Integer, ForeignKey(RAMP.id, ondelete="CASCADE"), nullable=False
+            )
+        },
     )
     identifier: str = field(default="", metadata={"sa": Column(sql.String(255))})
     required: bool = field(default=False, metadata={"sa": Column(sql.Boolean())})
@@ -145,7 +163,12 @@ class DataToRAMP(IdMixin):
     data_type_end: str = field(default="*", metadata={"sa": Column(sql.String(255))})
 
     ramp = relationship(RAMP, innerjoin=True, lazy="select")
-    content_types = relationship(lambda: ContentTypeToData, lazy="selectin")
+    content_types = relationship(
+        lambda: ContentTypeToData,
+        lazy="selectin",
+        cascade="all, delete, delete-orphan",
+        passive_deletes=True,
+    )
 
     @property
     def data_type(self) -> str:
@@ -161,7 +184,11 @@ class ContentTypeToData(IdMixin):
 
     data_id: int = field(
         init=False,
-        metadata={"sa": Column(sql.Integer, ForeignKey(DataToRAMP.id), nullable=False)},
+        metadata={
+            "sa": Column(
+                sql.Integer, ForeignKey(DataToRAMP.id, ondelete="CASCADE"), nullable=False
+            )
+        },
     )
     content_type_start: str = field(default="*", metadata={"sa": Column(sql.String(255))})
     content_type_end: str = field(default="*", metadata={"sa": Column(sql.String(255))})

@@ -17,4 +17,6 @@
 from . import generators  # noqa
 
 from . import root  # noqa
+from . import env  # noqa
 from . import seeds  # noqa
+from . import service  # noqa
