@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
@@ -72,17 +72,27 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         lazy="selectin",
         cascade="all, delete, delete-orphan",
         passive_deletes=True,
+        back_populates="ramp",
     )
 
     seed = relationship(Seed, lazy="select")
 
     tags = association_proxy("_tags", "tag")
 
-    data = relationship(
-        lambda: DataToRAMP,
-        lazy="select",
-        cascade="all, delete, delete-orphan",
-        passive_deletes=True,
+    data: List["DataToRAMP"] = field(
+        default_factory=list,
+        hash=False,
+        repr=False,
+        compare=False,
+        metadata={
+            "sa": relationship(
+                lambda: DataToRAMP,
+                lazy="select",
+                cascade="all, delete, delete-orphan",
+                passive_deletes=True,
+                back_populates="ramp",
+            )
+        },
     )
     data_consumed = relationship(
         lambda: DataToRAMP,
@@ -135,7 +145,7 @@ class TagToRAMP:
         metadata={"sa": Column(sql.Integer, ForeignKey(PluginTag.id), primary_key=True)},
     )
 
-    ramp = relationship(RAMP, innerjoin=True, lazy="select")
+    ramp = relationship(RAMP, innerjoin=True, lazy="select", back_populates="_tags")
     tag = relationship(PluginTag, innerjoin=True, lazy="joined")
 
 
@@ -162,12 +172,18 @@ class DataToRAMP(IdMixin):
     data_type_start: str = field(default="*", metadata={"sa": Column(sql.String(255))})
     data_type_end: str = field(default="*", metadata={"sa": Column(sql.String(255))})
 
-    ramp = relationship(RAMP, innerjoin=True, lazy="select")
-    content_types = relationship(
-        lambda: ContentTypeToData,
-        lazy="selectin",
-        cascade="all, delete, delete-orphan",
-        passive_deletes=True,
+    ramp = relationship(RAMP, innerjoin=True, lazy="select", back_populates="data")
+    content_types: List["ContentTypeToData"] = field(
+        default_factory=list,
+        metadata={
+            "sa": relationship(
+                lambda: ContentTypeToData,
+                lazy="selectin",
+                cascade="all, delete, delete-orphan",
+                passive_deletes=True,
+                back_populates="data",
+            )
+        },
     )
 
     @property
@@ -193,7 +209,9 @@ class ContentTypeToData(IdMixin):
     content_type_start: str = field(default="*", metadata={"sa": Column(sql.String(255))})
     content_type_end: str = field(default="*", metadata={"sa": Column(sql.String(255))})
 
-    data = relationship(DataToRAMP, innerjoin=True, lazy="select")
+    data = relationship(
+        DataToRAMP, innerjoin=True, lazy="select", back_populates="content_types"
+    )
 
     @property
     def content_type(self) -> str:

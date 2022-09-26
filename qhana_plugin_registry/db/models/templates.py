@@ -38,6 +38,7 @@ class WorkspaceTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
         lazy="selectin",
         cascade="all, delete, delete-orphan",
         passive_deletes=True,
+        back_populates="template",
     )
 
     tabs = relationship(
@@ -45,6 +46,7 @@ class WorkspaceTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
         lazy="selectin",
         cascade="all, delete, delete-orphan",
         passive_deletes=True,
+        back_populates="template",
     )
 
     tags = association_proxy("_tags", "tag")
@@ -85,7 +87,9 @@ class TagToTemplate:
         },
     )
 
-    template = relationship(WorkspaceTemplate, innerjoin=True, lazy="select")
+    template = relationship(
+        WorkspaceTemplate, innerjoin=True, lazy="select", back_populates="_tags"
+    )
     tag = relationship(TemplateTag, innerjoin=True, lazy="joined")
 
 
@@ -116,9 +120,12 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
         lazy="select",  # TODO figure out a good loading strategy!
         cascade="all, delete, delete-orphan",
         passive_deletes=True,
+        back_populates="tab",
     )
 
-    template = relationship(WorkspaceTemplate, innerjoin=True, lazy="select")
+    template = relationship(
+        WorkspaceTemplate, innerjoin=True, lazy="select", back_populates="tabs"
+    )
 
     plugins = association_proxy("_plugins", "ramp")
 
@@ -151,5 +158,7 @@ class RampToTemplateTab:
         },
     )
 
-    tab = relationship(TemplateTab, innerjoin=True, lazy="select")
+    tab = relationship(
+        TemplateTab, innerjoin=True, lazy="select", back_populates="_plugins"
+    )
     ramp = relationship(RAMP, innerjoin=True, lazy="joined")

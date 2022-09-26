@@ -54,3 +54,7 @@ def register_celery(app: Flask):
     app.logger.info(
         f"Celery settings:\n{CELERY.conf.humanize(with_defaults=False, censored=True)}\n"
     )
+
+    # load tasks
+    # TODO remove once module is imported somewhere else
+    from . import tasks
