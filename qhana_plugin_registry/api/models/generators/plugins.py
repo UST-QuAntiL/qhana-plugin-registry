@@ -25,13 +25,12 @@ from .constants import (
     ITEM_COUNT_QUERY_KEY,
     NAV_REL,
     PAGE_REL,
-    PAGE_SCHEMA,
     PLUGIN_ID_KEY,
     ROOT_RESOURCE_DUMMY,
     UP_REL,
 )
 from .type_map import TYPE_TO_METADATA
-from ..base_models import ApiLink, ApiResponse
+from ..base_models import ApiLink, ApiResponse, CursorPageSchema
 from ..plugins import EntryPoint, PluginData, InputDataMetadata, DataMetadata
 from ..request_helpers import (
     ApiObjectGenerator,
@@ -70,7 +69,7 @@ class PluginPageLinkGenerator(LinkGenerator, resource_type=RAMP, page=True):
             rel=(COLLECTION_REL, PAGE_REL),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{PAGE_SCHEMA}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{CursorPageSchema.schema_name()}",
         )
 
 
