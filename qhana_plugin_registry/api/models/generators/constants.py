@@ -109,19 +109,3 @@ PLUGIN_EXTRA_LINK_RELATIONS = tuple()
 # endpoints ####################################################################
 
 API_SPEC_RESOURCE = "api-docs.openapi_json"
-ROOT_RESOURCE = "api-root.RootView"
-
-ENV_COLLECTION_RESOURCE = "api-env.EnvRootView"
-ENV_RESOURCE = "api-env.EnvView"
-
-SERVICE_PAGE_RESOURCE = "api-services.ServicesRootView"
-SERVICE_RESOURCE = "api-services.ServiceView"
-
-TEMPLATE_PAGE_RESOURCE = "api-templates.TemplatesRootView"
-TEMPLATE_RESOURCE = "api-templates.TemplateView"
-
-SEED_PAGE_RESOURCE = "api-seeds.SeedsRootView"
-SEED_RESOURCE = "api-seeds.SeedView"
-
-PLUGIN_PAGE_RESOURCE = "api-plugins.PluginsRootView"
-PLUGIN_RESOURCE = "api-plugins.PluginView"
