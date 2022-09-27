@@ -27,14 +27,13 @@ from .constants import (
     ITEM_COUNT_QUERY_KEY,
     NAV_REL,
     PAGE_REL,
-    PAGE_SCHEMA,
     POST_REL,
     ROOT_RESOURCE_DUMMY,
     SEED_ID_KEY,
     UP_REL,
 )
 from .type_map import TYPE_TO_METADATA
-from ..base_models import ApiLink, ApiResponse
+from ..base_models import ApiLink, ApiResponse, CursorPageSchema
 from ..request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
@@ -73,7 +72,7 @@ class SeedPageLinkGenerator(LinkGenerator, resource_type=Seed, page=True):
             rel=(COLLECTION_REL, PAGE_REL),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{PAGE_SCHEMA}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{CursorPageSchema.schema_name()}",
         )
 
 

@@ -106,11 +106,6 @@ SEED_EXTRA_LINK_RELATIONS = tuple()
 PLUGIN_EXTRA_LINK_RELATIONS = tuple()
 
 
-# schemas ######################################################################
-
-PAGE_SCHEMA = "PageApiObject"
-
-
 # endpoints ####################################################################
 
 API_SPEC_RESOURCE = "api-docs.openapi_json"
