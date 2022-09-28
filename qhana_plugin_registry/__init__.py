@@ -29,7 +29,6 @@ from flask_cors import CORS
 from tomli import load as load_toml
 
 from . import api, babel, celery, db, licenses
-from .api.models.generators.type_map import populate_endpoints
 from .util.config import DebugConfig, ProductionConfig
 
 # change this to change tha flask app name and the config env var prefix
@@ -137,9 +136,6 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         from .util.debug_routes import register_debug_routes
 
         register_debug_routes(app)
-
-    # populate endpoint attributes of the metadata
-    populate_endpoints()
 
     return app
 
