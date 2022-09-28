@@ -62,6 +62,22 @@ Configured in `qhana_plugin_registry/util/config/smorest_config.py`.
     Useful for looking up which endpoint is served under a route or what routes are available.
 
 
+## Troubleshooting
+
+### Circular imports
+
+To investigate the cause of a circular import you can visualize the module dependencies with the package `pydeps` that
+is included in the dependencies of this project.
+To use `pydeps` you also need to install `Graphvis`.
+Please refer to the installation instruction in the [documentation](https://pydeps.readthedocs.io/en/latest/#how-to-install)
+of `pydeps`.
+
+To create a graph of all modules use `pydeps qhana_plugin_registry -o graph.svg --noshow`.
+The graph will be saved as `graph.svg`.
+This graph can be very huge and messy.
+
+To create a graph that is small and tidy you can render only circular dependencies with `pydeps qhana_plugin_registry -o graph.svg --noshow --show-cycles`.
+
 
 ## What this Template contains
 
