@@ -18,7 +18,7 @@ from typing import Dict, Iterable, Optional
 
 from flask import url_for
 
-from .constants import API_REL, API_SPEC_RESOURCE, NAV_REL
+from .constants import API_REL, API_SPEC_RESOURCE, NAV_REL, SEED_REL_TYPE, ENV_REL_TYPE, SERVICE_REL_TYPE
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse
 from ..request_helpers import (
@@ -60,7 +60,7 @@ class RootDataLinkGenerator(LinkGenerator, resource_type=RootDataRaw):
 
 
 class RootDataSeedsNavLinkGenerator(
-    LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Seed].rel_type
+    LinkGenerator, resource_type=RootDataRaw, relation=SEED_REL_TYPE
 ):
     def generate_link(
         self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
@@ -72,7 +72,7 @@ class RootDataSeedsNavLinkGenerator(
 
 
 class RootDataEnvNavLinkGenerator(
-    LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Env].rel_type
+    LinkGenerator, resource_type=RootDataRaw, relation=ENV_REL_TYPE
 ):
     def generate_link(
         self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
@@ -84,7 +84,7 @@ class RootDataEnvNavLinkGenerator(
 
 
 class RootDataServicesNavLinkGenerator(
-    LinkGenerator, resource_type=RootDataRaw, relation=TYPE_TO_METADATA[Service].rel_type
+    LinkGenerator, resource_type=RootDataRaw, relation=SERVICE_REL_TYPE
 ):
     def generate_link(
         self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None

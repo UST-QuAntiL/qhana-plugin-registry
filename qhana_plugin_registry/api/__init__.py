@@ -17,6 +17,7 @@
 from flask import Flask
 
 from .blueprint import API, ROOT_ENDPOINT
+from .models.generators.type_map import populate_metadata
 from .plugins import PLUGINS_API
 from .env import ENV_API
 from .seeds import SEEDS_API
@@ -39,3 +40,5 @@ def register_root_api(app: Flask):
     API.register_blueprint(SEEDS_API)
     API.register_blueprint(SERVICES_API)
     API.register_blueprint(TEMPLATES_API)
+
+    populate_metadata()
