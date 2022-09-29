@@ -36,6 +36,7 @@ sphinxcontrib-redoc = "^1.6.0"
 sphinx-click = "^3.0.0"
 myst-parser = "^0.15.1"
 pip-licenses = "^3.5.3"
+pydeps = "^1.10.24"
 
 [tool.poetry.extras]
 psycopg2 = ["psycopg2"]
