@@ -76,7 +76,14 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         back_populates="ramp",
     )
 
-    tags = association_proxy("_tags", "tag")
+    tags: List["PluginTag"] = field(
+        default_factory=list,
+        metadata={
+            "sa": association_proxy(
+                "_tags", "tag", creator=lambda tag: TagToRAMP(tag=tag)
+            )
+        },
+    )
 
     data: List["DataToRAMP"] = field(
         default_factory=list,
@@ -144,8 +151,20 @@ class TagToRAMP:
         metadata={"sa": Column(sql.Integer, ForeignKey(PluginTag.id), primary_key=True)},
     )
 
-    ramp = relationship(RAMP, innerjoin=True, lazy="select", back_populates="_tags")
-    tag = relationship(PluginTag, innerjoin=True, lazy="joined")
+    ramp: Optional[RAMP] = field(
+        default=None,
+        metadata={
+            "sa": relationship(
+                RAMP,
+                innerjoin=True,
+                lazy="select",
+            )
+        },
+    )
+    tag: Optional[PluginTag] = field(
+        default=None,
+        metadata={"sa": relationship(PluginTag, innerjoin=True, lazy="joined")},
+    )
 
 
 @REGISTRY.mapped
