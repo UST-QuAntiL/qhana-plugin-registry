@@ -28,6 +28,7 @@ from .db.models.plugins import (
     ContentTypeToData,
     DATA_RELATION_PRODUCED,
     DATA_RELATION_CONSUMED,
+    PluginTag,
 )
 from .db.models.seeds import Seed
 
@@ -188,8 +189,10 @@ def update_plugin_data(
             data=data,
             # TODO plugin dependencies
             seed=seed
-            # TODO tags
         )
+
+        for tag in plugin_data["tags"]:
+            found_plugin.tags.append(PluginTag(tag=tag))
 
     found_plugin.last_available = now
 
