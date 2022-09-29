@@ -37,7 +37,9 @@ class IdMixin:
     __sa_dataclass_metadata_key__ = "sa"
 
     id: Optional[int] = field(
-        default=None, metadata={"sa": DB.Column(DB.Integer, primary_key=True)}
+        default=None,
+        init=False,
+        metadata={"sa": DB.Column(DB.Integer, primary_key=True, autoincrement=True)},
     )
 
     def save(self, commit: bool = False):
