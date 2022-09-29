@@ -48,9 +48,10 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         ),
     )
 
-    seed_id: Optional[int] = field(
+    _seed_id: Optional[int] = field(
         default=None, metadata={"sa": Column(sql.Integer, ForeignKey(Seed.id))}
     )
+    seed: Optional[Seed] = field(default=None, metadata={"sa": relationship(Seed, lazy="select")})
 
     plugin_id: str = field(default="", metadata={"sa": Column(sql.String(255))})
     version: str = field(default="v0", metadata={"sa": Column(sql.String(100))})
@@ -74,8 +75,6 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         passive_deletes=True,
         back_populates="ramp",
     )
-
-    seed = relationship(Seed, lazy="select")
 
     tags = association_proxy("_tags", "tag")
 

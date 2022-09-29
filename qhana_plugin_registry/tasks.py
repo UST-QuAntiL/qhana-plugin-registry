@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from celery import group
-from celery.result import AsyncResult
 from celery.utils.log import get_task_logger
 from sqlalchemy.sql.expression import select
 from requests import get
@@ -41,10 +38,10 @@ TASK_LOGGER = get_task_logger(_name)
 BATCH_SIZE = 10
 
 
-@CELERY.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):  # FIXME does not seem to work
+@CELERY.on_after_finalize.connect
+def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        300, start_plugin_discovery.s(), name="Plugin discovery"
+        20, start_plugin_discovery.s(), name="Plugin discovery"
     )  # FIXME make period configurable
 
 
@@ -83,7 +80,7 @@ def discover_plugins_from_seeds(
         return
     if data.keys() >= PLUGIN_KEYS:
         # Data matches the structure of a plugin resource => is most likely a plugin
-        update_plugin_data(data, url=seed, now=now, seed=root_seed)
+        update_plugin_data(data, url=seed, now=now, seed_url=root_seed)
         return  # TODO update/register plugin in DB
 
     # treat seed as plugin runner
@@ -114,7 +111,7 @@ def split_mimetype(mimetype_like: str) -> Tuple[str, str]:
 
 
 def update_plugin_data(
-    plugin_data: Dict[str, Any], *, now: datetime, url: str, seed: Optional[str] = None
+    plugin_data: Dict[str, Any], *, now: datetime, url: str, seed_url: Optional[str] = None
 ):
     """Update the plugin data in the database.
 
@@ -122,7 +119,7 @@ def update_plugin_data(
         plugin_data (Dict[str, Any]): the new data from the plugin root endpoint
         now (datetime): the time the data was requested
         url (str): the plugin root url
-        seed (Optional[str], optional): optional root_seed. Defaults to None.
+        seed_url (Optional[str], optional): optional root_seed. Defaults to None.
     """
     plugin_id = plugin_data["name"]
     plugin_version = plugin_data["version"]
@@ -173,6 +170,12 @@ def update_plugin_data(
                 )
             )
 
+        seed: Optional[Seed] = None
+
+        if seed_url:
+            seed_query = select(Seed).where(Seed.url == seed_url)
+            seed = DB.session.execute(seed_query).scalar_one()
+
         found_plugin = RAMP(
             plugin_id=plugin_id,
             version=plugin_version,
@@ -184,7 +187,8 @@ def update_plugin_data(
             ui_url=entry_point["uiHref"],
             data=data,
             # TODO plugin dependencies
-            # TODO seed
+            seed=seed
+            # TODO tags
         )
 
     found_plugin.last_available = now
