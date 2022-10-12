@@ -18,12 +18,24 @@ from typing import Any, Dict, List
 import marshmallow as ma
 from marshmallow.validate import Regexp
 
-from .base_models import ApiObjectSchema, BaseApiObject, MaBaseSchema
+from .base_models import (
+    ApiObjectSchema,
+    BaseApiObject,
+    CursorPageArgumentsSchema,
+    MaBaseSchema,
+)
 
 __all__ = [
     "PluginSchema",
     "PluginData",
 ]
+
+
+class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
+    name = ma.fields.String(allow_none=True, load_only=True)
+    version = ma.fields.String(allow_none=True, load_only=True)
+    type_ = ma.fields.String( data_key="type",allow_none=True, load_only=True)
+    tags = ma.fields.String(allow_none=True, load_only=True)
 
 
 class DataMetadataSchema(MaBaseSchema):
