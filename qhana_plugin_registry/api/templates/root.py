@@ -15,10 +15,11 @@
 """Module containing the root endpoint of the services API."""
 
 from http import HTTPStatus
-from typing import List
+from typing import List, cast
 
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from sqlalchemy.sql.expression import ColumnElement
 
 from ..models.base_models import (
     CursorPageArgumentsSchema,
@@ -68,7 +69,10 @@ class TemplatesRootView(MethodView):
             WorkspaceTemplate,
             tuple(),
             pagination_options,
-            [WorkspaceTemplate.id, WorkspaceTemplate.name],
+            {
+                "id": cast(ColumnElement, WorkspaceTemplate.id),
+                "name": cast(ColumnElement, WorkspaceTemplate.name),
+            },
         )
 
         templates: List[WorkspaceTemplate] = DB.session.execute(

@@ -15,10 +15,13 @@
 """Module containing the root endpoint of the plugins API."""
 
 from http import HTTPStatus
-from typing import List
+from typing import List, Optional, cast
 
 from flask.views import MethodView
 from flask_smorest import Blueprint
+from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
+
+from qhana_plugin_registry.api.models.plugins import PluginsPageArgumentsSchema
 
 from ..models.base_models import (
     CursorPageArgumentsSchema,
@@ -38,7 +41,8 @@ from ..models.request_helpers import (
     PageResource,
 )
 from ...db.db import DB
-from ...db.models.plugins import RAMP
+from ...db.models.plugins import RAMP, PluginTag
+from ...db.filters import filter_ramps_by_id_and_version, filter_ramps_by_tags
 
 PLUGINS_API = Blueprint(
     name="api-plugins",
@@ -48,19 +52,58 @@ PLUGINS_API = Blueprint(
 )
 
 
+def get_tag_filter_sets(tags: Optional[str]):
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    must_have = {t for t in tag_list if not t.startswith("!")}
+    forbidden = {t.lstrip("!") for t in tag_list if t.startswith("!")}
+    tags_to_load = [t.lstrip("!") for t in tag_list]
+    found_tags = PluginTag.get_all(tags_to_load)
+    must_have_tags = [t for t in found_tags if t.tag in must_have]
+    forbidden_tags = [t for t in found_tags if t.tag in forbidden]
+    return must_have_tags, forbidden_tags
+
+
 @PLUGINS_API.route("/")
 class PluginsRootView(MethodView):
     """Root endpoint of the plugins api."""
 
-    @PLUGINS_API.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @PLUGINS_API.arguments(PluginsPageArgumentsSchema, location="query", as_kwargs=True)
     @PLUGINS_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
-    def get(self, **kwargs):
+    def get(
+        self,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        type_: Optional[str] = None,
+        tags: Optional[str] = None,
+        **kwargs,
+    ):
         """Get a list of plugins."""
+
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="name"
+            **kwargs, _sort_default="name,-version"
         )
 
-        pagination_info = default_get_page_info(RAMP, tuple(), pagination_options)
+        filter_: List[ColumnOperators] = filter_ramps_by_id_and_version(
+            ramp_id=name, version=version
+        )
+
+        must_have, forbidden = get_tag_filter_sets(tags)
+
+        filter_ += filter_ramps_by_tags(must_have, forbidden)
+
+        if type_:
+            filter_.append(cast(ColumnElement, RAMP.plugin_type) == type_)
+
+        pagination_info = default_get_page_info(
+            RAMP,
+            filter_,
+            pagination_options,
+            sort_columns={
+                "id": cast(ColumnElement, RAMP.id),
+                "name": cast(ColumnElement, RAMP.plugin_id),
+                "version": cast(ColumnElement, RAMP.sort_version),
+            },
+        )
 
         plugins: List[RAMP] = DB.session.execute(
             pagination_info.page_items_query
@@ -100,9 +143,19 @@ class PluginsRootView(MethodView):
         )
         assert first_page_link is not None
 
+        query_params = pagination_options.to_query_params()
+        if name is not None:
+            query_params["name"] = name
+        if version is not None:
+            query_params["version"] = version
+        if type_ is not None:
+            query_params["type"] = type_
+        if tags is not None:
+            query_params["tags"] = tags
+
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=query_params,
             extra_links=[
                 first_page_link,
                 self_link,
