@@ -132,9 +132,7 @@ def start_broker(c, port=None):
 
 
 @task
-def worker(
-    c, pool="solo", concurrency=1, dev=False, log_level="INFO", periodic_scheduler=False
-):
+def worker(c, pool="solo", concurrency=1, dev=False, log_level="INFO", beat=False):
     """Run the celery worker, optionally starting the redis broker.
 
     Args:
@@ -143,7 +141,7 @@ def worker(
         concurrency (int, optional): the number of concurrent workers (defaults to 1 for development)
         dev (bool, optional): If true the redis docker container will be started before the worker and stopped after the workers finished. Defaults to False.
         log_level (str, optional): The log level of the celery logger in the worker (DEBUG|INFO|WARNING|ERROR|CRITICAL|FATAL). Defaults to "INFO".
-        periodic_scheduler (bool, optional): If true a celery beat scheduler will be started alongside the worker. This is needed for periodic tasks. Should only be set to True for one worker otherwise the periodic tasks get executed too often (see readme file).
+        beat (bool, optional): If true a celery beat scheduler will be started alongside the worker. This is needed for periodic tasks. Should only be set to True for one worker otherwise the periodic tasks get executed too often (see readme file).
     """
     if dev:
         start_broker(c)
@@ -161,7 +159,7 @@ def worker(
         "-E",
     ]
 
-    if periodic_scheduler:
+    if beat:
         cmd += ["-B"]
 
     if dev:
