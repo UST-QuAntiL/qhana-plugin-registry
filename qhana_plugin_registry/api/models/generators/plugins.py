@@ -110,6 +110,7 @@ class PluginSelfLinkGenerator(LinkGenerator, resource_type=RAMP):
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
             schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{meta.schema_id}",
+            name=f"{resource.name} ({resource.version})",
         )
 
 
