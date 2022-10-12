@@ -15,10 +15,11 @@
 """Module containing the root endpoint of the services API."""
 
 from http import HTTPStatus
-from typing import List
+from typing import List, cast
 
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from sqlalchemy.sql.expression import ColumnElement
 
 from ..models.base_models import (
     CursorPageArgumentsSchema,
@@ -64,9 +65,16 @@ class ServicesRootView(MethodView):
             **kwargs, _sort_default="service_id"
         )
 
-        pagination_info = default_get_page_info(Service, tuple(), pagination_options, [Service.service_id])
+        pagination_info = default_get_page_info(
+            Service,
+            tuple(),
+            pagination_options,
+            {"service_id": cast(ColumnElement, Service.service_id)},
+        )
 
-        services: List[Service] = DB.session.execute(pagination_info.page_items_query).scalars()
+        services: List[Service] = DB.session.execute(
+            pagination_info.page_items_query
+        ).scalars()
 
         embedded_responses = (
             ApiResponseGenerator.get_api_response(EmbeddedResource(item))
@@ -113,13 +121,17 @@ class ServicesRootView(MethodView):
             extra_embedded=embedded_items,
         )
 
-    @SERVICES_API.arguments(ServiceSchema(only=("service_id", "name", "description", "url")))
+    @SERVICES_API.arguments(
+        ServiceSchema(only=("service_id", "name", "description", "url"))
+    )
     @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(NewApiObjectSchema))
     def post(self, service_data):
         service_id = service_data.get("service_id")
         existing: bool = Service.exists([Service.service_id == service_id])
         if existing:
-            abort(HTTPStatus.CONFLICT, message=f"Service id '{service_id}' is already used!")
+            abort(
+                HTTPStatus.CONFLICT, message=f"Service id '{service_id}' is already used!"
+            )
 
         created_service = Service(
             service_id=service_id,

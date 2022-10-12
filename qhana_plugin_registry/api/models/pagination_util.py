@@ -15,9 +15,9 @@
 """Module containing helpers for pagination that are better suited for the view functions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union, cast
 
-from sqlalchemy.sql.schema import Column
+from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
 
 from .base_models import ApiLink
 from .request_helpers import LinkGenerator, PageResource
@@ -32,18 +32,19 @@ class PaginationOptions:
 
     item_count: int = 25
     cursor: Optional[Union[str, int]] = None
-    sort_order: str = "asc"
-    sort_column: Optional[str] = None
+    sort: Optional[str] = None
     extra_query_params: Optional[Dict[str, str]] = None
 
     @property
-    def sort(self) -> Optional[str]:
+    def order_by(self) -> Sequence[Tuple[str, str]]:
         """The sort query argument."""
-        if self.sort_column:
-            if self.sort_order == "asc":
-                return self.sort_column
-            elif self.sort_order == "desc":
-                return f"-{self.sort_column}"
+        if not self.sort:
+            return []
+        return [
+            ((sort := c.strip()).lstrip("+-"), "desc" if sort.startswith("-") else "asc")
+            for c in self.sort.split(",")
+            if c
+        ]
 
     def to_query_params(
         self,
@@ -69,9 +70,8 @@ class PaginationOptions:
         elif self.cursor:
             params["cursor"] = str(self.cursor)
 
-        sort = self.sort
-        if sort:
-            params["sort"] = sort
+        if self.sort:
+            params["sort"] = self.sort
 
         if self.extra_query_params:
             params.update(self.extra_query_params)
@@ -102,14 +102,9 @@ def prepare_pagination_query_args(
     """
     if sort is None and _sort_default is not None:
         sort = _sort_default
-    sort_order = "asc"
-    if sort and sort.startswith("-"):
-        sort_order = "desc"
-    sort_column = sort.lstrip("+-") if sort else None
 
     return PaginationOptions(
-        sort_column=sort_column,
-        sort_order=sort_order,
+        sort=sort,
         item_count=item_count,
         cursor=cursor,
     )
@@ -121,17 +116,17 @@ I = TypeVar("I", bound=IdMixin)
 
 def default_get_page_info(
     model: Union[Type[M], Type[I]],
-    filter_criteria: Sequence[Any],
+    filter_criteria: Sequence[ColumnOperators],
     pagination_options: PaginationOptions,
-    sort_columns: Optional[Sequence[Column]] = None,
+    sort_columns: Optional[Dict[str, ColumnElement]] = None,
 ) -> PaginationInfo:
     """Get the pagination info from a model that extends IdMixin.
 
     Args:
         model (Type[IdMixin]): the db model; must also extend IdMixin!
-        filter_criteria (Sequence[Any]): the filter criteria
+        filter_criteria (Sequence[ColumnOperators]): the filter criteria
         pagination_options (PaginationOptions): the pagination options object containing the page size, sort string and cursor
-        sort_columns (Optional[Sequence[Column]], optional): a list of columns of the model that can be used to sort the items. Defaults to None.
+        sort_columns (Optional[Dict[str, Column]], optional): a dict mapping sort_keys to columns of the model that can be used to sort the items. Defaults to None.
 
     Raises:
         TypeError: if model is not an IdMixin
@@ -145,21 +140,23 @@ def default_get_page_info(
         raise TypeError(
             "Directly use get_page_info() for models that do not inherit from IdMixin!"
         )
-    id_column = cast(Column, model.id)
+    id_column = cast(ColumnElement, model.id)
 
-    sort: str = "id"
+    sort: str = pagination_options.sort if pagination_options.sort else "id"
 
     if not sort_columns:
-        sort_col_name = pagination_options.sort_column
-        if not sort_col_name:
-            sort = "id"
-        else:
-            sort_column = getattr(model, sort_col_name, None)
+        sort_columns = {}
+        sort_col_names = [c[0] for c in pagination_options.order_by]
+
+        if not sort_col_names:
+            sort_col_names.append("id")
+
+        for name in sort_col_names:
+            col_name = name.lstrip("+-")
+            sort_column = getattr(model, col_name, None)
             if sort_column is None:
-                raise KeyError(f"No column with name '{sort_col_name}' found!", model)
-            assert pagination_options.sort is not None
-            sort = pagination_options.sort
-            sort_columns = (sort_column,)
+                raise KeyError(f"No column with name '{col_name}' found!", model)
+            sort_columns[name] = sort_column
 
     if not sort_columns:
         raise ValueError("Could not identify sort columns!", model, pagination_options)
@@ -169,7 +166,7 @@ def default_get_page_info(
         id_column,
         sort_columns,
         pagination_options.cursor,
-        sort,
+        pagination_options.order_by,
         pagination_options.item_count,
         filter_criteria=filter_criteria,
     )

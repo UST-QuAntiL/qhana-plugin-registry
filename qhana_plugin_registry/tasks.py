@@ -12,25 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional
 
 from celery.utils.log import get_task_logger
 from sqlalchemy.sql.expression import select
 from requests import get
 from requests.exceptions import JSONDecodeError, ConnectionError
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .celery import CELERY
 from .db.db import DB
-from .db.models.plugins import (
-    RAMP,
-    DataToRAMP,
-    ContentTypeToData,
-    DATA_RELATION_PRODUCED,
-    DATA_RELATION_CONSUMED,
-    PluginTag,
-)
+from .db.models.plugins import RAMP
 from .db.models.seeds import Seed
+from .db.util import update_plugin_data
 
 _name = "qhana-plugin-registry"
 
@@ -74,15 +68,20 @@ def discover_plugins_from_seeds(
             f"Plugin discovery nested too deep, aborting! ({seed=}, {root_seed=}, {nesting=})"
         )
         return
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     try:
         data = get(seed).json()
     except JSONDecodeError or ConnectionError as err:
         return
     if data.keys() >= PLUGIN_KEYS:
         # Data matches the structure of a plugin resource => is most likely a plugin
-        update_plugin_data(data, url=seed, now=now, seed_url=root_seed)
-        return  # TODO update/register plugin in DB
+        plugin: RAMP
+        plugin, is_new_plugin = update_plugin_data(
+            data, url=seed, now=now, seed_url=root_seed
+        )
+        if is_new_plugin:
+            pass  # TODO run all updates / checks for new plugins (e.g. dependencies, templates, etc.)
+        return
 
     # treat seed as plugin runner
     try:
@@ -99,102 +98,3 @@ def discover_plugins_from_seeds(
 
     tasks = discover_plugins_from_seeds.chunks(plugin_seeds, BATCH_SIZE).group()
     tasks.skew().apply_async()
-
-
-def split_mimetype(mimetype_like: str) -> Tuple[str, str]:
-    """Split and normalize a mimetype like string into two components on the first '/'."""
-    if not mimetype_like:
-        return "*", "*"
-    split = mimetype_like.split("/", maxsplit=1)
-    start = split[0] if split[0] else "*"
-    end = split[1] if len(split) > 1 and split[1] else "*"
-    return start, end
-
-
-def update_plugin_data(
-    plugin_data: Dict[str, Any], *, now: datetime, url: str, seed_url: Optional[str] = None
-):
-    """Update the plugin data in the database.
-
-    Args:
-        plugin_data (Dict[str, Any]): the new data from the plugin root endpoint
-        now (datetime): the time the data was requested
-        url (str): the plugin root url
-        seed_url (Optional[str], optional): optional root_seed. Defaults to None.
-    """
-    plugin_id = plugin_data["name"]
-    plugin_version = plugin_data["version"]
-
-    q = select(RAMP).where(RAMP.plugin_id == plugin_id, RAMP.version == plugin_version)
-    found_plugin: Optional[RAMP] = DB.session.execute(q).scalar_one_or_none()
-
-    if not found_plugin:
-        entry_point = plugin_data["entryPoint"]
-
-        data: List[DataToRAMP] = []
-        for output in entry_point.get("dataOutput"):
-            data_type = split_mimetype(output.get("dataType", ""))
-            content_types = [
-                ContentTypeToData(
-                    content_type_start=(c_type := split_mimetype(c))[0],
-                    content_type_end=c_type[1],
-                )
-                for c in output.get("contentType", [])
-            ]
-            data.append(
-                DataToRAMP(
-                    identifier=output.get("name", ""),
-                    relation=DATA_RELATION_PRODUCED,
-                    required=output.get("required", False),
-                    data_type_start=data_type[0],
-                    data_type_end=data_type[1],
-                    content_types=content_types,
-                )
-            )
-        for output in entry_point.get("dataInput"):
-            data_type = split_mimetype(output.get("dataType", ""))
-            content_types = [
-                ContentTypeToData(
-                    content_type_start=(c_type := split_mimetype(c))[0],
-                    content_type_end=c_type[1],
-                )
-                for c in output.get("contentType", [])
-            ]
-            data.append(
-                DataToRAMP(
-                    identifier=output.get("parameter", ""),
-                    relation=DATA_RELATION_CONSUMED,
-                    required=output.get("required", False),
-                    data_type_start=data_type[0],
-                    data_type_end=data_type[1],
-                    content_types=content_types,
-                )
-            )
-
-        seed: Optional[Seed] = None
-
-        if seed_url:
-            seed_query = select(Seed).where(Seed.url == seed_url)
-            seed = DB.session.execute(seed_query).scalar_one()
-
-        found_plugin = RAMP(
-            plugin_id=plugin_id,
-            version=plugin_version,
-            name=plugin_data.get("title", plugin_id),
-            description=plugin_data.get("description", ""),
-            plugin_type=plugin_data["type"],
-            url=url,
-            entry_url=entry_point["href"],
-            ui_url=entry_point["uiHref"],
-            data=data,
-            # TODO plugin dependencies
-            seed=seed
-        )
-
-        for tag in plugin_data["tags"]:
-            found_plugin.tags.append(PluginTag(tag=tag))
-
-    found_plugin.last_available = now
-
-    DB.session.add(found_plugin)
-    DB.session.commit()

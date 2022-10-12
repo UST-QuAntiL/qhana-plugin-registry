@@ -29,8 +29,7 @@ from typing import (
 from sqlalchemy.orm import lazyload
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql import column, func, select
-from sqlalchemy.sql.expression import and_, asc, desc, or_
-from sqlalchemy.sql.schema import Column
+from sqlalchemy.sql.expression import and_, asc, desc, or_, ColumnElement
 from sqlalchemy.sql.selectable import CTE
 
 from .db import DB, MODEL
@@ -68,10 +67,10 @@ class PaginationInfo:
 
 def get_page_info(
     model: Union[Type[M], Type[I]],
-    cursor_column: Column,
-    sortables: Sequence[Column],
+    cursor_column: ColumnElement,
+    sortables: Dict[str, ColumnElement],
     cursor: Optional[Union[str, int]],
-    sort: str,
+    sort: Sequence[Tuple[str, str]],
     item_count: int = 25,
     surrounding_pages: int = 5,
     filter_criteria: Sequence[Any] = tuple(),
@@ -79,22 +78,21 @@ def get_page_info(
     if item_count is None:
         item_count = 25
 
-    sort_columns: Dict[str, Column] = {c.name: c for c in sortables}
+    if "id" not in sortables and issubclass(model, IdMixin):
+        sortables["id"] = cast(ColumnElement, model.id)
 
-    if issubclass(model, IdMixin):
-        sort_columns["id"] = cast(Column, model.id)
+    order_by_clauses = []
+    for col_name, direction in sort:
+        sort_direction: Any = desc if direction == "desc" else asc
 
-    sort_column_name = sort.lstrip("+-")
-    sort_direction: Any = desc if sort.startswith("-") else asc
-
-    sort_column = sort_columns[sort_column_name]
-    if "collate" in sort_column.info:
-        order_by = sort_direction(
-            sort_columns[sort_column_name].collate(sort_column.info["collate"])
-        )
-    else:
-        order_by = sort_direction(sort_columns[sort_column_name])
-    row_numbers: Any = func.row_number().over(order_by=order_by)
+        sort_column = sortables[col_name]
+        if "collate" in sort_column.info:
+            order_by_clauses.append(
+                sort_direction(sort_column.collate(sort_column.info["collate"]))
+            )
+        else:
+            order_by_clauses.append(sort_direction(sort_column))
+    row_numbers: Any = func.row_number().over(order_by=order_by_clauses)
 
     query_filter: Any = and_(*filter_criteria)
 
@@ -116,7 +114,7 @@ def get_page_info(
             .scalar()  # none or value of the cursor
         )
 
-    item_query: Query = select(model).filter(query_filter).order_by(order_by)
+    item_query: Query = select(model).filter(query_filter).order_by(*order_by_clauses)
 
     if collection_size <= item_count:
         return PaginationInfo(
@@ -133,7 +131,7 @@ def get_page_info(
     if cursor is not None:
         # always include cursor row
         query_filter = or_(cursor_column == cursor, and_(*filter_criteria))
-        item_query = select(model).filter(query_filter).order_by(order_by)
+        item_query = select(model).filter(query_filter).order_by(*order_by_clauses)
 
         cursor_row_cte: CTE = (
             DB.session.query(
