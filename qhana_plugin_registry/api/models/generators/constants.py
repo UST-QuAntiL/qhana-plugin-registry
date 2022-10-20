@@ -93,7 +93,12 @@ PLUGIN_REL_TYPE = "plugin"
 
 # link to relations ############################################################
 
-ROOT_EXTRA_LINK_RELATIONS = (SEED_REL_TYPE,)
+ROOT_EXTRA_LINK_RELATIONS = (
+    SEED_REL_TYPE,
+    SERVICE_REL_TYPE,
+    ENV_REL_TYPE,
+    PLUGIN_REL_TYPE,
+)
 
 ENV_EXTRA_LINK_RELATIONS = tuple()
 
