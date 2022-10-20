@@ -40,6 +40,7 @@ from .models.plugins import (
     TagToRAMP,
 )
 from .models.seeds import Seed
+from .models.services import Service
 
 
 def filter_ramps_by_id_and_version(
@@ -132,3 +133,23 @@ def filter_ramps_by_tags(
         )
         filter_.append(~ramp_id_column.in_(q))  # append a NOT IN filter
     return filter_
+
+
+def filter_services_by_service_id(
+    service_id: Optional[Union[str,Sequence[str]]] = None,
+    service_id_column: ColumnElement = cast(ColumnElement, Service.service_id),
+) -> List[ColumnOperators]:
+    """Generate a query filter to filter by one or more service ids.
+
+    Args:
+        service_id (Optional[Union[str,Sequence[str]]], optional): the service id(s) (not the database ids!) to filter for. Defaults to None.
+        service_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to Service.service_id.
+
+    Returns:
+        List[ColumnOperators]: the filter expression (to be joined by an and)
+    """
+    if service_id is None:
+        return []
+    if isinstance(service_id, str):
+        return [service_id_column == service_id]
+    return [service_id_column.in_(service_id)]

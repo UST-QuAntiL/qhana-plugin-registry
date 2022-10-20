@@ -18,7 +18,7 @@ from typing import Dict, Iterable, Optional
 
 from flask import url_for
 
-from .constants import API_REL, API_SPEC_RESOURCE, NAV_REL, SEED_REL_TYPE, ENV_REL_TYPE, SERVICE_REL_TYPE
+from .constants import API_REL, API_SPEC_RESOURCE, NAV_REL, PLUGIN_REL_TYPE, SEED_REL_TYPE, ENV_REL_TYPE, SERVICE_REL_TYPE
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse
 from ..request_helpers import (
@@ -31,6 +31,7 @@ from ..request_helpers import (
 )
 from ..root import RootData
 from ..root_raw import RootDataRaw
+from ....db.models.plugins import RAMP
 from ....db.models.env import Env
 from ....db.models.seeds import Seed
 from ....db.models.services import Service
@@ -91,6 +92,18 @@ class RootDataServicesNavLinkGenerator(
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(Service, resource=resource, page_number=1),
+            extra_relations=(NAV_REL, API_REL),
+        )
+
+
+class RootDataPluginsNavLinkGenerator(
+    LinkGenerator, resource_type=RootDataRaw, relation=PLUGIN_REL_TYPE
+):
+    def generate_link(
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(RAMP, resource=resource, page_number=1),
             extra_relations=(NAV_REL, API_REL),
         )
 

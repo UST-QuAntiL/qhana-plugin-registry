@@ -28,9 +28,11 @@ from .constants import (
     NAV_REL,
     PAGE_REL,
     POST_REL,
+    PUT_REL,
     ROOT_RESOURCE_DUMMY,
     SERVICE_ID_KEY,
     UP_REL,
+    UPDATE_REL,
 )
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse, CursorPageSchema
@@ -109,7 +111,7 @@ class ServiceKeyGenerator(KeyGenerator, resource_type=Service):
         assert isinstance(resource, Service)
         parent_key = KeyGenerator.generate_key(PageResource(Service, page_number=1))
         key.update(parent_key)
-        key[SERVICE_ID_KEY] = str(resource.id)
+        key[SERVICE_ID_KEY] = str(resource.service_id)
         return key
 
 
@@ -127,6 +129,7 @@ class ServiceSelfLinkGenerator(LinkGenerator, resource_type=Service):
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
             schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{meta.schema_id}",
+            name=resource.name,
         )
 
 
@@ -138,6 +141,19 @@ class ServiceUpLinkGenerator(LinkGenerator, resource_type=Service, relation=UP_R
             PageResource(Service, page_number=1),
             extra_relations=(UP_REL,),
         )
+
+
+class UpdateServiceLinkGenerator(
+    LinkGenerator, resource_type=Service, relation=UPDATE_REL
+):
+    def generate_link(
+        self, resource: Service, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        link = LinkGenerator.get_link_of(resource)
+        if link is None:
+            return None
+        link.rel = (UPDATE_REL, PUT_REL)
+        return link
 
 
 class DeleteServiceLinkGenerator(
