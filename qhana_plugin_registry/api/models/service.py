@@ -17,12 +17,16 @@ from dataclasses import dataclass
 import marshmallow as ma
 from marshmallow.validate import Length
 
-from .base_models import ApiObjectSchema, BaseApiObject
+from .base_models import ApiObjectSchema, BaseApiObject, CursorPageArgumentsSchema
 
 __all__ = [
     "ServiceSchema",
     "ServiceData",
 ]
+
+
+class ServicesPageArgumentsSchema(CursorPageArgumentsSchema):
+    service_id = ma.fields.String(data_key="service-id", allow_none=True, load_only=True)
 
 
 class ServiceSchema(ApiObjectSchema):

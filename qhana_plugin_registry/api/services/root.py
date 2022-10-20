@@ -40,8 +40,9 @@ from ..models.request_helpers import (
     LinkGenerator,
     PageResource,
 )
-from ..models.service import ServiceSchema
+from ..models.service import ServiceSchema, ServicesPageArgumentsSchema
 from ...db.db import DB
+from ...db.filters import filter_services_by_service_id
 from ...db.models.services import Service
 
 SERVICES_API = Blueprint(
@@ -56,18 +57,24 @@ SERVICES_API = Blueprint(
 class ServicesRootView(MethodView):
     """Root endpoint of the service api."""
 
-    @SERVICES_API.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @SERVICES_API.arguments(ServicesPageArgumentsSchema, location="query", as_kwargs=True)
     @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
-    def get(self, **kwargs):
+    def get(self, service_id: str | None = None, **kwargs):
         """Get a list of services."""
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
             **kwargs, _sort_default="service_id"
         )
 
+        service_id_filter = service_id
+        if service_id and "," in service_id:
+            service_id_filter = [i.strip() for i in service_id.split(",") if i.strip()]
+
         pagination_info = default_get_page_info(
             Service,
-            tuple(),
+            filter_services_by_service_id(
+                service_id_filter if service_id_filter else None
+            ),
             pagination_options,
             {"service_id": cast(ColumnElement, Service.service_id)},
         )
@@ -110,9 +117,17 @@ class ServicesRootView(MethodView):
         )
         assert first_page_link is not None
 
+        query_params = {**pagination_options.to_query_params()}
+
+        if service_id_filter:
+            if isinstance(service_id_filter, str):
+                query_params["service-id"] = service_id_filter
+            else:
+                query_params["service-id"] = ",".join(service_id_filter)
+
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=query_params,
             extra_links=[
                 first_page_link,
                 self_link,
@@ -141,8 +156,6 @@ class ServicesRootView(MethodView):
         )
         DB.session.add(created_service)
         DB.session.commit()
-
-        # FIXME kick of plugin discovery
 
         return ApiResponseGenerator.get_api_response(
             NewApiObjectRaw(self=PageResource(Service), new=created_service)

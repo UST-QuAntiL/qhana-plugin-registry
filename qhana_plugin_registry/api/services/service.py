@@ -15,12 +15,15 @@
 """Module containing the resource endpoint of the service API."""
 
 from http import HTTPStatus
+from typing import Dict, Optional
 
 from flask.views import MethodView
 from flask_smorest import abort
 
 from .root import SERVICES_API
 from ..models.base_models import (
+    ChangedApiObjectRaw,
+    ChangedApiObjectSchema,
     DeletedApiObjectRaw,
     DeletedApiObjectSchema,
     get_api_response_schema,
@@ -47,6 +50,31 @@ class ServiceView(MethodView):
         return ApiResponseGenerator.get_api_response(found_service)
 
     # TODO: add put resource for updates!
+
+    @SERVICES_API.arguments(
+        ServiceSchema(only=("service_id", "name", "description", "url"))
+    )
+    @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(ChangedApiObjectSchema))
+    def put(self, service_data: Dict[str, str], service_id: str):
+        """Get a single seed resource."""
+        if not service_id:
+            abort(HTTPStatus.BAD_REQUEST, message="The service id must not be empty!")
+        if service_id != service_data.get("service_id", service_id):
+            abort(HTTPStatus.BAD_REQUEST, message="The service id cannot be changed!")
+        found_service: Optional[Service] = Service.get_by_service_id(service_id)
+        if not found_service:
+            abort(HTTPStatus.NOT_FOUND, message="Service not found.")
+
+        found_service.url = service_data["url"]
+        found_service.name = service_data["name"]
+        found_service.description = service_data["description"]
+
+        DB.session.add(found_service)
+        DB.session.commit()
+
+        return ApiResponseGenerator.get_api_response(
+            ChangedApiObjectRaw(changed=found_service)
+        )
 
     @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(DeletedApiObjectSchema))
     def delete(self, service_id: str):
