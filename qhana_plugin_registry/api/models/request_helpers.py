@@ -788,13 +788,21 @@ class ChangedApiObjectApiResponseGenerator(
         changed_link = LinkGenerator.get_link_of(resource.changed)
         assert isinstance(changed_link, ApiLink)
 
-        self_link = LinkGenerator.get_link_of(
-            resource.self,
-            query_params=query_params,
-            extra_relations=(CREATE_REL, POST_REL, changed_link.resource_type),
-        )
-        assert self_link is not None
-        self_link.resource_type = CHANGED_REL
+        if resource.self is None:
+            self_link = changed_link.copy_with(
+                resource_type = CHANGED_REL,
+                rel=(*changed_link.rel, changed_link.resource_type, UPDATE_REL, PUT_REL),
+            )
+        elif isinstance(resource.self, ApiLink):
+            self_link = resource.self
+        else:
+            self_link = LinkGenerator.get_link_of(
+                resource.self,
+                query_params=query_params,
+                extra_relations=(UPDATE_REL, PUT_REL, changed_link.resource_type),
+            )
+            assert self_link is not None
+            self_link.resource_type = CHANGED_REL
         return ApiResponse(
             links=LinkGenerator.get_links_for(
                 resource.self if resource.self else resource.changed,
@@ -838,5 +846,7 @@ from .generators.constants import (  # isort:skip
     NEW_REL,
     CHANGED_REL,
     POST_REL,
+    PUT_REL,
+    UPDATE_REL,
 )
 from .generators import type_map as tm  # isort:skip
