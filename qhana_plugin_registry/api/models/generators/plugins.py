@@ -169,6 +169,7 @@ class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
 
         return PluginData(
             self=self_link,
+            href=resource.url,
             identifier=resource.plugin_id,
             version=resource.version,
             title=resource.name,
