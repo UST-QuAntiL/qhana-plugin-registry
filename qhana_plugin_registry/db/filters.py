@@ -43,29 +43,43 @@ from .models.seeds import Seed
 from .models.services import Service
 
 
-def filter_ramps_by_id_and_version(
-    ramp_id: Optional[str] = None,
+def filter_ramps_by_id(ramp_id: Union[int, Sequence[int], None] = None, plugin_id_column: ColumnElement = cast(ColumnElement, RAMP.id)) -> List[ColumnOperators]:
+    """Generates a query filter to filter by the unique plugin id (the DB id).
+
+    Args:
+        ramp_id (Union[int, Sequence[int]], optional): the id to filter by. Defaults to None.
+        plugin_id_column (ColumnElement, optional): _description_. Defaults to cast(ColumnElement, RAMP.id).
+    """
+    if ramp_id is None:
+        return []
+    if isinstance(ramp_id, int):
+        return [plugin_id_column == ramp_id]
+    return [plugin_id_column.in_(ramp_id)]
+
+
+def filter_ramps_by_identifier_and_version(
+    ramp_identifier: Optional[str] = None,
     version: Optional[str] = None,
-    plugin_id_column: ColumnElement = cast(ColumnElement, RAMP.plugin_id),
+    plugin_identifier_column: ColumnElement = cast(ColumnElement, RAMP.plugin_id),
     plugin_version_column: ColumnElement = cast(ColumnElement, RAMP.version),
 ) -> List[ColumnOperators]:
     """Generate a query filter to filter by plugin identifier string and version.
 
     Args:
-        ramp_id (Optional[str], optional): the plugin identifier name (not the human readable title!) to filter for. Defaults to None.
+        ramp_identifier (Optional[str], optional): the plugin identifier name (not the human readable title!) to filter for. Defaults to None.
         version (Optional[str], optional): a single version number or a version requirement to filter by (if a version requirement like >=1.0 is used ramp_id must also be set!). Defaults to None.
-        plugin_id_column (ColumnElement, optional): the column to apply the ramp_id filter to (use only if aliases are used in the query). Defaults to RAMP.plugin_id.
+        plugin_identifier_column (ColumnElement, optional): the column to apply the ramp_identifier filter to (use only if aliases are used in the query). Defaults to RAMP.plugin_id.
         plugin_version_column (ColumnElement, optional): the column to apply the version filter to (use only if aliases are used in the query). Defaults to RAMP.version.
 
     Raises:
-        ValueError: If a version filter with version requirements is set without a ramp_id filter
+        ValueError: If a version filter with version requirements is set without a ramp_identifier filter
 
     Returns:
         List[ColumnOperators]: the filter expressions (to be joined by an and)
     """
     filter_: List[ColumnOperators] = []
-    if ramp_id is not None:
-        filter_.append(plugin_id_column == ramp_id)
+    if ramp_identifier is not None:
+        filter_.append(plugin_identifier_column == ramp_identifier)
     if version is None:
         return filter_
     is_single_version = isinstance(parse_version(version), Version)
@@ -73,7 +87,7 @@ def filter_ramps_by_id_and_version(
         filter_.append(plugin_version_column == version)
         return filter_
 
-    if ramp_id is None:
+    if ramp_identifier is None:
         # filtering version numbers must happen on python side => we need to execute a quere beforehand
         # filtering for versions is only allowed for a single ramp ID to limit performance bottlenecks here
         raise ValueError(
@@ -85,7 +99,7 @@ def filter_ramps_by_id_and_version(
     )  # add commas to whitespace
     specifier = SpecifierSet(specifier_str)
     versions: List[str] = (
-        DB.session.execute(select(RAMP.version).filter(RAMP.plugin_id == ramp_id))
+        DB.session.execute(select(RAMP.version).filter(RAMP.plugin_id == ramp_identifier))
         .scalars()
         .all()
     )
@@ -136,7 +150,7 @@ def filter_ramps_by_tags(
 
 
 def filter_services_by_service_id(
-    service_id: Optional[Union[str,Sequence[str]]] = None,
+    service_id: Optional[Union[str, Sequence[str]]] = None,
     service_id_column: ColumnElement = cast(ColumnElement, Service.service_id),
 ) -> List[ColumnOperators]:
     """Generate a query filter to filter by one or more service ids.

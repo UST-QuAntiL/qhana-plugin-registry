@@ -15,10 +15,10 @@
 """Module containing the root endpoint of the plugins API."""
 
 from http import HTTPStatus
-from typing import List, Optional, cast
+from typing import List, Optional, Sequence, Union, cast
 
 from flask.views import MethodView
-from flask_smorest import Blueprint
+from flask_smorest import Blueprint, abort
 from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
 
 from qhana_plugin_registry.api.models.plugins import PluginsPageArgumentsSchema
@@ -42,7 +42,11 @@ from ..models.request_helpers import (
 )
 from ...db.db import DB
 from ...db.models.plugins import RAMP, PluginTag
-from ...db.filters import filter_ramps_by_id_and_version, filter_ramps_by_tags
+from ...db.filters import (
+    filter_ramps_by_id,
+    filter_ramps_by_identifier_and_version,
+    filter_ramps_by_tags,
+)
 
 PLUGINS_API = Blueprint(
     name="api-plugins",
@@ -71,6 +75,7 @@ class PluginsRootView(MethodView):
     @PLUGINS_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
     def get(
         self,
+        plugin_id: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         type_: Optional[str] = None,
@@ -79,12 +84,34 @@ class PluginsRootView(MethodView):
     ):
         """Get a list of plugins."""
 
+        parsed_plugin_ids: Union[int, Sequence[int], None] = None
+        if plugin_id:
+            if "," in plugin_id:
+                try:
+                    parsed_plugin_ids = [
+                        int(p_id.strip()) for p_id in plugin_id.split(",")
+                    ]
+                except ValueError:
+                    abort(
+                        HTTPStatus.BAD_REQUEST,
+                        message="The plugin-id must be a comma separated list of valid plugin ids!",
+                    )
+            else:
+                if not plugin_id.isdecimal():
+                    abort(
+                        HTTPStatus.BAD_REQUEST,
+                        message="The plugin-id parameter is in the wrong format!",
+                    )
+                parsed_plugin_ids = int(plugin_id)
+
         pagination_options: PaginationOptions = prepare_pagination_query_args(
             **kwargs, _sort_default="name,-version"
         )
 
-        filter_: List[ColumnOperators] = filter_ramps_by_id_and_version(
-            ramp_id=name, version=version
+        filter_: List[ColumnOperators] = filter_ramps_by_id(parsed_plugin_ids)
+
+        filter_ += filter_ramps_by_identifier_and_version(
+            ramp_identifier=name, version=version
         )
 
         must_have, forbidden = get_tag_filter_sets(tags)
@@ -144,6 +171,8 @@ class PluginsRootView(MethodView):
         assert first_page_link is not None
 
         query_params = pagination_options.to_query_params()
+        if plugin_id is not None:
+            query_params["plugin-id"] = plugin_id
         if name is not None:
             query_params["name"] = name
         if version is not None:

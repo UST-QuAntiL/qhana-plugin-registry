@@ -32,9 +32,10 @@ __all__ = [
 
 
 class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
+    plugin_id = ma.fields.String(data_key="plugin-id", allow_none=True, load_only=True)
     name = ma.fields.String(allow_none=True, load_only=True)
     version = ma.fields.String(allow_none=True, load_only=True)
-    type_ = ma.fields.String( data_key="type",allow_none=True, load_only=True)
+    type_ = ma.fields.String(data_key="type",allow_none=True, load_only=True)
     tags = ma.fields.String(allow_none=True, load_only=True)
 
 
