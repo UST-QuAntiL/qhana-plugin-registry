@@ -208,6 +208,11 @@ class EntryPointSchema(MaBaseSchema):
 
 
 class PluginSchema(ApiObjectSchema):
+    href = ma.fields.Url(
+        required=True,
+        allow_none=False,
+        metadata={"description": "The root URL of the plugin API."},
+    )
     title = ma.fields.String(
         required=True,
         allow_none=False,
@@ -289,6 +294,7 @@ class EntryPoint:
 
 @dataclass
 class PluginData(BaseApiObject):
+    href: str
     title: str
     description: str
     identifier: str
