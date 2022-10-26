@@ -102,32 +102,43 @@ class ServicesRootView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        extra_query_params = {}
+
+        if service_id_filter:
+            if isinstance(service_id_filter, str):
+                extra_query_params["service-id"] = service_id_filter
+            else:
+                extra_query_params["service-id"] = ",".join(service_id_filter)
+
         self_link = LinkGenerator.get_link_of(
-            page_resource, query_params=pagination_options.to_query_params()
+            page_resource,
+            query_params=pagination_options.to_query_params(
+                extra_params=extra_query_params
+            ),
         )
         assert self_link is not None
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_query_params=extra_query_params,
         )
 
         first_page_link = LinkGenerator.get_link_of(
             page_resource.get_page(1),
-            query_params=pagination_options.to_query_params(cursor=None),
+            query_params=pagination_options.to_query_params(
+                cursor=None, extra_params=extra_query_params
+            ),
         )
         assert first_page_link is not None
 
-        query_params = {**pagination_options.to_query_params()}
-
-        if service_id_filter:
-            if isinstance(service_id_filter, str):
-                query_params["service-id"] = service_id_filter
-            else:
-                query_params["service-id"] = ",".join(service_id_filter)
-
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=query_params,
+            query_params=pagination_options.to_query_params(
+                extra_params=extra_query_params
+            ),
             extra_links=[
                 first_page_link,
                 self_link,
