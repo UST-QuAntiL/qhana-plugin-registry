@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import datetime, timedelta, timezone
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
@@ -43,18 +44,39 @@ from .models.seeds import Seed
 from .models.services import Service
 
 
-def filter_ramps_by_id(ramp_id: Union[int, Sequence[int], None] = None, plugin_id_column: ColumnElement = cast(ColumnElement, RAMP.id)) -> List[ColumnOperators]:
+def filter_ramps_by_id(
+    ramp_id: Union[int, Sequence[int], None] = None,
+    plugin_id_column: ColumnElement = cast(ColumnElement, RAMP.id),
+) -> List[ColumnOperators]:
     """Generates a query filter to filter by the unique plugin id (the DB id).
 
     Args:
         ramp_id (Union[int, Sequence[int]], optional): the id to filter by. Defaults to None.
-        plugin_id_column (ColumnElement, optional): _description_. Defaults to cast(ColumnElement, RAMP.id).
+        plugin_id_column (ColumnElement, optional): the column to filter against (use only if aliases are used in the query). Defaults to cast(ColumnElement, RAMP.id).
     """
     if ramp_id is None:
         return []
     if isinstance(ramp_id, int):
         return [plugin_id_column == ramp_id]
     return [plugin_id_column.in_(ramp_id)]
+
+
+def filter_ramps_by_last_available(
+    period: Union[int, None] = None,
+    plugin_available_column: ColumnElement = cast(ColumnElement, RAMP.last_available),
+) -> List[ColumnOperators]:
+    """Generates a query filter matching ramps that were available in the given period.
+
+    Args:
+        period (Union[int, None], optional): the allowed time period in seconds. Defaults to None.
+        plugin_available_column (ColumnElement, optional): the column to filter against (use only if aliases are used in the query). Defaults to cast(ColumnElement, RAMP.last_available).
+    """
+    if period is None:
+        return []
+    if period <= 0:  # cannot apply filter for negative periods
+        raise ValueError("The given time period must be None or a positive integer >0 !")
+    check_date = datetime.now(timezone.utc) - timedelta(seconds=period)
+    return [plugin_available_column >= check_date]
 
 
 def filter_ramps_by_identifier_and_version(

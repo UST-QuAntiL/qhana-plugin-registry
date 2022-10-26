@@ -37,6 +37,7 @@ class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
     version = ma.fields.String(allow_none=True, load_only=True)
     type_ = ma.fields.String(data_key="type",allow_none=True, load_only=True)
     tags = ma.fields.String(allow_none=True, load_only=True)
+    last_available_period = ma.fields.Integer(data_key="last-available-period", allow_none=True, load_only=True)
 
 
 class DataMetadataSchema(MaBaseSchema):
