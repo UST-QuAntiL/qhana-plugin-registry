@@ -55,6 +55,7 @@ class PaginationOptions:
 
         Args:
             cursor (Optional[Union[str, int]], optional): the cursor to overwrite the current cursor. Defaults to "".
+            extra_params (Dict[str, str], optional): extra query params to include in the api link
 
         Returns:
             Dict[str, str]: the query arguments dict
@@ -176,6 +177,7 @@ def generate_page_links(
     resource: PageResource,
     pagination_info: PaginationInfo,
     pagination_options: PaginationOptions,
+    extra_query_params: Optional[Dict[str, str]] = None,
 ) -> List[ApiLink]:
     """Generate page links from pagination info and options for the given page resource.
 
@@ -183,6 +185,7 @@ def generate_page_links(
         resource (PageResource): the base page resource
         pagination_info (PaginationInfo): the pagination info containing first last and surrounding pages
         pagination_options (PaginationOptions): the pagination options that were used to generate the pagination info
+        extra_query_params (Dict[str, str], optional): extra query params to include in all page links
 
     Returns:
         List[ApiLink]: a list of api links to the last page and the surrounding pages
@@ -194,7 +197,8 @@ def generate_page_links(
             last_page_link = LinkGenerator.get_link_of(
                 resource.get_page(pagination_info.last_page.page),
                 query_params=pagination_options.to_query_params(
-                    cursor=pagination_info.last_page.cursor
+                    cursor=pagination_info.last_page.cursor,
+                    extra_params=extra_query_params,
                 ),
             )
 
@@ -207,7 +211,10 @@ def generate_page_links(
 
         page_link = LinkGenerator.get_link_of(
             resource.get_page(page.page),
-            query_params=pagination_options.to_query_params(cursor=page.cursor),
+            query_params=pagination_options.to_query_params(
+                cursor=page.cursor,
+                extra_params=extra_query_params,
+            ),
         )
 
         if page_link:
