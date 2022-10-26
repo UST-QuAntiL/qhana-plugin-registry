@@ -45,6 +45,7 @@ from ...db.models.plugins import RAMP, PluginTag
 from ...db.filters import (
     filter_ramps_by_id,
     filter_ramps_by_identifier_and_version,
+    filter_ramps_by_last_available,
     filter_ramps_by_tags,
 )
 
@@ -80,6 +81,7 @@ class PluginsRootView(MethodView):
         version: Optional[str] = None,
         type_: Optional[str] = None,
         tags: Optional[str] = None,
+        last_available_period: Optional[int] = None,
         **kwargs,
     ):
         """Get a list of plugins."""
@@ -104,11 +106,16 @@ class PluginsRootView(MethodView):
                     )
                 parsed_plugin_ids = int(plugin_id)
 
+        if last_available_period is not None and last_available_period <= 0:
+            last_available_period = None
+
         pagination_options: PaginationOptions = prepare_pagination_query_args(
             **kwargs, _sort_default="name,-version"
         )
 
         filter_: List[ColumnOperators] = filter_ramps_by_id(parsed_plugin_ids)
+
+        filter_ += filter_ramps_by_last_available(last_available_period)
 
         filter_ += filter_ramps_by_identifier_and_version(
             ramp_identifier=name, version=version
@@ -167,6 +174,8 @@ class PluginsRootView(MethodView):
             extra_query_params["type"] = type_
         if tags is not None:
             extra_query_params["tags"] = tags
+        if last_available_period is not None:
+            extra_query_params["last-available-period"] = str(last_available_period)
 
         self_link = LinkGenerator.get_link_of(
             page_resource,
