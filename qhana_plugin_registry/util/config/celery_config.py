@@ -14,7 +14,7 @@
 
 from collections import ChainMap
 
-CELERY_PRODUCTION_CONFIG = {}
+CELERY_PRODUCTION_CONFIG = {"task_default_queue": "qhana_plugin_registry"}
 
 CELERY_DEBUG_CONFIG = ChainMap(
     {
