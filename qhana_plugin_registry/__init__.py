@@ -45,9 +45,11 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
             instance_path = None
 
     # create and configure the app
-    app = Flask(APP_NAME, instance_relative_config=True, instance_path=instance_path)
-
-    # FIXME load instance path from env var
+    app = Flask(
+        APP_NAME,
+        instance_relative_config=True,
+        instance_path=instance_path,
+    )
 
     # Start Loading config #################
 
@@ -73,6 +75,29 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         # load config from file specified in env var
         config.from_envvar(f"{CONFIG_ENV_VAR_PREFIX}_SETTINGS", silent=True)
         # TODO load some config keys directly from env vars
+
+        # load Redis URLs from env vars
+        if "BROKER_URL" in environ:
+            celery_conf = config.get("CELERY", {})
+            celery_conf["broker_url"] = environ["BROKER_URL"]
+            config["CELERY"] = celery_conf
+
+        if "RESULT_BACKEND" in environ:
+            celery_conf = config.get("CELERY", {})
+            celery_conf["result_backend"] = environ["RESULT_BACKEND"]
+            config["CELERY"] = celery_conf
+
+        if "CELERY_QUEUE" in environ:
+            celery_conf = config.get("CELERY", {})
+            celery_conf["task_default_queue"] = environ["CELERY_QUEUE"]
+            config["CELERY"] = celery_conf
+
+        # load database URI from env vars
+        if "SQLALCHEMY_DATABASE_URI" in environ:
+            config["SQLALCHEMY_DATABASE_URI"] = environ["SQLALCHEMY_DATABASE_URI"]
+
+        if "SERVER_NAME" in environ:
+            config["SERVER_NAME"] = environ["SERVER_NAME"]
     else:
         # load the test config if passed in
         config.from_mapping(test_config)
