@@ -25,9 +25,11 @@ from .constants import (
     DELETE_REL,
     NAV_REL,
     POST_REL,
+    PUT_REL,
     ROOT_RESOURCE_DUMMY,
     ENV_ID_KEY,
     UP_REL,
+    UPDATE_REL,
 )
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse, CursorPageSchema
@@ -141,6 +143,17 @@ class EnvUpLinkGenerator(LinkGenerator, resource_type=Env, relation=UP_REL):
         return LinkGenerator.get_link_of(
             CollectionResource(Env), extra_relations=(UP_REL,)
         )
+
+
+class UpdateEnvLinkGenerator(LinkGenerator, resource_type=Env, relation=UPDATE_REL):
+    def generate_link(
+        self, resource: Env, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        link = LinkGenerator.get_link_of(resource)
+        if link is None:
+            return None
+        link.rel = (UPDATE_REL, PUT_REL)
+        return link
 
 
 class DeleteEnvLinkGenerator(LinkGenerator, resource_type=Env, relation=DELETE_REL):
