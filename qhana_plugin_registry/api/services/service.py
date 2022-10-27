@@ -49,14 +49,12 @@ class ServiceView(MethodView):
 
         return ApiResponseGenerator.get_api_response(found_service)
 
-    # TODO: add put resource for updates!
-
     @SERVICES_API.arguments(
         ServiceSchema(only=("service_id", "name", "description", "url"))
     )
     @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(ChangedApiObjectSchema))
     def put(self, service_data: Dict[str, str], service_id: str):
-        """Get a single seed resource."""
+        """Update a service resource."""
         if not service_id:
             abort(HTTPStatus.BAD_REQUEST, message="The service id must not be empty!")
         if service_id != service_data.get("service_id", service_id):
