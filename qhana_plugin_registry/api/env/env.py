@@ -15,12 +15,15 @@
 """Module containing the resource endpoint of the env API."""
 
 from http import HTTPStatus
+from typing import Dict, Optional
 
 from flask.views import MethodView
 from flask_smorest import abort
 
 from .root import ENV_API
 from ..models.base_models import (
+    ChangedApiObjectRaw,
+    ChangedApiObjectSchema,
     DeletedApiObjectRaw,
     DeletedApiObjectSchema,
     get_api_response_schema,
@@ -45,6 +48,27 @@ class EnvView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message="Env not found.")
 
         return ApiResponseGenerator.get_api_response(found_env)
+
+    @ENV_API.arguments(EnvSchema(only=("name", "value")))
+    @ENV_API.response(HTTPStatus.OK, get_api_response_schema(ChangedApiObjectSchema))
+    def put(self, env_data: Dict[str, str], env: str):
+        """Update a environment variable value."""
+        if not env:
+            abort(HTTPStatus.BAD_REQUEST, message="The env var path param must not be empty!")
+        if env != env_data.get("name", env):
+            abort(HTTPStatus.BAD_REQUEST, message="The env var name cannot be changed!")
+        found_env: Optional[Env] = Env.get(env)
+        if not found_env:
+            abort(HTTPStatus.NOT_FOUND, message="Env not found.")
+
+        found_env.value = env_data["value"]
+
+        DB.session.add(found_env)
+        DB.session.commit()
+
+        return ApiResponseGenerator.get_api_response(
+            ChangedApiObjectRaw(changed=found_env)
+        )
 
     @ENV_API.response(HTTPStatus.OK, get_api_response_schema(DeletedApiObjectSchema))
     def delete(self, env: str):
