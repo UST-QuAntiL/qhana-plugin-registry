@@ -50,11 +50,14 @@ def register_celery(app: Flask):
         app.config.get("CELERY", {}),
         beat_schedule={},
     )
-    CELERY.flask_app = app  # set flask_app attribute used by FlaskTask
+    CELERY.flask_app = app  # set flask_app attribute used by 
+
+    # load tasks (by importing tasks module)
+    from .tasks import register_periodic_tasks
+
+    # register periodic tasks
+    register_periodic_tasks(app, CELERY)
+
     app.logger.info(
         f"Celery settings:\n{CELERY.conf.humanize(with_defaults=False, censored=True)}\n"
     )
-
-    # load tasks
-    # TODO remove once module is imported somewhere else
-    from . import tasks  # noqa
