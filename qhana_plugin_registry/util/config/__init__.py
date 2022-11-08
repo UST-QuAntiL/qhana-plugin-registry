@@ -28,6 +28,10 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
 
     CELERY = CELERY_PRODUCTION_CONFIG
 
+    # config related to celery tasks
+    PLUGIN_DISCOVERY_INTERVAL = 15 * 60  # 15 minutes
+    PLUGIN_BATCH_SIZE = 50
+
 
 class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     ENV = "development"
@@ -37,3 +41,7 @@ class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     DEFAULT_LOG_SEVERITY = INFO
 
     CELERY = CELERY_DEBUG_CONFIG
+
+    # config related to celery tasks
+    PLUGIN_DISCOVERY_INTERVAL = 60  # 1 minute
+    PLUGIN_BATCH_SIZE = 10

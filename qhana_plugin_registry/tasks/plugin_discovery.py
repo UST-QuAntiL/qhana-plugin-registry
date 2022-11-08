@@ -19,6 +19,7 @@ from sqlalchemy.sql.expression import select
 from requests import get
 from requests.exceptions import JSONDecodeError, ConnectionError
 from datetime import datetime, timezone
+from flask.globals import current_app
 
 from ..celery import CELERY
 from ..db.db import DB
@@ -30,21 +31,15 @@ _name = "qhana-plugin-registry"
 
 TASK_LOGGER = get_task_logger(_name)
 
-BATCH_SIZE = 10
-
-
-@CELERY.on_after_finalize.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(
-        20, start_plugin_discovery.s(), name="Plugin discovery"
-    )  # FIXME make period configurable
+DEFAULT_BATCH_SIZE = 20
 
 
 @CELERY.task(name=f"{_name}.start_plugin_discovery", bind=True, ignore_result=True)
 def start_plugin_discovery(self):
     """Kick of plugin discovery process starting from the seed urls."""
+    batch_size: int = current_app.config.get("PLUGIN_BATCH_SIZE", DEFAULT_BATCH_SIZE)
     seeds = DB.session.execute(select(Seed.url)).scalars().all()
-    tasks = discover_plugins_from_seeds.chunks(((i,) for i in seeds), BATCH_SIZE).group()
+    tasks = discover_plugins_from_seeds.chunks(((i,) for i in seeds), batch_size).group()
     tasks.skew().apply_async()
 
 
@@ -96,5 +91,6 @@ def discover_plugins_from_seeds(
         if (api := p.get("apiRoot"))
     ]
 
-    tasks = discover_plugins_from_seeds.chunks(plugin_seeds, BATCH_SIZE).group()
+    batch_size: int = current_app.config.get("PLUGIN_BATCH_SIZE", DEFAULT_BATCH_SIZE)
+    tasks = discover_plugins_from_seeds.chunks(plugin_seeds, batch_size).group()
     tasks.skew().apply_async()
