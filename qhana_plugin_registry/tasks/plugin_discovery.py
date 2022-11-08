@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+from typing import Optional, Union
 
 from celery.utils.log import get_task_logger
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, delete, desc
 from requests import get
 from requests.exceptions import JSONDecodeError, ConnectionError
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask.globals import current_app
 
 from ..celery import CELERY
@@ -27,7 +27,7 @@ from ..db.models.plugins import RAMP
 from ..db.models.seeds import Seed
 from ..db.util import update_plugin_data
 
-_name = "qhana-plugin-registry"
+_name = "qhana-plugin-registry.tasks.plugins"
 
 TASK_LOGGER = get_task_logger(_name)
 
@@ -94,3 +94,66 @@ def discover_plugins_from_seeds(
     batch_size: int = current_app.config.get("PLUGIN_BATCH_SIZE", DEFAULT_BATCH_SIZE)
     tasks = discover_plugins_from_seeds.chunks(plugin_seeds, batch_size).group()
     tasks.skew().apply_async()
+
+
+@CELERY.task(name=f"{_name}.purge_plugins", ignore_result=True)
+def purge_plugins():
+    """Purge plugin according to the PLUGIN_PURGE_AFTER setting.
+
+    Plugins that were not available in the timeframe specified are removed from the database.
+    The time is counted from the latest time any plugin was available.
+    This means that only if the plugin discovery task updates these timestamps
+    more plugins will be removed on repeated runs of this task.
+    """
+    purge_after: Union[str, int, float, timedelta, None] = current_app.config.get(
+        "PLUGIN_PURGE_AFTER", "never"
+    )
+    if purge_after in ("never", -1) or purge_after is None:
+        return  # do not purge
+    if purge_after == "auto":
+        plugin_discovery_intervall = current_app.config.get(
+            "PLUGIN_DISCOVERY_INTERVAL", 15 * 60
+        )
+        if not isinstance(plugin_discovery_intervall, (int, float)):
+            TASK_LOGGER.warning(
+                f"The purge_after configuration could not be inferred automatically (invalid discovery interval {plugin_discovery_intervall}). Aborting."
+            )
+            return
+        if plugin_discovery_intervall < 5:
+            TASK_LOGGER.warning(
+                f"The purge_after configuration could not be inferred automatically (too small discovery interval {plugin_discovery_intervall}). Aborting."
+            )
+            return
+
+        # allow up to 10 failures to reach the plugin before purging
+        purge_after = plugin_discovery_intervall * 10
+    if isinstance(purge_after, str):
+        TASK_LOGGER.warning(
+            f"The purge_after configuration has the wrong type (expected int but got {purge_after}). Aborting."
+        )
+        return
+    if isinstance(purge_after, (int, float)):
+        purge_after = timedelta(seconds=purge_after)
+
+    assert purge_after is not None  # to keep typechecker happy
+
+    latest_date_query = select(RAMP.last_available).order_by(desc(RAMP.last_available))
+
+    latest_date: Optional[datetime] = (
+        DB.session.execute(latest_date_query).scalars().first()
+    )
+
+    if latest_date is None:
+        TASK_LOGGER.info("No plugins detected. No plugins to purge.")
+        return
+
+    purge_before_date = latest_date - purge_after
+
+    delete_query = (
+        delete(RAMP)
+        .filter(RAMP.last_available < purge_before_date)
+        .execution_options(synchronize_session="fetch")
+    )
+
+    DB.session.execute(delete_query)
+    DB.session.commit()

@@ -32,6 +32,9 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     PLUGIN_DISCOVERY_INTERVAL = 15 * 60  # 15 minutes
     PLUGIN_BATCH_SIZE = 50
 
+    PLUGIN_PURGE_INTERVAL = 15 * 60  # 15 minutes
+    PLUGIN_PURGE_AFTER = 7 * 24 * 60 * 60  # 1 week
+
 
 class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     ENV = "development"
@@ -45,3 +48,6 @@ class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     # config related to celery tasks
     PLUGIN_DISCOVERY_INTERVAL = 60  # 1 minute
     PLUGIN_BATCH_SIZE = 10
+
+    PLUGIN_PURGE_INTERVAL = 60  # 1 minute
+    PLUGIN_PURGE_AFTER = "auto"
