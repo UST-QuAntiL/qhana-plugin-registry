@@ -20,11 +20,11 @@ from requests import get
 from requests.exceptions import JSONDecodeError, ConnectionError
 from datetime import datetime, timezone
 
-from .celery import CELERY
-from .db.db import DB
-from .db.models.plugins import RAMP
-from .db.models.seeds import Seed
-from .db.util import update_plugin_data
+from ..celery import CELERY
+from ..db.db import DB
+from ..db.models.plugins import RAMP
+from ..db.models.seeds import Seed
+from ..db.util import update_plugin_data
 
 _name = "qhana-plugin-registry"
 

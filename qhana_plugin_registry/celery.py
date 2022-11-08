@@ -57,4 +57,4 @@ def register_celery(app: Flask):
 
     # load tasks
     # TODO remove once module is imported somewhere else
-    from . import tasks
+    from . import tasks  # noqa
