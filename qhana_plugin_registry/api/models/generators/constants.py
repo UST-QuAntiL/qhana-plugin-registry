@@ -91,6 +91,8 @@ SEED_REL_TYPE = "seed"
 
 PLUGIN_REL_TYPE = "plugin"
 
+RECOMMENDATION_REL_TYPE = "plugin-recommendation"
+
 # link to relations ############################################################
 
 ROOT_EXTRA_LINK_RELATIONS = (
@@ -98,6 +100,7 @@ ROOT_EXTRA_LINK_RELATIONS = (
     SERVICE_REL_TYPE,
     ENV_REL_TYPE,
     PLUGIN_REL_TYPE,
+    RECOMMENDATION_REL_TYPE,
 )
 
 ENV_EXTRA_LINK_RELATIONS = tuple()

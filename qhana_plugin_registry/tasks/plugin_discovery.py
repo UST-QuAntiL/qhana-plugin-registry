@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 
 from celery.utils.log import get_task_logger
-from sqlalchemy.sql.expression import select, delete, desc
-from requests import get
-from requests.exceptions import JSONDecodeError, ConnectionError
-from datetime import datetime, timezone, timedelta
 from flask.globals import current_app
+from requests import get
+from requests.exceptions import ConnectionError, JSONDecodeError
+from sqlalchemy.sql.expression import delete, desc, select
 
 from ..celery import CELERY
 from ..db.db import DB
