@@ -30,8 +30,7 @@ class ResourceMetadata:
     collection_endpoint: Optional[str]
 
 
-TYPE_TO_METADATA = {
-}
+TYPE_TO_METADATA = {}
 
 
 def populate_metadata():
@@ -39,30 +38,40 @@ def populate_metadata():
     To prevent circular imports, the endpoints will be populated here and the necessary imports will be done here.
     """
     from . import constants as c
+    from ..env import EnvSchema
     from ..plugins import PluginSchema
+    from ..recommendations import RecommendationCollectionSchema, RecommendationDataRaw
     from ..root import RootSchema
     from ..root_raw import RootDataRaw
     from ..seeds import SeedSchema
-    from ..env import EnvSchema
     from ..service import ServiceSchema
     from ..templates import TemplateSchema
-    from ....db.models.plugins import RAMP
-    from ....db.models.seeds import Seed
-    from ....db.models.env import Env
-    from ....db.models.services import Service
-    from ....db.models.templates import WorkspaceTemplate
-    from ... import ROOT_ENDPOINT, ENV_API, SERVICES_API, TEMPLATES_API, SEEDS_API, PLUGINS_API
-    from ...root import RootView
+    from ... import (
+        ENV_API,
+        PLUGINS_API,
+        RECOMMENDATIONS_API,
+        ROOT_ENDPOINT,
+        SEEDS_API,
+        SERVICES_API,
+        TEMPLATES_API,
+    )
     from ...env.env import EnvView
     from ...env.root import EnvRootView
-    from ...services.service import ServiceView
-    from ...services.root import ServicesRootView
-    from ...templates.template import TemplateView
-    from ...templates.root import TemplatesRootView
-    from ...seeds.seed import SeedView
-    from ...seeds.root import SeedsRootView
     from ...plugins.plugin import PluginView
     from ...plugins.root import PluginsRootView
+    from ...recommendations.root import RecommendationsRootView
+    from ...root import RootView
+    from ...seeds.root import SeedsRootView
+    from ...seeds.seed import SeedView
+    from ...services.root import ServicesRootView
+    from ...services.service import ServiceView
+    from ...templates.root import TemplatesRootView
+    from ...templates.template import TemplateView
+    from ....db.models.env import Env
+    from ....db.models.plugins import RAMP
+    from ....db.models.seeds import Seed
+    from ....db.models.services import Service
+    from ....db.models.templates import WorkspaceTemplate
 
     TYPE_TO_METADATA[RootDataRaw] = ResourceMetadata(
         rel_type=c.ROOT_REL_TYPE,
@@ -111,4 +120,12 @@ def populate_metadata():
         schema=PluginSchema,
         schema_id=PluginSchema.schema_name(),
         collection_endpoint=f"{PLUGINS_API.name}.{PluginsRootView.__name__}",
+    )
+    TYPE_TO_METADATA[RecommendationDataRaw] = ResourceMetadata(
+        rel_type=c.RECOMMENDATION_REL_TYPE,
+        extra_link_rels=tuple(),
+        endpoint="",
+        schema=RecommendationCollectionSchema,
+        schema_id=RecommendationCollectionSchema.schema_name(),
+        collection_endpoint=f"{RECOMMENDATIONS_API.name}.{RecommendationsRootView.__name__}",
     )

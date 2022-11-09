@@ -23,6 +23,7 @@ from .env import ENV_API
 from .seeds import SEEDS_API
 from .services import SERVICES_API
 from .templates import TEMPLATES_API
+from .recommendations import RECOMMENDATIONS_API
 
 from . import root  # noqa
 
@@ -40,5 +41,6 @@ def register_root_api(app: Flask):
     API.register_blueprint(SEEDS_API)
     API.register_blueprint(SERVICES_API)
     API.register_blueprint(TEMPLATES_API)
+    API.register_blueprint(RECOMMENDATIONS_API)
 
     populate_metadata()

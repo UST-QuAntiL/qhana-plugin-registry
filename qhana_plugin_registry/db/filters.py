@@ -25,6 +25,8 @@ from sqlalchemy.sql.expression import (
     Select,
     distinct,
     select,
+    or_,
+    exists,
 )
 from sqlalchemy.sql.functions import count
 
@@ -42,6 +44,7 @@ from .models.plugins import (
 )
 from .models.seeds import Seed
 from .models.services import Service
+from .util import split_mimetype
 
 
 def filter_ramps_by_id(
@@ -168,6 +171,80 @@ def filter_ramps_by_tags(
             )
         )
         filter_.append(~ramp_id_column.in_(q))  # append a NOT IN filter
+    return filter_
+
+
+def filter_data_to_ramp_by_consumed_data(
+    data_type: Optional[str] = None,
+    content_type: Optional[str] = None,
+    required: Optional[bool] = None,
+    relation: Optional[str] = None,
+    data_id_column: ColumnElement = cast(ColumnElement, DataToRAMP.id),
+    data_relation_column: ColumnElement = cast(ColumnElement, DataToRAMP.relation),
+    data_required_column: ColumnElement = cast(ColumnElement, DataToRAMP.required),
+    data_type_start_column: ColumnElement = cast(
+        ColumnElement, DataToRAMP.data_type_start
+    ),
+    data_type_end_column: ColumnElement = cast(ColumnElement, DataToRAMP.data_type_end),
+) -> List[ColumnOperators]:
+    """Generate query filter expressions to filter data linked to ramps.
+
+    Args:
+        data_type (str, optional): data type to filter by
+        content_type (str, optional): content type to filter by
+        required (bool, optional): if set, filter by the required column
+        relation (DATA_RELATION_CONSUMED | DATA_RELATION_PRODUCED, optional): if set, filter by the relation column
+        data_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.id.
+        data_relation_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.relation.
+        data_required_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.reqired.
+        data_type_start_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.data_type_start.
+        data_type_end_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.data_type_end.
+
+    Returns:
+        List[ColumnOperators]: the filter expressions (to be joined by an and)
+    """
+    filter_: List[ColumnOperators] = []
+    if relation is not None:
+        if relation not in (DATA_RELATION_CONSUMED, DATA_RELATION_PRODUCED):
+            raise ValueError(
+                f"Relation must be either '{DATA_RELATION_CONSUMED}' or '{DATA_RELATION_PRODUCED}'."
+            )
+        filter_.append(data_relation_column == relation)
+    if required is not None:
+        filter_.append(data_required_column == required)
+    if data_type:
+        split_type = split_mimetype(data_type)
+        if split_type[0] != "*":
+            filter_.append(
+                or_(
+                    data_type_start_column == split_type[0], data_type_start_column == "*"
+                )
+            )
+        if split_type[1] != "*":
+            filter_.append(
+                or_(data_type_end_column == split_type[1], data_type_end_column == "*")
+            )
+    if content_type:
+        split_type = split_mimetype(content_type)
+        if not split_type[0] == split_type[1] == "*":
+            q = select(ContentTypeToData.data_id).filter(
+                data_id_column == ContentTypeToData.data_id
+            )
+            if split_type[0] != "*":
+                q = q.filter(
+                    or_(
+                        ContentTypeToData.content_type_start == split_type[0],
+                        ContentTypeToData.content_type_start == "*",
+                    )
+                )
+            if split_type[1] != "*":
+                q = q.filter(
+                    or_(
+                        ContentTypeToData.content_type_end == split_type[1],
+                        ContentTypeToData.content_type_end == "*",
+                    )
+                )
+            filter_.append(exists(q))
     return filter_
 
 
