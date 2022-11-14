@@ -26,18 +26,32 @@ from ...db.filters import filter_data_to_ramp_by_consumed_data
 from ...db.models.plugins import DATA_RELATION_CONSUMED, DataToRAMP
 
 
-class CurrentDataRecommender(PluginRecommender):
+class StepDataRecommender(PluginRecommender):
     def get_votes(
         self, context: RecommendationContext, timeout: float
     ) -> Union[Signature, Sequence[Signature], None]:
-
-        current_data = context.get("current_data", [])
-        if not current_data:
+        if context.get("current_step") is None:
             return None
+        step_success = context.get("step_success")
+        step_error = context.get("step_error")
 
         task = cast(FlaskTask, fetch_votes)
 
-        return task.s(current_data=current_data)
+        tasks = []
+
+        input_data = context.get("step_input_data", [])
+        if input_data:
+            tasks.append(task.s(data=input_data))
+        if step_success and not step_error:
+            if context.get("step_data_quality") in {"UNKNOWN", "BAD", "NEUTRAL", "GOOD"}:
+                output_data = context.get("step_output_data", [])
+                if output_data:
+                    tasks.append(task.s(data=output_data))
+
+        if not tasks:
+            return None
+
+        return tasks
 
 
 def extract_mimetypes(
@@ -49,8 +63,8 @@ def extract_mimetypes(
 
 
 @CELERY.task(name=f"{__name__}.fetch_votes", bind=True)
-def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
-    """Fetch plugins relevant for recommendations based on current data."""
+def fetch_votes(self, data: Sequence[Union[DataItemTuple, DataItem]]):
+    """Fetch plugins relevant for recommendations based on given data types."""
 
     data_filters = filter_data_to_ramp_by_consumed_data(
         required=True,
@@ -65,7 +79,7 @@ def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
                         *extract_mimetypes(data_item),
                     )
                 )
-                for data_item in current_data
+                for data_item in data
             ]
         )
     )

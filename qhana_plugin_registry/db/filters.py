@@ -25,6 +25,7 @@ from sqlalchemy.sql.expression import (
     Select,
     distinct,
     select,
+    and_,
     or_,
     exists,
 )
@@ -176,7 +177,7 @@ def filter_ramps_by_tags(
 
 def filter_data_to_ramp_by_consumed_data(
     data_type: Optional[str] = None,
-    content_type: Optional[str] = None,
+    content_type: Optional[Union[str, Sequence[str]]] = None,
     required: Optional[bool] = None,
     relation: Optional[str] = None,
     data_id_column: ColumnElement = cast(ColumnElement, DataToRAMP.id),
@@ -191,7 +192,7 @@ def filter_data_to_ramp_by_consumed_data(
 
     Args:
         data_type (str, optional): data type to filter by
-        content_type (str, optional): content type to filter by
+        content_type (str|Sequence[str], optional): content type(s) to filter by (multiple types will be joined by an or)
         required (bool, optional): if set, filter by the required column
         relation (DATA_RELATION_CONSUMED | DATA_RELATION_PRODUCED, optional): if set, filter by the relation column
         data_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.id.
@@ -225,26 +226,64 @@ def filter_data_to_ramp_by_consumed_data(
                 or_(data_type_end_column == split_type[1], data_type_end_column == "*")
             )
     if content_type:
-        split_type = split_mimetype(content_type)
-        if not split_type[0] == split_type[1] == "*":
-            q = select(ContentTypeToData.data_id).filter(
-                data_id_column == ContentTypeToData.data_id
+        content_type_filters = filter_content_type_to_data_by_content_type(content_type)
+        if content_type_filters:
+            q = (
+                select(ContentTypeToData.data_id)
+                .filter(data_id_column == ContentTypeToData.data_id)
+                .filter(or_(*content_type_filters))
             )
-            if split_type[0] != "*":
-                q = q.filter(
-                    or_(
-                        ContentTypeToData.content_type_start == split_type[0],
-                        ContentTypeToData.content_type_start == "*",
-                    )
-                )
-            if split_type[1] != "*":
-                q = q.filter(
-                    or_(
-                        ContentTypeToData.content_type_end == split_type[1],
-                        ContentTypeToData.content_type_end == "*",
-                    )
-                )
             filter_.append(exists(q))
+    return filter_
+
+
+def filter_content_type_to_data_by_content_type(
+    content_type: Optional[Union[str, Sequence[str]]] = None,
+    content_type_start_column: ColumnElement = cast(
+        ColumnElement, ContentTypeToData.content_type_start
+    ),
+    content_type_end_column: ColumnElement = cast(
+        ColumnElement, ContentTypeToData.content_type_end
+    ),
+) -> List[ColumnOperators]:
+    """Generate query filter expressions to filter content types linked data consumed or produced by ramps.
+
+    Args:
+        content_type (str|Sequence[str], optional): content types to filter by (each content type adds one filter expression to the result)
+        content_type_start_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to ContentTypeToData.content_type_start.
+        content_type_end_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to ContentTypeToData.content_type_end.
+
+    Returns:
+        List[ColumnOperators]: the filter expressions (to be joined by an OR)
+    """
+    filter_: List[ColumnOperators] = []
+    if content_type is None:
+        return filter_
+    if isinstance(content_type, str):
+        content_type = [content_type]
+    for type_ in content_type:
+        split_type = split_mimetype(type_)
+        inner_filter: List[ColumnOperators] = []
+        if split_type[0] != "*":
+            inner_filter.append(
+                or_(
+                    content_type_start_column == split_type[0],
+                    content_type_start_column == "*",
+                )
+            )
+        if split_type[1] != "*":
+            inner_filter.append(
+                or_(
+                    content_type_end_column == split_type[1],
+                    content_type_end_column == "*",
+                )
+            )
+        if not inner_filter:
+            continue
+        if len(inner_filter) == 1:
+            filter_ += inner_filter
+        else:  # len(inner_filter) == 2
+            filter_.append(and_(*inner_filter))
     return filter_
 
 

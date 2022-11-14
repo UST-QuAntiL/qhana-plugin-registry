@@ -14,3 +14,6 @@
 
 from .base_recommender import PluginRecommender  # noqa
 from . import current_data_recommender  # noqa
+
+from . import available_data_recommender  # noqa
+from . import step_data_recommender  # noqa

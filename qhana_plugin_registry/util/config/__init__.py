@@ -35,6 +35,15 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     PLUGIN_PURGE_INTERVAL = 15 * 60  # 15 minutes
     PLUGIN_PURGE_AFTER = 7 * 24 * 60 * 60  # 1 week
 
+    # plugin recommendations
+    RECOMMENDER_WEIGHTS = {
+        "AvailableDataRecommender": 1,
+        "CurrentDataRecommender": 5,
+        "StepDataRecommender": 3,
+    }
+    RECOMMENDATION_TIMEOUT = 5
+    RECOMMENDATION_LIMIT = 5
+
 
 class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     ENV = "development"
