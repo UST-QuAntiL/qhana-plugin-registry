@@ -17,6 +17,8 @@ from flask import Flask
 
 from .plugin_discovery import purge_plugins, start_plugin_discovery
 
+from . import recommendations_context  # noqa
+
 from ..recommendations import recommenders  # noqa
 
 

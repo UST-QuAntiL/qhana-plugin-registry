@@ -18,6 +18,7 @@ from typing import (
     List,
     NamedTuple,
     Sequence,
+    Set,
     Tuple,
     TypeAlias,
     Union,
@@ -28,9 +29,14 @@ from celery import group
 from celery.canvas import Signature
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult, GroupResult
+from flask.globals import current_app
+from sqlalchemy.sql.expression import ColumnElement, and_, distinct, or_, select
 
 from .recommenders import PluginRecommender
 from .util import RecommendationContext
+from ..db.db import DB
+from ..db.filters import filter_data_to_ramp_by_consumed_data
+from ..db.models.plugins import DATA_RELATION_CONSUMED, RAMP, DataToRAMP
 
 Vote: TypeAlias = Tuple[float, int]
 
@@ -68,6 +74,67 @@ def merge_results(
         plugins[plugin_id] = old_vote + (vote * weight)
     merged_results = ((p_id, votes) for p_id, votes in plugins.items())
     return sorted(merged_results, key=lambda r: r[1], reverse=True)
+
+
+def get_plugin_ids_with_unmet_requirements(context: RecommendationContext) -> Set[int]:
+    available_data = context.get("available_data", None)
+    if not available_data:
+        return set()
+
+    data_type_filters = [
+        and_(
+            *filter_data_to_ramp_by_consumed_data(
+                data_type=data_type,
+                content_type=content_types,
+            )
+        )
+        for data_type, content_types in available_data.items()
+    ]
+
+    # all data requirements that can be fulfilled
+    inner_q = (
+        select(distinct(DataToRAMP.id))
+        .filter(
+            *filter_data_to_ramp_by_consumed_data(
+                required=True,
+                relation=DATA_RELATION_CONSUMED,
+            )
+        )
+        .filter(or_(*data_type_filters))
+    )
+
+    # plugins with data requirements that are not fulfilled
+    q = (
+        select(distinct(DataToRAMP.ramp_id))
+        .filter(
+            *filter_data_to_ramp_by_consumed_data(
+                required=True,
+                relation=DATA_RELATION_CONSUMED,
+            )
+        )
+        .filter(cast(ColumnElement, DataToRAMP.id).not_in(inner_q))
+    )
+
+    return set(DB.session.execute(q).scalars().all())
+
+
+def filter_votes(
+    context: RecommendationContext, votes: Sequence[Tuple[int, float]]
+) -> Sequence[Tuple[int, float]]:
+
+    ids_to_exclude = get_plugin_ids_with_unmet_requirements(context)
+
+    # plugin ids that are not for working with data
+    q = select(RAMP.id).filter(
+        RAMP.plugin_type != "processing", RAMP.plugin_type != "conversion"
+    )
+
+    ids_to_exclude.update(DB.session.execute(q).scalars().all())
+
+    if not ids_to_exclude:
+        return votes
+
+    return [vote for vote in votes if vote[0] not in ids_to_exclude]
 
 
 def get_recommendations(
@@ -111,5 +178,12 @@ def get_recommendations(
 
     # gather finished results
     votes = [(n, r.result) for n, r in results if r.successful()]
-    merged_votes = merge_results(votes, {})  # TODO populate multipliers from settings
-    return merged_votes
+
+    recommender_weights: Dict[str, float] = {}
+
+    if current_app:
+        recommender_weights = current_app.config.get("RECOMMENDER_WEIGHTS", {})
+
+    merged_votes = merge_results(votes, recommender_weights)
+
+    return filter_votes(context, merged_votes)

@@ -65,7 +65,7 @@ def discover_plugins_from_seeds(
         return
     now = datetime.now(timezone.utc)
     try:
-        data = get(seed).json()
+        data = get(seed, timeout=5).json()
     except JSONDecodeError or ConnectionError as err:
         return
     if data.keys() >= PLUGIN_KEYS:
@@ -80,7 +80,7 @@ def discover_plugins_from_seeds(
 
     # treat seed as plugin runner
     try:
-        plugin_data = get(seed.rstrip("/") + "/plugins").json()
+        plugin_data = get(seed.rstrip("/") + "/plugins", timeout=10).json()
     except JSONDecodeError or ConnectionError as err:
         return
 
