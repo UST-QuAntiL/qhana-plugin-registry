@@ -35,9 +35,12 @@ class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
     plugin_id = ma.fields.String(data_key="plugin-id", allow_none=True, load_only=True)
     name = ma.fields.String(allow_none=True, load_only=True)
     version = ma.fields.String(allow_none=True, load_only=True)
-    type_ = ma.fields.String(data_key="type",allow_none=True, load_only=True)
+    url = ma.fields.String(allow_none=True, load_only=True)
+    type_ = ma.fields.String(data_key="type", allow_none=True, load_only=True)
     tags = ma.fields.String(allow_none=True, load_only=True)
-    last_available_period = ma.fields.Integer(data_key="last-available-period", allow_none=True, load_only=True)
+    last_available_period = ma.fields.Integer(
+        data_key="last-available-period", allow_none=True, load_only=True
+    )
 
 
 class DataMetadataSchema(MaBaseSchema):

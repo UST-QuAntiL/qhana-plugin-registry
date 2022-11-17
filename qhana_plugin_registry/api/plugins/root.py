@@ -44,6 +44,7 @@ from ...db.db import DB
 from ...db.models.plugins import RAMP, PluginTag
 from ...db.filters import (
     filter_ramps_by_id,
+    filter_ramps_by_url,
     filter_ramps_by_identifier_and_version,
     filter_ramps_by_last_available,
     filter_ramps_by_tags,
@@ -79,6 +80,7 @@ class PluginsRootView(MethodView):
         plugin_id: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
+        url: Optional[str] = None,
         type_: Optional[str] = None,
         tags: Optional[str] = None,
         last_available_period: Optional[int] = None,
@@ -120,6 +122,8 @@ class PluginsRootView(MethodView):
         filter_ += filter_ramps_by_identifier_and_version(
             ramp_identifier=name, version=version
         )
+
+        filter_ += filter_ramps_by_url(url)
 
         must_have, forbidden = get_tag_filter_sets(tags)
 
@@ -170,6 +174,8 @@ class PluginsRootView(MethodView):
             extra_query_params["name"] = name
         if version is not None:
             extra_query_params["version"] = version
+        if url is not None:
+            extra_query_params["url"] = url
         if type_ is not None:
             extra_query_params["type"] = type_
         if tags is not None:
