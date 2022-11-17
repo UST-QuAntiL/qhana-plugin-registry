@@ -65,6 +65,21 @@ def filter_ramps_by_id(
     return [plugin_id_column.in_(ramp_id)]
 
 
+def filter_ramps_by_url(
+    url: Optional[str] = None,
+    plugin_url_column: ColumnElement = cast(ColumnElement, RAMP.url),
+) -> List[ColumnOperators]:
+    """Generates a query filter to filter by the unique plugin id (the DB id).
+
+    Args:
+        url (str, optional): the url to filter by. Defaults to None.
+        plugin_url_column (ColumnElement, optional): the column to filter against (use only if aliases are used in the query). Defaults to cast(ColumnElement, RAMP.url).
+    """
+    if url is None:
+        return []
+    return [plugin_url_column == url]
+
+
 def filter_ramps_by_last_available(
     period: Union[int, None] = None,
     plugin_available_column: ColumnElement = cast(ColumnElement, RAMP.last_available),
