@@ -190,6 +190,31 @@ def filter_ramps_by_tags(
     return filter_
 
 
+def filter_ramps_by_input_data(
+    input_data_type: Optional[str] = None,
+    input_content_type: Optional[str] = None,
+    ramp_id_column: ColumnElement = cast(ColumnElement, RAMP.id),
+) -> List[ColumnOperators]:
+    """Generate query filter expression to filter ramps by input types.
+
+    Args:
+        input_data_type (str, optional): the input data type. Defaults to None.
+        input_content_type (str, optional): the input content type. Defaults to None.
+        ramp_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to RAMP.id.
+
+    Returns:
+        List[ColumnOperators]: the filter expressions (to be joined by an and)
+    """
+    filter_: List[ColumnOperators] = []
+    inner_filter = filter_data_to_ramp_by_data_types(
+        input_data_type, input_content_type, relation=DATA_RELATION_CONSUMED
+    )
+    if inner_filter:
+        q = select(DataToRAMP.ramp_id).filter(*inner_filter)
+        filter_.append(ramp_id_column.in_(q))  # append a IN filter
+    return filter_
+
+
 def filter_data_to_ramp_by_data_types(
     data_type: Optional[str] = None,
     content_type: Optional[Union[str, Sequence[str]]] = None,
