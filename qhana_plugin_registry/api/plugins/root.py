@@ -24,7 +24,6 @@ from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
 from qhana_plugin_registry.api.models.plugins import PluginsPageArgumentsSchema
 
 from ..models.base_models import (
-    CursorPageArgumentsSchema,
     CursorPageSchema,
     get_api_response_schema,
 )
@@ -48,6 +47,7 @@ from ...db.filters import (
     filter_ramps_by_identifier_and_version,
     filter_ramps_by_last_available,
     filter_ramps_by_tags,
+    filter_ramps_by_input_data,
 )
 
 PLUGINS_API = Blueprint(
@@ -83,6 +83,8 @@ class PluginsRootView(MethodView):
         url: Optional[str] = None,
         type_: Optional[str] = None,
         tags: Optional[str] = None,
+        input_data_type: Optional[str] = None,
+        input_content_type: Optional[str] = None,
         last_available_period: Optional[int] = None,
         **kwargs,
     ):
@@ -128,6 +130,8 @@ class PluginsRootView(MethodView):
         must_have, forbidden = get_tag_filter_sets(tags)
 
         filter_ += filter_ramps_by_tags(must_have, forbidden)
+
+        filter_ += filter_ramps_by_input_data(input_data_type, input_content_type)
 
         if type_:
             filter_.append(cast(ColumnElement, RAMP.plugin_type) == type_)
@@ -180,6 +184,10 @@ class PluginsRootView(MethodView):
             extra_query_params["type"] = type_
         if tags is not None:
             extra_query_params["tags"] = tags
+        if input_data_type is not None:
+            extra_query_params["input-data-type"] = input_data_type
+        if input_content_type is not None:
+            extra_query_params["input-content-type"] = input_content_type
         if last_available_period is not None:
             extra_query_params["last-available-period"] = str(last_available_period)
 
