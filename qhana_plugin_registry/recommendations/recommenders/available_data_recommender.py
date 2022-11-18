@@ -21,7 +21,7 @@ from .base_recommender import PluginRecommender
 from ..util import DataItem, DataItemTuple, RecommendationContext
 from ...celery import CELERY, FlaskTask
 from ...db.db import DB
-from ...db.filters import filter_data_to_ramp_by_consumed_data
+from ...db.filters import filter_data_to_ramp_by_data_types
 from ...db.models.plugins import DATA_RELATION_CONSUMED, RAMP, DataToRAMP
 
 
@@ -61,7 +61,7 @@ def fetch_votes(self, available_data: Dict[str, Sequence[str]]):
 
     data_type_filters = [
         and_(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 data_type=data_type,
                 content_type=content_types,
             )
@@ -73,7 +73,7 @@ def fetch_votes(self, available_data: Dict[str, Sequence[str]]):
     inner_q = (
         select(distinct(DataToRAMP.id))
         .filter(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 required=True,
                 relation=DATA_RELATION_CONSUMED,
             )
@@ -85,7 +85,7 @@ def fetch_votes(self, available_data: Dict[str, Sequence[str]]):
     data_q = (
         select(distinct(DataToRAMP.ramp_id))
         .filter(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 required=True,
                 relation=DATA_RELATION_CONSUMED,
             )
