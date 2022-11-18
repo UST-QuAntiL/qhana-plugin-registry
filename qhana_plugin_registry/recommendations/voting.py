@@ -35,7 +35,7 @@ from sqlalchemy.sql.expression import ColumnElement, and_, distinct, or_, select
 from .recommenders import PluginRecommender
 from .util import RecommendationContext
 from ..db.db import DB
-from ..db.filters import filter_data_to_ramp_by_consumed_data
+from ..db.filters import filter_data_to_ramp_by_data_types
 from ..db.models.plugins import DATA_RELATION_CONSUMED, RAMP, DataToRAMP
 
 Vote: TypeAlias = Tuple[float, int]
@@ -83,7 +83,7 @@ def get_plugin_ids_with_unmet_requirements(context: RecommendationContext) -> Se
 
     data_type_filters = [
         and_(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 data_type=data_type,
                 content_type=content_types,
             )
@@ -95,7 +95,7 @@ def get_plugin_ids_with_unmet_requirements(context: RecommendationContext) -> Se
     inner_q = (
         select(distinct(DataToRAMP.id))
         .filter(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 required=True,
                 relation=DATA_RELATION_CONSUMED,
             )
@@ -107,7 +107,7 @@ def get_plugin_ids_with_unmet_requirements(context: RecommendationContext) -> Se
     q = (
         select(distinct(DataToRAMP.ramp_id))
         .filter(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 required=True,
                 relation=DATA_RELATION_CONSUMED,
             )

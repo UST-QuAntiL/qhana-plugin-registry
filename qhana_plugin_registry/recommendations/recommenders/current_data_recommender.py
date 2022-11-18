@@ -22,7 +22,7 @@ from .base_recommender import PluginRecommender
 from ..util import DataItem, DataItemTuple, RecommendationContext
 from ...celery import CELERY, FlaskTask
 from ...db.db import DB
-from ...db.filters import filter_data_to_ramp_by_consumed_data
+from ...db.filters import filter_data_to_ramp_by_data_types
 from ...db.models.plugins import DATA_RELATION_CONSUMED, DataToRAMP
 
 
@@ -52,7 +52,7 @@ def extract_mimetypes(
 def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
     """Fetch plugins relevant for recommendations based on current data."""
 
-    data_filters = filter_data_to_ramp_by_consumed_data(
+    data_filters = filter_data_to_ramp_by_data_types(
         required=True,
         relation=DATA_RELATION_CONSUMED,
     )
@@ -61,7 +61,7 @@ def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
         or_(
             *[
                 and_(
-                    *filter_data_to_ramp_by_consumed_data(
+                    *filter_data_to_ramp_by_data_types(
                         *extract_mimetypes(data_item),
                     )
                 )
@@ -73,7 +73,7 @@ def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
     required_q: Select = (
         select(DataToRAMP.ramp_id, count())
         .filter(
-            *filter_data_to_ramp_by_consumed_data(
+            *filter_data_to_ramp_by_data_types(
                 required=True,
                 relation=DATA_RELATION_CONSUMED,
             )

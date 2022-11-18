@@ -190,7 +190,7 @@ def filter_ramps_by_tags(
     return filter_
 
 
-def filter_data_to_ramp_by_consumed_data(
+def filter_data_to_ramp_by_data_types(
     data_type: Optional[str] = None,
     content_type: Optional[Union[str, Sequence[str]]] = None,
     required: Optional[bool] = None,
