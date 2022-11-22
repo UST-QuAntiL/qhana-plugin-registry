@@ -28,6 +28,7 @@ from sqlalchemy.sql.expression import (
     and_,
     or_,
     exists,
+    literal,
 )
 from sqlalchemy.sql.functions import count
 
@@ -46,6 +47,11 @@ from .models.plugins import (
 from .models.seeds import Seed
 from .models.services import Service
 from .util import split_mimetype
+
+
+def filter_impossible() -> List[ColumnOperators]:
+    """Return a filter that is never true."""
+    return [literal(1) != 1]
 
 
 def filter_ramps_by_id(

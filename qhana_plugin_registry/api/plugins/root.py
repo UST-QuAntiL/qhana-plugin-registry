@@ -42,6 +42,7 @@ from ..models.request_helpers import (
 from ...db.db import DB
 from ...db.models.plugins import RAMP, PluginTag
 from ...db.filters import (
+    filter_impossible,
     filter_ramps_by_id,
     filter_ramps_by_url,
     filter_ramps_by_identifier_and_version,
@@ -65,8 +66,9 @@ def get_tag_filter_sets(tags: Optional[str]):
     tags_to_load = [t.lstrip("!") for t in tag_list]
     found_tags = PluginTag.get_all(tags_to_load)
     must_have_tags = [t for t in found_tags if t.tag in must_have]
+    unknown_must_have_tags = must_have - {t.tag for t in must_have_tags}
     forbidden_tags = [t for t in found_tags if t.tag in forbidden]
-    return must_have_tags, forbidden_tags
+    return must_have_tags, forbidden_tags, unknown_must_have_tags
 
 
 @PLUGINS_API.route("/")
@@ -127,7 +129,7 @@ class PluginsRootView(MethodView):
 
         filter_ += filter_ramps_by_url(url)
 
-        must_have, forbidden = get_tag_filter_sets(tags)
+        must_have, forbidden, unknown_must_have = get_tag_filter_sets(tags)
 
         filter_ += filter_ramps_by_tags(must_have, forbidden)
 
@@ -135,6 +137,10 @@ class PluginsRootView(MethodView):
 
         if type_:
             filter_.append(cast(ColumnElement, RAMP.plugin_type) == type_)
+
+        if unknown_must_have:
+            # required tags are are unknown => no plugin can have these tags
+            filter_ = filter_impossible()
 
         pagination_info = default_get_page_info(
             RAMP,
