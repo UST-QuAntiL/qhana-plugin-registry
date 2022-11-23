@@ -14,13 +14,16 @@
 
 """CLI functions for the db module."""
 
-from typing import cast
+from typing import Dict, List, Set, cast
 
 import click
 from flask import Blueprint, Flask, current_app
 from flask.cli import AppGroup, with_appcontext
+from sqlalchemy.sql.expression import Insert, insert
 
 from .db import DB
+from .models.seeds import Seed
+from .models.services import Service
 from ..util.logging import get_logger
 
 # make sure all models are imported for CLI to work properly
@@ -57,6 +60,63 @@ def drop_db():
 def drop_db_function(app: Flask):
     DB.drop_all()
     get_logger(app, DB_COMMAND_LOGGER).info("Dropped Database.")
+
+
+@DB_CLI.command("preload-db")
+@with_appcontext
+def preload_db():
+    """Prelaod the database with values read from app config."""
+    click.echo("Preloading seed URLs into the database.")
+    preload_seeds(current_app)
+    click.echo("Preloading services into the database.")
+    preload_services(current_app)
+    click.echo("Values loaded.")
+
+
+def preload_seeds(app: Flask):
+    logger = get_logger(app, DB_COMMAND_LOGGER)
+    initial_seeds: Set[str] = set(app.config.get("INITIAL_PLUGIN_SEEDS", []))
+    if not initial_seeds:
+        logger.info("No initial seeds configured.")
+        return
+    if Seed.exists():
+        logger.info("Seeds table is not empty, no seeds will be preloaded.")
+        return
+    insert_q: Insert = insert(Seed)
+    DB.session.execute(insert_q, [{"url": s} for s in initial_seeds])
+    DB.session.commit()
+    logger.info("Loaded initial seeds into database.")
+
+
+tmp = {"description": "string", "serviceId": "AAAAAA", "url": "string", "name": "AAAAAA"}
+
+
+def preload_services(app: Flask):
+    logger = get_logger(app, DB_COMMAND_LOGGER)
+    services: List[Dict[str, str]] = app.config.get("PRECONFIGURED_SERVICES", [])
+
+    for service in services:
+        service_id = service.get("serviceId", "")
+        if not service_id:
+            logger.info(f"Encountered service with missing serviceId: {service}")
+            continue
+        if Service.exists((Service.service_id == service_id,)):
+            logger.info(
+                f"Service with serviceId {service_id} already exists. No changes made to the service."
+            )
+            continue
+        service_url = service.get("url", "")
+        if not service_url:
+            logger.info(f"Encountered service with missing url: {service}")
+            continue
+        new_service = Service(
+            name=service.get("name", service_id),
+            description=service.get("description", ""),
+            service_id=service_id,
+            url=service_url,
+        )
+        DB.session.add(new_service)
+    DB.session.commit()
 
 
 def register_cli_blueprint(app: Flask):

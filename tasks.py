@@ -340,8 +340,14 @@ def await_db(c):
 
 @task
 def upgrade_db(c):
-    """Upgrade the datzabase to the newest migration."""
+    """Upgrade the database to the newest migration."""
     c.run(join(["python", "-m", "flask", "db", "upgrade"]), echo=True, warn=True)
+
+
+@task
+def preload_db(c):
+    """Preload the database with seeds and services from the app configuration."""
+    c.run(join(["python", "-m", "flask", "preload-db"]), echo=True, warn=True)
 
 
 @task
@@ -354,10 +360,12 @@ def ensure_paths(c):
 def start_docker(c):
     """Docker entry point task. Do not call!"""
 
-    def execute_pre_tasks(do_upgrade_db=False):
+    def execute_pre_tasks(do_upgrade_db=False, preload_data=False):
         await_db(c)
         if do_upgrade_db:
             upgrade_db(c)
+        if preload_data:
+            preload_db(c)
 
     if not environ.get("QHANA_SECRET_KEY"):
         environ["QHANA_SECRET_KEY"] = urandom(32).hex()
@@ -366,18 +374,25 @@ def start_docker(c):
     concurrency_env = environ.get("CONCURRENCY", "1")
     concurrency = int(concurrency_env) if concurrency_env.isdigit() else 1
     if environ.get("CONTAINER_MODE", "").lower() == "server":
-        execute_pre_tasks(do_upgrade_db=True)
+        execute_pre_tasks(do_upgrade_db=True, preload_data=True)
         start_gunicorn(c, workers=concurrency, log_level=log_level, docker=True)
     elif environ.get("CONTAINER_MODE", "").lower() == "worker":
         execute_pre_tasks()
         worker_pool = environ.get("CELERY_WORKER_POOL", "threads")
-        periodic_scheduler = bool(environ.get("PERIODIC_SCHEDULER", False))
+        periodic_scheduler = environ.get("PERIODIC_SCHEDULER", "false").lower() in (
+            "true",
+            "t",
+            "yes",
+            "y",
+            "on",
+            "1",
+        )
         worker(
             c,
             concurrency=concurrency,
             pool=worker_pool,
             log_level=log_level,
-            periodic_scheduler=periodic_scheduler,
+            beat=periodic_scheduler,
         )
     else:
         raise ValueError(
