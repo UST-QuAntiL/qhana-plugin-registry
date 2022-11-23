@@ -22,6 +22,7 @@ from flask.cli import AppGroup, with_appcontext
 from sqlalchemy.sql.expression import Insert, insert
 
 from .db import DB
+from .models.env import Env
 from .models.seeds import Seed
 from .models.services import Service
 from ..util.logging import get_logger
@@ -66,11 +67,23 @@ def drop_db_function(app: Flask):
 @with_appcontext
 def preload_db():
     """Prelaod the database with values read from app config."""
+    click.echo("Preloading env variables into the database.")
+    preload_env(current_app)
     click.echo("Preloading seed URLs into the database.")
     preload_seeds(current_app)
     click.echo("Preloading services into the database.")
     preload_services(current_app)
     click.echo("Values loaded.")
+
+
+def preload_env(app: Flask):
+    logger = get_logger(app, DB_COMMAND_LOGGER)
+    env_dict: Dict[str, str] = app.config.get("CURRENT_ENV", {})
+
+    for key, value in env_dict.items():
+        Env.set(key, value)
+        logger.info(f"Set env variable {key}.")
+    DB.session.commit()
 
 
 def preload_seeds(app: Flask):
@@ -86,9 +99,6 @@ def preload_seeds(app: Flask):
     DB.session.execute(insert_q, [{"url": s} for s in initial_seeds])
     DB.session.commit()
     logger.info("Loaded initial seeds into database.")
-
-
-tmp = {"description": "string", "serviceId": "AAAAAA", "url": "string", "name": "AAAAAA"}
 
 
 def preload_services(app: Flask):
