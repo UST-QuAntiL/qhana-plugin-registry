@@ -45,6 +45,7 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     RECOMMENDATION_LIMIT = 5
 
     # preloading the DB with some values
+    CURRENT_ENV = {}  # a (string) key: value dict representing env variables
     INITIAL_PLUGIN_SEEDS = []  # a list of URLs
     PRECONFIGURED_SERVICES = []  # a list of dicts with service info
 

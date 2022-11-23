@@ -93,6 +93,10 @@ def _load_plugin_recommendation_config_from_env(config: Config):
 
 
 def _load_preconfigured_values(config: Config):
+    env_dict = config.get("CURRENT_ENV", {})
+    # load all env variables prefixed with QHANA_ENV_ (remove prefix)
+    env_dict.update({k[10:]: v for k, v in environ.items() if k.startswith("QHANA_ENV_")})
+    config["CURRENT_ENV"] = env_dict
     if "INITIAL_PLUGIN_SEEDS" in environ:
         seeds = environ["INITIAL_PLUGIN_SEEDS"]
         if seeds.startswith("["):
