@@ -44,6 +44,10 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     RECOMMENDATION_TIMEOUT = 5
     RECOMMENDATION_LIMIT = 5
 
+    # preloading the DB with some values
+    INITIAL_PLUGIN_SEEDS = []  # a list of URLs
+    PRECONFIGURED_SERVICES = []  # a list of dicts with service info
+
 
 class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     ENV = "development"

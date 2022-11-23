@@ -182,7 +182,7 @@ def get_recommendations(
     recommender_weights: Dict[str, float] = {}
 
     if current_app:
-        recommender_weights = current_app.config.get("RECOMMENDER_WEIGHTS", {})
+        recommender_weights = current_app.config.get("PLUGIN_RECOMMENDER_WEIGHTS", {})
 
     merged_votes = merge_results(votes, recommender_weights)
 
