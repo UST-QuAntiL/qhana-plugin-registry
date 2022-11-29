@@ -240,6 +240,8 @@ class PluginTag(IdMixin, ExistsMixin):
     def get_or_create_all(
         cls, tags: Sequence[Union[str, Tuple[str, str]]]
     ) -> "List[PluginTag]":
+        if not tags:
+            return []
         return [
             (
                 cls.get_or_create(tag=tag)
@@ -251,6 +253,8 @@ class PluginTag(IdMixin, ExistsMixin):
 
     @classmethod
     def get_all(cls, tags: Sequence[str]) -> "List[PluginTag]":
+        if not tags:
+            return []
         q = select(cls).filter(cls.tag.in_(tags))
         return DB.session.execute(q).scalars().all()
 

@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import sqltypes as sql, select
+from sqlalchemy.sql import select
+from sqlalchemy.sql import sqltypes as sql
 from sqlalchemy.sql.schema import Column, ForeignKey
 
 from .model_helpers import ExistsMixin, IdMixin, NameDescriptionMixin
@@ -102,6 +103,8 @@ class TemplateTag(IdMixin, ExistsMixin):
     def get_or_create_all(
         cls, tags: List[Union[str, Tuple[str, str]]]
     ) -> "List[TemplateTag]":
+        if not tags:
+            return []
         return [
             (
                 cls.get_or_create(tag=tag)
@@ -110,6 +113,16 @@ class TemplateTag(IdMixin, ExistsMixin):
             )
             for tag in tags
         ]
+
+    @classmethod
+    def get_all(cls, tags: Sequence[str]) -> "List[TemplateTag]":
+        if not tags:
+            return []
+        q = select(cls).filter(cls.tag.in_(tags))
+        return DB.session.execute(q).scalars().all()
+
+    def __str__(self) -> str:
+        return self.tag
 
 
 @REGISTRY.mapped

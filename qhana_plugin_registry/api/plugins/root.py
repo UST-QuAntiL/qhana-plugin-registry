@@ -15,7 +15,7 @@
 """Module containing the root endpoint of the plugins API."""
 
 from http import HTTPStatus
-from typing import List, Optional, Sequence, Union, cast
+from typing import List, Optional, Sequence, Union, cast, Tuple, Set
 
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
@@ -59,8 +59,12 @@ PLUGINS_API = Blueprint(
 )
 
 
-def get_tag_filter_sets(tags: Optional[str]):
+def get_tag_filter_sets(
+    tags: Optional[str],
+) -> Tuple[Sequence[PluginTag], Sequence[PluginTag], Set[str]]:
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    if not tag_list:
+        return [], [], set()
     must_have = {t for t in tag_list if not t.startswith("!")}
     forbidden = {t.lstrip("!") for t in tag_list if t.startswith("!")}
     tags_to_load = [t.lstrip("!") for t in tag_list]
