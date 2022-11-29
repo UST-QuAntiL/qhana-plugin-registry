@@ -212,6 +212,8 @@ def filter_ramps_by_input_data(
         List[ColumnOperators]: the filter expressions (to be joined by an and)
     """
     filter_: List[ColumnOperators] = []
+    if input_data_type is None and input_content_type is None:
+        return []  # do not apply any filter if both filter criteria are none
     inner_filter = filter_data_to_ramp_by_data_types(
         input_data_type, input_content_type, relation=DATA_RELATION_CONSUMED
     )
