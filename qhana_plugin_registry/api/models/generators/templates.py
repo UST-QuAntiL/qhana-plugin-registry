@@ -45,12 +45,12 @@ from ..request_helpers import (
 )
 from ..templates import TemplateData
 from ..templates_raw import TemplateGroupRaw
-from ....db.models.templates import WorkspaceTemplate
+from ....db.models.templates import UiTemplate
 
 # Template Page ################################################################
 
 
-class TemplatePageKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate, page=True):
+class TemplatePageKeyGenerator(KeyGenerator, resource_type=UiTemplate, page=True):
     def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         parent_key = KeyGenerator.generate_key(parent_resource)
@@ -58,16 +58,14 @@ class TemplatePageKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate, pa
         return key
 
 
-class TemplatePageLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True
-):
+class TemplatePageLinkGenerator(LinkGenerator, resource_type=UiTemplate, page=True):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
 
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[UiTemplate]
 
         endpoint = meta.collection_endpoint
         assert endpoint is not None
@@ -82,7 +80,7 @@ class TemplatePageLinkGenerator(
 
 
 class TemplatePageUpLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=UP_REL
+    LinkGenerator, resource_type=UiTemplate, page=True, relation=UP_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -95,7 +93,7 @@ class TemplatePageUpLinkGenerator(
 
 
 class TemplatePageCreateTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=CREATE_REL
+    LinkGenerator, resource_type=UiTemplate, page=True, relation=CREATE_REL
 ):
     def generate_link(
         self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
@@ -109,27 +107,23 @@ class TemplatePageCreateTemplateLinkGenerator(
 # Template #####################################################################
 
 
-class TemplateKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate):
-    def update_key(
-        self, key: Dict[str, str], resource: WorkspaceTemplate
-    ) -> Dict[str, str]:
-        assert isinstance(resource, WorkspaceTemplate)
-        parent_key = KeyGenerator.generate_key(
-            PageResource(WorkspaceTemplate, page_number=1)
-        )
+class TemplateKeyGenerator(KeyGenerator, resource_type=UiTemplate):
+    def update_key(self, key: Dict[str, str], resource: UiTemplate) -> Dict[str, str]:
+        assert isinstance(resource, UiTemplate)
+        parent_key = KeyGenerator.generate_key(PageResource(UiTemplate, page_number=1))
         key.update(parent_key)
         key[TEMPLATE_ID_KEY] = str(resource.id)
         return key
 
 
-class TemplateSelfLinkGenerator(LinkGenerator, resource_type=WorkspaceTemplate):
+class TemplateSelfLinkGenerator(LinkGenerator, resource_type=UiTemplate):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[UiTemplate]
 
         return ApiLink(
             href=url_for(meta.endpoint, template_id=str(resource.id), _external=True),
@@ -141,27 +135,25 @@ class TemplateSelfLinkGenerator(LinkGenerator, resource_type=WorkspaceTemplate):
         )
 
 
-class TemplateUpLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=UP_REL
-):
+class TemplateUpLinkGenerator(LinkGenerator, resource_type=UiTemplate, relation=UP_REL):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
-            PageResource(WorkspaceTemplate, page_number=1),
+            PageResource(UiTemplate, page_number=1),
             extra_relations=(UP_REL,),
         )
 
 
 class UpdateTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=UPDATE_REL
+    LinkGenerator, resource_type=UiTemplate, relation=UPDATE_REL
 ):  # TODO check action relation
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
@@ -173,11 +165,11 @@ class UpdateTemplateLinkGenerator(
 
 
 class DeleteTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=DELETE_REL
+    LinkGenerator, resource_type=UiTemplate, relation=DELETE_REL
 ):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
@@ -188,14 +180,14 @@ class DeleteTemplateLinkGenerator(
         return link
 
 
-class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=WorkspaceTemplate):
+class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
     def generate_api_object(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[TemplateData]:
-        assert isinstance(resource, WorkspaceTemplate)
+        assert isinstance(resource, UiTemplate)
 
         self_link = LinkGenerator.get_link_of(resource)
 
@@ -221,17 +213,15 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=WorkspaceTemp
         )
 
 
-class TemplateDataApiResponseGenerator(
-    ApiResponseGenerator, resource_type=WorkspaceTemplate
-):
+class TemplateDataApiResponseGenerator(ApiResponseGenerator, resource_type=UiTemplate):
     def generate_api_response(
         self,
-        resource: WorkspaceTemplate,
+        resource: UiTemplate,
         *,
         link_to_relations: Optional[Iterable[str]],
         **kwargs,
     ) -> Optional[ApiResponse]:
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[UiTemplate]
         link_to_relations = (
             meta.extra_link_rels if link_to_relations is None else link_to_relations
         )

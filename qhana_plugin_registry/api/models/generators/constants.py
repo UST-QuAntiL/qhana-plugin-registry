@@ -62,9 +62,9 @@ ENV_ID_KEY = "envId"
 
 SERVICE_ID_KEY = "serviceId"
 
-TEMPLATE_ID_KEY = "wsTemplateId"
+TEMPLATE_ID_KEY = "uiTemplateId"
 
-TEMPLATE_TAB_ID_KEY = "wsTemplateTabId"
+TEMPLATE_TAB_ID_KEY = "uiTemplateTabId"
 
 SEED_ID_KEY = "seedId"
 
@@ -89,9 +89,9 @@ ENV_REL_TYPE = "env"
 
 SERVICE_REL_TYPE = "service"
 
-TEMPLATE_REL_TYPE = "ws-template"
+TEMPLATE_REL_TYPE = "ui-template"
 
-TEMPLATE_TAB_REL_TYPE = "ws-template-tab"
+TEMPLATE_TAB_REL_TYPE = "ui-template-tab"
 
 SEED_REL_TYPE = "seed"
 

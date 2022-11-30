@@ -46,7 +46,7 @@ from ....db.models.env import Env
 from ....db.models.plugins import RAMP
 from ....db.models.seeds import Seed
 from ....db.models.services import Service
-from ....db.models.templates import WorkspaceTemplate
+from ....db.models.templates import UiTemplate
 
 # Root #########################################################################
 
@@ -139,7 +139,7 @@ class RootDataTemplatesNavLinkGenerator(
         self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
-            PageResource(WorkspaceTemplate, resource=resource, page_number=1),
+            PageResource(UiTemplate, resource=resource, page_number=1),
             extra_relations=(NAV_REL, API_REL),
         )
 

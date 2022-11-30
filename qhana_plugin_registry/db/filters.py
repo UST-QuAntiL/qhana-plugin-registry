@@ -46,7 +46,7 @@ from .models.plugins import (
 )
 from .models.seeds import Seed
 from .models.services import Service
-from .models.templates import RampToTemplateTab, WorkspaceTemplate
+from .models.templates import RampToTemplateTab, UiTemplate
 from .util import split_mimetype
 
 
@@ -383,13 +383,13 @@ def filter_services_by_service_id(
 
 def filter_templates_by_template_id(
     template_id: Optional[Union[int, Sequence[int]]] = None,
-    template_id_column: ColumnElement = cast(ColumnElement, WorkspaceTemplate.id),
+    template_id_column: ColumnElement = cast(ColumnElement, UiTemplate.id),
 ) -> List[ColumnOperators]:
     """Generate a query filter to filter by one or more service ids.
 
     Args:
         template_id (Optional[Union[str,Sequence[str]]], optional): the database id(s) of templates to filter for. Defaults to None.
-        template_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to WorkspaceTemplate.id.
+        template_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to UiTemplate.id.
 
     Returns:
         List[ColumnOperators]: the filter expression (to be joined by an and)

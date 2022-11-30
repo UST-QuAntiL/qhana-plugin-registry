@@ -46,7 +46,7 @@ from ..request_helpers import (
 )
 from ..templates import TemplateTabData
 from ..templates_raw import TemplateGroupRaw
-from ....db.models.templates import TemplateTab, WorkspaceTemplate
+from ....db.models.templates import TemplateTab, UiTemplate
 from ....db.models.plugins import RAMP
 
 # Template Page ################################################################
@@ -69,7 +69,7 @@ class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, pag
     def generate_link(
         self, resource: CollectionResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
-        assert isinstance(resource.resource, WorkspaceTemplate)
+        assert isinstance(resource.resource, UiTemplate)
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
 

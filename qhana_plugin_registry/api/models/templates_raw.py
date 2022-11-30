@@ -14,11 +14,11 @@
 
 from dataclasses import dataclass
 from typing import Sequence
-from ...db.models.templates import WorkspaceTemplate, TemplateTab
+from ...db.models.templates import UiTemplate, TemplateTab
 
 
 @dataclass
-class TemplateGroupRaw():
-    template: WorkspaceTemplate
+class TemplateGroupRaw:
+    template: UiTemplate
     location: str
     items: Sequence[TemplateTab]

@@ -75,7 +75,7 @@ def populate_metadata():
     from ....db.models.plugins import RAMP
     from ....db.models.seeds import Seed
     from ....db.models.services import Service
-    from ....db.models.templates import WorkspaceTemplate, TemplateTab
+    from ....db.models.templates import UiTemplate, TemplateTab
 
     TYPE_TO_METADATA[RootDataRaw] = ResourceMetadata(
         rel_type=c.ROOT_REL_TYPE,
@@ -101,7 +101,7 @@ def populate_metadata():
         schema_id=ServiceSchema.schema_name(),
         collection_endpoint=f"{SERVICES_API.name}.{ServicesRootView.__name__}",
     )
-    TYPE_TO_METADATA[WorkspaceTemplate] = ResourceMetadata(
+    TYPE_TO_METADATA[UiTemplate] = ResourceMetadata(
         rel_type=c.TEMPLATE_REL_TYPE,
         extra_link_rels=c.TEMPLATE_EXTRA_LINK_RELATIONS,
         endpoint=f"{TEMPLATES_API.name}.{TemplateView.__name__}",

@@ -37,7 +37,7 @@ from ..models.request_helpers import (
 from ..models.templates_raw import TemplateGroupRaw
 from ..models.templates import TemplateTabSchema, TemplateTabCollectionArgumentsSchema
 from ...db.db import DB
-from ...db.models.templates import TemplateTab, WorkspaceTemplate
+from ...db.models.templates import TemplateTab, UiTemplate
 
 TEMPLATE_TABS_API = Blueprint(
     name="api-template-tabs",
@@ -63,7 +63,7 @@ class TemplateTabsRootView(MethodView):
             )
 
         found_template = cast(
-            Optional[WorkspaceTemplate], WorkspaceTemplate.get_by_id(int(template_id))
+            Optional[UiTemplate], UiTemplate.get_by_id(int(template_id))
         )
         if not found_template:
             abort(HTTPStatus.NOT_FOUND, message="Template not found.")
@@ -124,7 +124,7 @@ class TemplateTabsRootView(MethodView):
                 HTTPStatus.BAD_REQUEST, message="The template id is in the wrong format!"
             )
         found_template = cast(
-            Optional[WorkspaceTemplate], WorkspaceTemplate.get_by_id(int(template_id))
+            Optional[UiTemplate], UiTemplate.get_by_id(int(template_id))
         )
         if not found_template:
             abort(HTTPStatus.NOT_FOUND, message="Template not found.")
@@ -141,5 +141,5 @@ class TemplateTabsRootView(MethodView):
         DB.session.commit()
 
         return ApiResponseGenerator.get_api_response(
-            NewApiObjectRaw(self=PageResource(WorkspaceTemplate), new=created_tab)
+            NewApiObjectRaw(self=PageResource(UiTemplate), new=created_tab)
         )
