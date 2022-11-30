@@ -46,6 +46,7 @@ from .models.plugins import (
 )
 from .models.seeds import Seed
 from .models.services import Service
+from .models.templates import RampToTemplateTab, WorkspaceTemplate
 from .util import split_mimetype
 
 
@@ -193,6 +194,31 @@ def filter_ramps_by_tags(
             )
         )
         filter_.append(~ramp_id_column.in_(q))  # append a NOT IN filter
+    return filter_
+
+
+def filter_ramps_by_template_tab(
+    tab_id: Optional[int] = None,
+    ramp_id_column: ColumnElement = cast(ColumnElement, RAMP.id),
+) -> List[ColumnOperators]:
+    """Generate query filter expression to filter ramps by their affiliation to a specific template tab.
+
+    Args:
+        tab_id (int, optional): the database id of the template tab. Defaults to None.
+        ramp_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to RAMP.id.
+
+    Returns:
+        List[ColumnOperators]: the filter expressions (to be joined by an and)
+    """
+    filter_: List[ColumnOperators] = []
+    if tab_id is None:
+        return []
+
+    # select all ramp ids that are affiliated with the specific template tab
+    q = select(distinct(RampToTemplateTab.ramp_id)).filter(
+        cast(ColumnElement, RampToTemplateTab.tab_id) == tab_id
+    )
+    filter_.append(ramp_id_column.in_(q))  # append a IN filter
     return filter_
 
 
@@ -353,3 +379,23 @@ def filter_services_by_service_id(
     if isinstance(service_id, str):
         return [service_id_column == service_id]
     return [service_id_column.in_(service_id)]
+
+
+def filter_templates_by_template_id(
+    template_id: Optional[Union[int, Sequence[int]]] = None,
+    template_id_column: ColumnElement = cast(ColumnElement, WorkspaceTemplate.id),
+) -> List[ColumnOperators]:
+    """Generate a query filter to filter by one or more service ids.
+
+    Args:
+        template_id (Optional[Union[str,Sequence[str]]], optional): the database id(s) of templates to filter for. Defaults to None.
+        template_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to WorkspaceTemplate.id.
+
+    Returns:
+        List[ColumnOperators]: the filter expression (to be joined by an and)
+    """
+    if template_id is None:
+        return []
+    if isinstance(template_id, int):
+        return [template_id_column == template_id]
+    return [template_id_column.in_(template_id)]

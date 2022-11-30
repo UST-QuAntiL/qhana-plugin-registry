@@ -101,7 +101,7 @@ class TemplateTag(IdMixin, ExistsMixin):
 
     @classmethod
     def get_or_create_all(
-        cls, tags: List[Union[str, Tuple[str, str]]]
+        cls, tags: Sequence[Union[str, Tuple[str, str]]]
     ) -> "List[TemplateTag]":
         if not tags:
             return []
@@ -186,9 +186,8 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
         },
     )
     sort_key: int = field(default=0, metadata={"sa": Column(sql.Integer())})
-    plugin_filter: str = field(
-        default="", metadata={"sa": Column(sql.Text())}
-    )  # FIXME default
+    location: str = field(default="workspace", metadata={"sa": Column(sql.String(255))})
+    plugin_filter: str = field(default="", metadata={"sa": Column(sql.Text())})
 
     _plugins: List["RampToTemplateTab"] = field(
         init=False,

@@ -23,38 +23,67 @@ from .base_models import (
     ApiLinkSchema,
     ApiObjectSchema,
     BaseApiObject,
+    CollectionResource,
+    CollectionResourceSchema,
     MaBaseSchema,
+    CursorPageArgumentsSchema
 )
 
 __all__ = [
+    "TemplateTabSchema",
+    "TemplateGroupSchema",
     "TemplateSchema",
     "TemplateTabData",
+    "TemplateGroupData",
     "TemplateData",
 ]
 
 
-class TemplateTabSchema(MaBaseSchema):
+class TemplatePageArgumentsSchema(CursorPageArgumentsSchema):
+    template_id = ma.fields.Integer(data_key="template-id", allow_none=True, load_only=True)
+
+
+class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
+    group = ma.fields.String(allow_none=True, load_only=True)
+
+
+class TemplateTabSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
+    location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
+    sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
     plugin_filter = ma.fields.String(required=True, allow_none=False)
-    plugins = ma.fields.List(ma.fields.Nested(ApiLinkSchema))
+    plugins = ma.fields.Nested(ApiLinkSchema)
+
+
+class TemplateGroupSchema(CollectionResourceSchema):
+    location = ma.fields.String(
+        required=True, allow_none=False, dump_only=True, validate=Length(max=255)
+    )
 
 
 class TemplateSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
     tags = ma.fields.List(ma.fields.String(), required=True, allow_none=False)
-    tabs = ma.fields.List(
-        ma.fields.Nested(TemplateTabSchema()), required=True, allow_none=False
+    groups = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
     )
 
 
 @dataclass
-class TemplateTabData:
+class TemplateTabData(BaseApiObject):
     name: str
     description: str
+    location: str
+    sort_key: int
     plugin_filter: str
-    plugins: Sequence[ApiLink]
+    plugins: ApiLink
+
+
+@dataclass
+class TemplateGroupData(CollectionResource):
+    location: str
 
 
 @dataclass
@@ -62,4 +91,4 @@ class TemplateData(BaseApiObject):
     name: str
     description: str
     tags: Sequence[str]
-    tabs: Sequence[TemplateTabData]
+    groups: Sequence[ApiLink]

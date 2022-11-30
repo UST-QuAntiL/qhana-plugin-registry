@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module containing link, api key and resource generators."""
+from dataclasses import dataclass
+from typing import Sequence
+from ...db.models.templates import WorkspaceTemplate, TemplateTab
 
-# make sure all modules containing generators are imported!
-from . import root  # noqa
-from . import env  # noqa
-from . import seeds  # noqa
-from . import services  # noqa
-from . import templates  # noqa
-from . import template_groups  # noqa
-from . import template_tabs  # noqa
-from . import plugins  # noqa
-from . import recommendations  # noqa
+
+@dataclass
+class TemplateGroupRaw():
+    template: WorkspaceTemplate
+    location: str
+    items: Sequence[TemplateTab]

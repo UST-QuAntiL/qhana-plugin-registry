@@ -45,6 +45,7 @@ class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
     input_content_type = ma.fields.String(
         data_key="input-content-type", allow_none=True, load_only=True
     )
+    template_tab = ma.fields.Integer(data_key="template-tab", allow_none=True, load_only=True)
 
 
 class DataMetadataSchema(MaBaseSchema):

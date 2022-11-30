@@ -15,14 +15,13 @@
 """Module containing the root endpoint of the services API."""
 
 from http import HTTPStatus
-from typing import List, cast
+from typing import List, cast, Sequence, Optional
 
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
+from flask_smorest import Blueprint
 from sqlalchemy.sql.expression import ColumnElement
 
 from ..models.base_models import (
-    CursorPageArgumentsSchema,
     CursorPageSchema,
     NewApiObjectRaw,
     NewApiObjectSchema,
@@ -40,9 +39,10 @@ from ..models.request_helpers import (
     LinkGenerator,
     PageResource,
 )
-from ..models.templates import TemplateSchema
+from ..models.templates import TemplateSchema, TemplatePageArgumentsSchema
 from ...db.db import DB
-from ...db.models.templates import WorkspaceTemplate
+from ...db.models.templates import WorkspaceTemplate, TemplateTag
+from ...db.filters import filter_templates_by_template_id
 
 TEMPLATES_API = Blueprint(
     name="api-templates",
@@ -56,18 +56,22 @@ TEMPLATES_API = Blueprint(
 class TemplatesRootView(MethodView):
     """Root endpoint of the template api."""
 
-    @TEMPLATES_API.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @TEMPLATES_API.arguments(TemplatePageArgumentsSchema, location="query", as_kwargs=True)
     @TEMPLATES_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
     def get(self, **kwargs):
         """Get a list of templates."""
+
+        template_id: Optional[int] = kwargs.pop("template_id", None)
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
             **kwargs, _sort_default="name"
         )
 
+        filter_ = filter_templates_by_template_id(template_id=template_id)
+
         pagination_info = default_get_page_info(
             WorkspaceTemplate,
-            tuple(),
+            filter_,
             pagination_options,
             {
                 "id": cast(ColumnElement, WorkspaceTemplate.id),
@@ -90,6 +94,10 @@ class TemplatesRootView(MethodView):
 
         last_page = pagination_info.last_page
 
+        extra_query = {}
+        if template_id is not None:
+            extra_query["template-id"] = str(template_id)
+
         page_resource = PageResource(
             WorkspaceTemplate,
             page_number=pagination_info.cursor_page,
@@ -99,23 +107,23 @@ class TemplatesRootView(MethodView):
             item_links=items,
         )
         self_link = LinkGenerator.get_link_of(
-            page_resource, query_params=pagination_options.to_query_params()
+            page_resource, query_params=pagination_options.to_query_params(extra_params=extra_query)
         )
         assert self_link is not None
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource, pagination_info, pagination_options, extra_query
         )
 
         first_page_link = LinkGenerator.get_link_of(
             page_resource.get_page(1),
-            query_params=pagination_options.to_query_params(cursor=None),
+            query_params=pagination_options.to_query_params(cursor=None, extra_params=extra_query),
         )
         assert first_page_link is not None
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(extra_params=extra_query),
             extra_links=[
                 first_page_link,
                 self_link,
@@ -124,20 +132,20 @@ class TemplatesRootView(MethodView):
             extra_embedded=embedded_items,
         )
 
-    @TEMPLATES_API.arguments(TemplateSchema(exclude=("self",)))
+    @TEMPLATES_API.arguments(TemplateSchema(exclude=("self", "groups")))
     @TEMPLATES_API.response(HTTPStatus.OK, get_api_response_schema(NewApiObjectSchema))
-    def post(self, service_data):
+    def post(self, template_data):
+
+        tags: Sequence[str] = (template_data.get("tags", []),)
 
         created_template = WorkspaceTemplate(
-            name=service_data["name"],
-            description=service_data["description"],
-            # TODO: tags=service_data["tags"],
-            # TODO: figure out tabs and tags
+            name=template_data["name"],
+            description=template_data["description"],
+            tags=TemplateTag.get_or_create_all(tags),
+            tabs=[],
         )
         DB.session.add(created_template)
         DB.session.commit()
-
-        # FIXME kick of plugin filter matching
 
         return ApiResponseGenerator.get_api_response(
             NewApiObjectRaw(self=PageResource(WorkspaceTemplate), new=created_template)

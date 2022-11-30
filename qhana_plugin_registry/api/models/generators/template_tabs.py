@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generators for all Template resources."""
+"""Generators for all Template Tab resources."""
 
-from typing import Dict, Iterable, Optional, Set
+from typing import Dict, Iterable, Optional
 
 from flask import url_for
 
@@ -27,12 +27,12 @@ from .constants import (
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
     NAV_REL,
-    PAGE_REL,
     POST_REL,
     PUT_REL,
     ROOT_RESOURCE_DUMMY,
-    TEMPLATE_ID_KEY,
+    TEMPLATE_TAB_ID_KEY,
     UP_REL,
+    PLUGIN_REL_TYPE,
 )
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse, CursorPageSchema
@@ -41,51 +41,65 @@ from ..request_helpers import (
     ApiResponseGenerator,
     KeyGenerator,
     LinkGenerator,
+    CollectionResource,
     PageResource,
 )
-from ..templates import TemplateData
+from ..templates import TemplateTabData
 from ..templates_raw import TemplateGroupRaw
-from ....db.models.templates import WorkspaceTemplate
+from ....db.models.templates import TemplateTab, WorkspaceTemplate
+from ....db.models.plugins import RAMP
 
 # Template Page ################################################################
 
 
-class TemplatePageKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate, page=True):
-    def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
-        parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
+class TemplateTabPageKeyGenerator(KeyGenerator, resource_type=TemplateTab, page=True):
+    def update_key(
+        self, key: Dict[str, str], resource: CollectionResource
+    ) -> Dict[str, str]:
+        assert (
+            resource.resource is not None
+        ), "Tabs must have a Template as a parent resource!"
+        parent_resource = resource.resource
         parent_key = KeyGenerator.generate_key(parent_resource)
         key.update(parent_key)
         return key
 
 
-class TemplatePageLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True
-):
+class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, page=True):
     def generate_link(
-        self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
+        self, resource: CollectionResource, *, query_params: Optional[Dict[str, str]]
     ) -> Optional[ApiLink]:
+        assert isinstance(resource.resource, WorkspaceTemplate)
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
 
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[TemplateTab]
 
         endpoint = meta.collection_endpoint
         assert endpoint is not None
 
         return ApiLink(
-            href=url_for(endpoint, **query_params, _external=True),
-            rel=(COLLECTION_REL, PAGE_REL),
+            href=url_for(
+                endpoint,
+                template_id=str(resource.resource.id),
+                **query_params,
+                _external=True,
+            ),
+            rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
             schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{CursorPageSchema.schema_name()}",
         )
 
 
-class TemplatePageUpLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=UP_REL
+class TemplateTabPageUpLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, page=True, relation=UP_REL
 ):
     def generate_link(
-        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: CollectionResource,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         parent_resource = resource.resource or ROOT_RESOURCE_DUMMY
         link = LinkGenerator.get_link_of(parent_resource, query_params=query_params)
@@ -94,11 +108,14 @@ class TemplatePageUpLinkGenerator(
         return link
 
 
-class TemplatePageCreateTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, page=True, relation=CREATE_REL
+class TemplateTabPageCreateTemplateLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, page=True, relation=CREATE_REL
 ):
     def generate_link(
-        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: CollectionResource,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         link = LinkGenerator.get_link_of(resource)
         assert link is not None
@@ -109,30 +126,34 @@ class TemplatePageCreateTemplateLinkGenerator(
 # Template #####################################################################
 
 
-class TemplateKeyGenerator(KeyGenerator, resource_type=WorkspaceTemplate):
-    def update_key(
-        self, key: Dict[str, str], resource: WorkspaceTemplate
-    ) -> Dict[str, str]:
-        assert isinstance(resource, WorkspaceTemplate)
-        parent_key = KeyGenerator.generate_key(
-            PageResource(WorkspaceTemplate, page_number=1)
-        )
+class TemplateTabKeyGenerator(KeyGenerator, resource_type=TemplateTab):
+    def update_key(self, key: Dict[str, str], resource: TemplateTab) -> Dict[str, str]:
+        assert isinstance(resource, TemplateTab)
+        template = resource.template
+        assert template is not None
+        parent_resource = TemplateGroupRaw(template, resource.location, [])
+        parent_key = KeyGenerator.generate_key(parent_resource)
         key.update(parent_key)
-        key[TEMPLATE_ID_KEY] = str(resource.id)
+        key[TEMPLATE_TAB_ID_KEY] = str(resource.id)
         return key
 
 
-class TemplateSelfLinkGenerator(LinkGenerator, resource_type=WorkspaceTemplate):
+class TemplateTabSelfLinkGenerator(LinkGenerator, resource_type=TemplateTab):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[TemplateTab]
 
         return ApiLink(
-            href=url_for(meta.endpoint, template_id=str(resource.id), _external=True),
+            href=url_for(
+                meta.endpoint,
+                template_id=str(resource.template_id),
+                tab_id=str(resource.id),
+                _external=True,
+            ),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
@@ -141,27 +162,30 @@ class TemplateSelfLinkGenerator(LinkGenerator, resource_type=WorkspaceTemplate):
         )
 
 
-class TemplateUpLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=UP_REL
+class TemplateTabUpLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, relation=UP_REL
 ):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
+        template = resource.template
+        assert template is not None
+        parent_resource = TemplateGroupRaw(template, resource.location, [])
         return LinkGenerator.get_link_of(
-            PageResource(WorkspaceTemplate, page_number=1),
+            parent_resource,
             extra_relations=(UP_REL,),
         )
 
 
-class UpdateTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=UPDATE_REL
+class UpdateTemplateTabLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, relation=UPDATE_REL
 ):  # TODO check action relation
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
@@ -172,12 +196,12 @@ class UpdateTemplateLinkGenerator(
         return link
 
 
-class DeleteTemplateLinkGenerator(
-    LinkGenerator, resource_type=WorkspaceTemplate, relation=DELETE_REL
+class DeleteTemplateTabLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, relation=DELETE_REL
 ):
     def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
@@ -188,50 +212,63 @@ class DeleteTemplateLinkGenerator(
         return link
 
 
-class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=WorkspaceTemplate):
-    def generate_api_object(
+class TemplateTabToPluginsNavLinkGenerator(
+    LinkGenerator, resource_type=TemplateTab, relation=PLUGIN_REL_TYPE
+):
+    def generate_link(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         query_params: Optional[Dict[str, str]] = None,
-    ) -> Optional[TemplateData]:
-        assert isinstance(resource, WorkspaceTemplate)
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(RAMP),
+            query_params={"template-tab": str(resource.id)},
+            extra_relations=(NAV_REL,),
+        )
+
+
+class TemplateTabApiObjectGenerator(ApiObjectGenerator, resource_type=TemplateTab):
+    def generate_api_object(
+        self,
+        resource: TemplateTab,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[TemplateTabData]:
+        assert isinstance(resource, TemplateTab)
 
         self_link = LinkGenerator.get_link_of(resource)
 
         assert self_link is not None
 
-        group_locations: Set[str] = {t.location for t in resource.tabs}
-        groups = (
-            TemplateGroupRaw(
-                template=resource,
-                location=loc,
-                items=[],
-            )
-            for loc in group_locations
+        plugin_link = LinkGenerator.get_link_of(
+            PageResource(RAMP), query_params={"template-tab": str(resource.id)}
         )
-        group_links = [l for g in groups if (l := LinkGenerator.get_link_of(g))]
 
-        return TemplateData(
+        assert plugin_link is not None
+
+        return TemplateTabData(
             self=self_link,
             name=resource.name,
             description=resource.description,
-            tags=[t.tag for t in resource.tags],
-            groups=group_links,
+            location=resource.location,
+            sort_key=resource.sort_key,
+            plugin_filter=resource.plugin_filter,
+            plugins=plugin_link,
         )
 
 
-class TemplateDataApiResponseGenerator(
-    ApiResponseGenerator, resource_type=WorkspaceTemplate
+class TemplateTabDataApiResponseGenerator(
+    ApiResponseGenerator, resource_type=TemplateTab
 ):
     def generate_api_response(
         self,
-        resource: WorkspaceTemplate,
+        resource: TemplateTab,
         *,
         link_to_relations: Optional[Iterable[str]],
         **kwargs,
     ) -> Optional[ApiResponse]:
-        meta = TYPE_TO_METADATA[WorkspaceTemplate]
+        meta = TYPE_TO_METADATA[TemplateTab]
         link_to_relations = (
             meta.extra_link_rels if link_to_relations is None else link_to_relations
         )
