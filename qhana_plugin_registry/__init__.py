@@ -40,7 +40,7 @@ CONFIG_ENV_VAR_PREFIX = APP_NAME.upper().replace("-", "_").replace(" ", "_")
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
     """Flask app factory."""
-    instance_path: str | None = environ.get("INSTANCE_PATH", None)
+    instance_path: Optional[str] = environ.get("INSTANCE_PATH", None)
     if instance_path:
         if Path(instance_path).is_file():
             instance_path = None
