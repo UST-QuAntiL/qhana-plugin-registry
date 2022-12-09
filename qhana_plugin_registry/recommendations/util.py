@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Sequence, Tuple, TypeAlias, TypedDict, Union
+from typing import Dict, Sequence, Tuple, TypedDict, Union
+from typing_extensions import TypeAlias
 
 DataItemTuple: TypeAlias = Union[Tuple[str, str], Tuple[str, str, str]]
 """Either (data_type, content_type) or (data_type, content_type, name)."""

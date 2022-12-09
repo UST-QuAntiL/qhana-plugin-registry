@@ -20,10 +20,10 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    TypeAlias,
     Union,
     cast,
 )
+from typing_extensions import TypeAlias
 
 from celery import group
 from celery.canvas import Signature
