@@ -213,6 +213,8 @@ redoc = [
     },
 ]
 
+redoc_uri = "https://unpkg.com/redoc@latest/bundles/redoc.standalone.js"
+
 # myst markdown parsing
 _myst_options = sphinx_config.get("myst", {})
 allowed_md_extensions = {
