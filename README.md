@@ -32,10 +32,22 @@ To override any variable create a `.env` file.
 Environment variables in `.env` take precedence over `.flaskenv`.
 See the content of the `.flaskenv` file for the default environment variables.
 
+Create dev database
+```
+poetry run flask create-db
+```
+
 Run the development server with
 
 ```bash
 poetry run flask run
+```
+
+Start redis instance in docker container (if not started yet) and start worker process used for executing background tasks with
+
+```
+poetry run invoke start-broker
+poetry run invoke worker --beat
 ```
 
 ### Trying out the Template
