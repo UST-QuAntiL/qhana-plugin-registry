@@ -90,6 +90,9 @@ This graph can be very huge and messy.
 
 To create a graph that is small and tidy you can render only circular dependencies with `pydeps qhana_plugin_registry -o graph.svg --noshow --show-cycles`.
 
+### Import error for packaging version 22.0
+See <https://github.com/UST-QuAntiL/qhana-plugin-registry/issues/7>
+
 
 ## What this Template contains
 
