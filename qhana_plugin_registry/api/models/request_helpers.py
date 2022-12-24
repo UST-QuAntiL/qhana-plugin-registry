@@ -790,7 +790,7 @@ class ChangedApiObjectApiResponseGenerator(
 
         if resource.self is None:
             self_link = changed_link.copy_with(
-                resource_type = CHANGED_REL,
+                resource_type=CHANGED_REL,
                 rel=(*changed_link.rel, changed_link.resource_type, UPDATE_REL, PUT_REL),
             )
         elif isinstance(resource.self, ApiLink):

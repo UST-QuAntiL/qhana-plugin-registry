@@ -54,7 +54,10 @@ class EnvView(MethodView):
     def put(self, env_data: Dict[str, str], env: str):
         """Update a environment variable value."""
         if not env:
-            abort(HTTPStatus.BAD_REQUEST, message="The env var path param must not be empty!")
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message="The env var path param must not be empty!",
+            )
         if env != env_data.get("name", env):
             abort(HTTPStatus.BAD_REQUEST, message="The env var name cannot be changed!")
         found_env: Optional[Env] = Env.get(env)
