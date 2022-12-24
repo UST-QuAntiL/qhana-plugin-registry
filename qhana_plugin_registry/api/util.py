@@ -14,8 +14,8 @@
 
 """Module containing utilities for flask smorest APIs."""
 
+
 def camelcase(s: str) -> str:
     """Turn a string from python snake_case into camelCase."""
     parts = iter(s.split("_"))
     return next(parts) + "".join(i.title() for i in parts)
-

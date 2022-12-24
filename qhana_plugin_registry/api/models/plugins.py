@@ -41,7 +41,9 @@ class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
     last_available_period = ma.fields.Integer(
         data_key="last-available-period", allow_none=True, load_only=True
     )
-    input_data_type = ma.fields.String(data_key="input-data-type", allow_none=True, load_only=True)
+    input_data_type = ma.fields.String(
+        data_key="input-data-type", allow_none=True, load_only=True
+    )
     input_content_type = ma.fields.String(
         data_key="input-content-type", allow_none=True, load_only=True
     )

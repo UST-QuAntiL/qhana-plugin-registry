@@ -50,7 +50,7 @@ def register_celery(app: Flask):
         app.config.get("CELERY", {}),
         beat_schedule={},
     )
-    CELERY.flask_app = app  # set flask_app attribute used by 
+    CELERY.flask_app = app  # set flask_app attribute used by
 
     # load tasks (by importing tasks module)
     from .tasks import register_periodic_tasks
