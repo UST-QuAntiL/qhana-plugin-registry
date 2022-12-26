@@ -49,6 +49,7 @@ from ...db.filters import (
     filter_ramps_by_last_available,
     filter_ramps_by_tags,
     filter_ramps_by_input_data,
+    filter_ramps_by_template_tab,
 )
 
 PLUGINS_API = Blueprint(
@@ -92,6 +93,7 @@ class PluginsRootView(MethodView):
         input_data_type: Optional[str] = None,
         input_content_type: Optional[str] = None,
         last_available_period: Optional[int] = None,
+        template_tab: Optional[int] = None,
         **kwargs,
     ):
         """Get a list of plugins."""
@@ -138,6 +140,8 @@ class PluginsRootView(MethodView):
         filter_ += filter_ramps_by_tags(must_have, forbidden)
 
         filter_ += filter_ramps_by_input_data(input_data_type, input_content_type)
+
+        filter_ += filter_ramps_by_template_tab(template_tab)
 
         if type_:
             filter_.append(cast(ColumnElement, RAMP.plugin_type) == type_)
@@ -200,6 +204,8 @@ class PluginsRootView(MethodView):
             extra_query_params["input-content-type"] = input_content_type
         if last_available_period is not None:
             extra_query_params["last-available-period"] = str(last_available_period)
+        if template_tab is not None:
+            extra_query_params["template-tab"] = str(template_tab)
 
         self_link = LinkGenerator.get_link_of(
             page_resource,

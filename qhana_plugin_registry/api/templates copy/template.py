@@ -51,7 +51,9 @@ class TemplateView(MethodView):
 
         return ApiResponseGenerator.get_api_response(found_service)
 
-    @TEMPLATES_API.arguments(TemplateSchema(exclude=("self", "groups")))
+    # TODO: add put resource for updates!
+
+    @TEMPLATES_API.arguments(TemplateSchema(exclude=("self", "tabs")))
     @TEMPLATES_API.response(
         HTTPStatus.OK, get_api_response_schema(ChangedApiObjectSchema)
     )
@@ -100,6 +102,7 @@ class TemplateView(MethodView):
             found_template = UiTemplate(
                 name=template_id,
                 description="DELETED",
+                # FIXME: add missing
             )
 
         return ApiResponseGenerator.get_api_response(
