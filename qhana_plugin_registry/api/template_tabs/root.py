@@ -118,7 +118,7 @@ class TemplateTabsRootView(MethodView):
     @TEMPLATE_TABS_API.response(
         HTTPStatus.OK, get_api_response_schema(NewApiObjectSchema)
     )
-    def post(self, template_id: str, tab_data):
+    def post(self, tab_data, template_id: str):
         if not template_id or not template_id.isdecimal():
             abort(
                 HTTPStatus.BAD_REQUEST, message="The template id is in the wrong format!"
