@@ -26,7 +26,7 @@ from .base_models import (
     CollectionResource,
     CollectionResourceSchema,
     MaBaseSchema,
-    CursorPageArgumentsSchema
+    CursorPageArgumentsSchema,
 )
 
 __all__ = [
@@ -40,7 +40,9 @@ __all__ = [
 
 
 class TemplatePageArgumentsSchema(CursorPageArgumentsSchema):
-    template_id = ma.fields.Integer(data_key="template-id", allow_none=True, load_only=True)
+    template_id = ma.fields.Integer(
+        data_key="template-id", allow_none=True, load_only=True
+    )
 
 
 class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
