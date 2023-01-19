@@ -38,6 +38,7 @@ from ..models.templates_raw import TemplateGroupRaw
 from ..models.templates import TemplateTabSchema, TemplateTabCollectionArgumentsSchema
 from ...db.db import DB
 from ...db.models.templates import TemplateTab, UiTemplate
+from ...tasks.plugin_filter import apply_filter_for_tab
 
 TEMPLATE_TABS_API = Blueprint(
     name="api-template-tabs",
@@ -139,6 +140,8 @@ class TemplateTabsRootView(MethodView):
         )
         DB.session.add(created_tab)
         DB.session.commit()
+        DB.session.refresh(created_tab)
+        apply_filter_for_tab.delay(created_tab.id)
 
         return ApiResponseGenerator.get_api_response(
             NewApiObjectRaw(self=PageResource(UiTemplate), new=created_tab)

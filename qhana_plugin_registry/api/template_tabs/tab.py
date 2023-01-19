@@ -32,6 +32,7 @@ from ..models.request_helpers import ApiResponseGenerator, PageResource
 from ..models.templates import TemplateTabSchema
 from ...db.db import DB
 from ...db.models.templates import TemplateTab, UiTemplate
+from ...tasks.plugin_filter import apply_filter_for_tab
 
 
 class TemplateTabData(TypedDict):
@@ -61,7 +62,6 @@ class TemplateTabView(MethodView):
 
         return ApiResponseGenerator.get_api_response(found_tab)
 
-    # FIXME keep plugin lists for tabs up to date on changes
     @TEMPLATE_TABS_API.arguments(TemplateTabSchema(exclude=("self", "plugins")))
     @TEMPLATE_TABS_API.response(
         HTTPStatus.OK, get_api_response_schema(ChangedApiObjectSchema)
@@ -92,6 +92,7 @@ class TemplateTabView(MethodView):
 
         DB.session.add(found_tab)
         DB.session.commit()
+        apply_filter_for_tab.delay(found_tab.id)
 
         return ApiResponseGenerator.get_api_response(
             ChangedApiObjectRaw(changed=found_tab)
