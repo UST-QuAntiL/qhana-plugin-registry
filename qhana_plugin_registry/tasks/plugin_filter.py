@@ -24,3 +24,9 @@ TASK_LOGGER = get_task_logger(_name)
 def apply_filter_for_tab(self, tab_id):
     # TODO: evaluate plugin filter and set tab plugins accordingly
     pass
+
+
+@CELERY.task(name=f"{_name}.update_plugin_lists", bind=True, ignore_result=True)
+def update_plugin_lists(self, plugin_id):
+    # TODO: reevaluate plugin filters and update corresponding plugins lists
+    pass

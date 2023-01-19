@@ -26,6 +26,7 @@ from ..db.db import DB
 from ..db.models.plugins import RAMP
 from ..db.models.seeds import Seed
 from ..db.util import update_plugin_data
+from .plugin_filter import update_plugin_lists
 
 _name = "qhana-plugin-registry.tasks.plugins"
 
@@ -75,7 +76,8 @@ def discover_plugins_from_seeds(
             data, url=seed, now=now, seed_url=root_seed
         )
         if is_new_plugin:
-            pass  # TODO run all updates / checks for new plugins (e.g. dependencies, templates, etc.)
+            update_plugin_lists.delay(plugin.id)
+            # TODO run all updates / checks for new plugins (e.g. dependencies, templates, etc.)
         return
 
     # treat seed as plugin runner
