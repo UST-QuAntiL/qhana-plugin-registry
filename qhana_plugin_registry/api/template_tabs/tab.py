@@ -90,7 +90,6 @@ class TemplateTabView(MethodView):
         found_tab.location = template_tab_data["location"]
         found_tab.plugin_filter = template_tab_data["plugin_filter"]
 
-        DB.session.add(found_tab)
         DB.session.commit()
         apply_filter_for_tab.delay(found_tab.id)
 
