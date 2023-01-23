@@ -211,6 +211,14 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
         if self.sort_version != sort_version:
             self.sort_version = sort_version
 
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        if not isinstance(other, RAMP):
+            raise NotImplementedError('Cannot compare "RAMP" with other types')
+        return self.id == other.id
+
 
 @REGISTRY.mapped
 @dataclass
