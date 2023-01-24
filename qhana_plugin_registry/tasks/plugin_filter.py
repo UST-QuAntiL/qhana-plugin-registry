@@ -37,34 +37,39 @@ def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
     """
     # TODO: store filter as dict in DB to avoid parsing
     plugin_filter: dict = json.loads(filter_string)
-    plugins = DB.session.query(RAMP).all()
+    # TODO: filter plugins in batches
+    plugin_mapping = {plugin.id: plugin for plugin in DB.session.query(RAMP).all()}
 
     def get_plugins_from_filter(filter_dict: dict) -> list[RAMP]:
         # TODO: add match for plugin description
         match filter_dict:
             case {"and": filter_expr}:
-                return set.intersection(*map(set, [get_plugins_from_filter(f) for f in filter_expr]))
+                return set.intersection(
+                    *(get_plugins_from_filter(f) for f in filter_expr)
+                )
             case {"or": filter_expr}:
-                return set.union(*map(set, [get_plugins_from_filter(f) for f in filter_expr]))
+                return set.union(*(get_plugins_from_filter(f) for f in filter_expr))
             case {"not": filter_expr}:
-                return set.difference(set(plugins), set(get_plugins_from_filter(filter_expr)))
+                return set(plugin_mapping.keys()) - get_plugins_from_filter(filter_expr)
             case {"tag": tag}:
-                return [plugin for plugin in plugins if tag in [t.tag for t in plugin.tags]]
+                has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
+                return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
             case {"version": version}:
                 # TODO: match version with semver
-                return [plugin for plugin in plugins if version == plugin.version]
+                return {
+                    p_id for p_id, p in plugin_mapping.items() if version == p.version
+                }
             case {"name": name}:
-                return [plugin for plugin in plugins if name == plugin.name]
+                return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
             case _:
-                return []
+                return set()
 
-    return get_plugins_from_filter(plugin_filter)
+    return [plugin_mapping[p_id] for p_id in get_plugins_from_filter(plugin_filter)]
 
 
 @CELERY.task(name=f"{_name}.apply_filter_for_tab", bind=True, ignore_result=True)
 def apply_filter_for_tab(self, tab_id):
-    q = select(TemplateTab).where(TemplateTab.id == tab_id)
-    found_tab: Optional[TemplateTab] = DB.session.execute(q).scalar_one_or_none()
+    found_tab = TemplateTab.get_by_id(tab_id)
     found_tab.plugins = evaluate_plugin_filter(found_tab.plugin_filter)
     DB.session.commit()
 
