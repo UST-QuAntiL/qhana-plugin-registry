@@ -50,7 +50,7 @@ def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
             case {"or": filter_expr}:
                 return set.union(*(get_plugins_from_filter(f) for f in filter_expr))
             case {"not": filter_expr}:
-                return set(plugin_mapping.keys()) - get_plugins_from_filter(filter_expr)
+                return plugin_mapping.keys() - get_plugins_from_filter(filter_expr)
             case {"tag": tag}:
                 has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
                 return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
