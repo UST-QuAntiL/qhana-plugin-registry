@@ -1,6 +1,7 @@
 import re
 from json import loads
 from os import environ
+from typing import Mapping
 
 from flask import Config
 
@@ -17,6 +18,8 @@ def load_config_from_env(config: Config):
     _load_plugin_discovery_config_from_env(config)
     _load_plugin_recommendation_config_from_env(config)
     _load_preconfigured_values(config)
+    _load_url_rewrite_rules(config, "URL_MAP_FROM_LOCALHOST")
+    _load_url_rewrite_rules(config, "URL_MAP_TO_LOCALHOST")
 
 
 def _load_database_uri_from_env(config: Config):
@@ -108,3 +111,20 @@ def _load_preconfigured_values(config: Config):
     if "PRECONFIGURED_SERVICES" in environ:
         services = environ["PRECONFIGURED_SERVICES"]
         config["PRECONFIGURED_SERVICES"] = loads(services)
+
+
+def _load_url_rewrite_rules(config: Config, key: str):
+    if key in environ:
+        config[key] = loads(environ[key])
+
+    if isinstance(config.get(key), Mapping):
+        # rewrite mapping to tuple sequence and precompile regex patterns
+        url_map = config[key]
+        config[key] = [
+            (re.compile(key), value)  # pattern, replacement pairs
+            for key, value in url_map.items()
+            if isinstance(key, str) and isinstance(value, str)  # only str, str allowed
+        ]
+
+        if len(config[key]) != len(url_map):
+            pass  # TODO some rewrite rules were dismissed as invalid!
