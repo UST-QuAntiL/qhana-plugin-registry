@@ -49,7 +49,8 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     INITIAL_PLUGIN_SEEDS = []  # a list of URLs
     PRECONFIGURED_SERVICES = []  # a list of dicts with service info
 
-    # rewrite rules for URLs e.g. to map localhost to docker container name
+    # rewrite rules for URLs e.g. to map localhost to docker container name and vise versa
+    # these dicts will be converted to and replaced by lists of (key, value) tuples
     URL_MAP_FROM_LOCALHOST = {}
     URL_MAP_TO_LOCALHOST = {}
 
