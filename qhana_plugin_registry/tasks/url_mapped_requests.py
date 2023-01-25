@@ -25,7 +25,9 @@ from requests.models import Response
 REQUEST_SESSION = Session()
 
 
-def map_url(url: str, config_key: Literal["URL_MAP_FROM_LOCALHOST", "URL_MAP_TO_LOCALHOST"]) -> str:
+def map_url(
+    url: str, config_key: Literal["URL_MAP_FROM_LOCALHOST", "URL_MAP_TO_LOCALHOST"]
+) -> str:
     if current_app:
         # apply rewrite rules from the current app context in sequence
         app: Flask = current_app
