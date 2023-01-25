@@ -52,7 +52,7 @@ poetry run invoke worker --beat
 
 ## Environment variables
 
-- the database can be configured with `RESULT_BACKEND`
+- the database can be configured with `SQLALCHEMY_DATABASE_URI`
 - the broker can be configured with `BROKER_URL`, `RESULT_BACKEND` and `CELERY_QUEUE`
 - the plugin discovery process can be configured with `PLUGIN_DISCOVERY_INTERVAL`, `PLUGIN_BATCH_SIZE`, `PLUGIN_PURGE_INTERVAL` and `PLUGIN_PURGE_AFTER`
 - environment variables that are prefixed with `QHANA_ENV_` get loaded environment into the DB without the prefix
