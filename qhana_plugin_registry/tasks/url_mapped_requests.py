@@ -15,6 +15,7 @@
 """Functions for opening files from external URLs."""
 
 from re import Pattern
+from typing import Literal
 
 from flask import Flask
 from flask.globals import current_app
@@ -24,7 +25,7 @@ from requests.models import Response
 REQUEST_SESSION = Session()
 
 
-def map_url(url: str, config_key: str) -> str:
+def map_url(url: str, config_key: Literal["URL_MAP_FROM_LOCALHOST", "URL_MAP_TO_LOCALHOST"]) -> str:
     if current_app:
         # apply rewrite rules from the current app context in sequence
         app: Flask = current_app
