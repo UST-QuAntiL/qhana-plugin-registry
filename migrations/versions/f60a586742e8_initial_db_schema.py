@@ -104,13 +104,6 @@ def upgrade():
             batch_op.f("ix_RAMP_description"), ["description"], unique=False
         )
         batch_op.create_index(batch_op.f("ix_RAMP_name"), ["name"], unique=False)
-        batch_op.create_index(
-            "ix_search_RAMP",
-            ["name", "description"],
-            unique=False,
-            mysql_prefix="FULLTEXT",
-            postgresql_using="gin",
-        )
 
     op.create_table(
         "TagToTemplate",
@@ -275,9 +268,6 @@ def downgrade():
     op.drop_table("TemplateTab")
     op.drop_table("TagToTemplate")
     with op.batch_alter_table("RAMP", schema=None) as batch_op:
-        batch_op.drop_index(
-            "ix_search_RAMP", mysql_prefix="FULLTEXT", postgresql_using="gin"
-        )
         batch_op.drop_index(batch_op.f("ix_RAMP_name"))
         batch_op.drop_index(batch_op.f("ix_RAMP_description"))
 

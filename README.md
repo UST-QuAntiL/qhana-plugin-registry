@@ -50,6 +50,15 @@ poetry run invoke start-broker
 poetry run invoke worker --beat
 ```
 
+## Environment variables
+
+- the database can be configured with `SQLALCHEMY_DATABASE_URI`
+- the broker can be configured with `BROKER_URL`, `RESULT_BACKEND` and `CELERY_QUEUE`
+- the plugin discovery process can be configured with `PLUGIN_DISCOVERY_INTERVAL`, `PLUGIN_BATCH_SIZE`, `PLUGIN_PURGE_INTERVAL` and `PLUGIN_PURGE_AFTER`
+- environment variables that are prefixed with `QHANA_ENV_` get loaded environment into the DB without the prefix
+- add initial seeds and services with `INITIAL_PLUGIN_SEEDS` and `PRECONFIGURED_SERVICES`
+- add regex rewrite rules for urls with `URL_MAP_FROM_LOCALHOST` and `URL_MAP_TO_LOCALHOST`
+
 ### Trying out the Template
 
 For a list of all dependencies with their license open <http://localhost:5000/licenses/>.
