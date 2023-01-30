@@ -13,8 +13,12 @@
 # limitations under the License.
 
 import json
+import re
 from celery.utils.log import get_task_logger
 from sqlalchemy.sql.expression import select
+from packaging.specifiers import InvalidSpecifier
+from packaging.specifiers import SpecifierSet
+from packaging.specifiers import Version
 
 from ..celery import CELERY
 from ..db.models.templates import TemplateTab
@@ -30,7 +34,13 @@ def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
     """Get a list of plugins from a filter.
 
     Args:
-        plugin_filter (str): The filter string.
+        plugin_filter (str): the recursivly parsed JSON filter string. The following key-value pairs are allowed:
+            - "and": list of filters
+            - "or": list of filters
+            - "not": filter
+            - "tag": tag name
+            - "version": version specifier (https://peps.python.org/pep-0440/#version-specifiers)
+            - "name": plugin name
 
     Returns:
         list: A list of plugins.
@@ -55,13 +65,23 @@ def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
                 has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
                 return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
             case {"version": version}:
-                # TODO: match version with semver
+                specifier_str = re.sub(
+                    r"([^\s,])(\s+)", r"\1,\2", version
+                )  # add commas to whitespace
+                try:
+                    specifier = SpecifierSet(specifier_str)
+                except InvalidSpecifier:
+                    TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
+                    return set()
                 return {
-                    p_id for p_id, p in plugin_mapping.items() if version == p.version
+                    p_id
+                    for p_id, p in plugin_mapping.items()
+                    if Version(p.version) in specifier
                 }
             case {"name": name}:
                 return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
             case _:
+                TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
                 return set()
 
     return [plugin_mapping[p_id] for p_id in get_plugins_from_filter(plugin_filter)]
