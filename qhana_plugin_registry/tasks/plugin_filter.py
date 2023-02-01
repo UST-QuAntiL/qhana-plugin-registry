@@ -30,7 +30,7 @@ _name = "qhana-plugin-registry.tasks.tabs"
 TASK_LOGGER = get_task_logger(_name)
 
 
-def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
+def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
     """Get a list of plugins from a filter.
 
     Args:
@@ -45,8 +45,6 @@ def evaluate_plugin_filter(filter_string: str) -> list[RAMP]:
     Returns:
         list: A list of plugins.
     """
-    # TODO: store filter as dict in DB to avoid parsing
-    plugin_filter: dict = json.loads(filter_string)
     # TODO: filter plugins in batches
     plugin_mapping = {plugin.id: plugin for plugin in DB.session.query(RAMP).all()}
 

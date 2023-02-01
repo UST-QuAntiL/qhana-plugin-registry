@@ -253,7 +253,7 @@ class TemplateTabApiObjectGenerator(ApiObjectGenerator, resource_type=TemplateTa
             description=resource.description,
             location=resource.location,
             sort_key=resource.sort_key,
-            plugin_filter=resource.plugin_filter,
+            filter_string=resource.filter_string,
             plugins=plugin_link,
         )
 

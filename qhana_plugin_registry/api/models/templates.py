@@ -54,7 +54,7 @@ class TemplateTabSchema(ApiObjectSchema):
     description = ma.fields.String(required=True, allow_none=False)
     location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
-    plugin_filter = ma.fields.String(required=True, allow_none=False)
+    filter_string = ma.fields.String(required=True, allow_none=False)
     plugins = ma.fields.Nested(ApiLinkSchema)
 
 
@@ -79,7 +79,7 @@ class TemplateTabData(BaseApiObject):
     description: str
     location: str
     sort_key: int
-    plugin_filter: str
+    filter_string: str
     plugins: ApiLink
 
 

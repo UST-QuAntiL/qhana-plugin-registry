@@ -136,7 +136,7 @@ class TemplateTabsRootView(MethodView):
             description=tab_data["description"],
             sort_key=tab_data["sort_key"],
             location=tab_data["location"],
-            plugin_filter=tab_data["plugin_filter"],
+            filter_string=tab_data["filter_string"],
         )
         DB.session.add(created_tab)
         DB.session.commit()

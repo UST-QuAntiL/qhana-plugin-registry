@@ -40,7 +40,7 @@ class TemplateTabData(TypedDict):
     description: str
     sort_key: int
     location: str
-    plugin_filter: str
+    filter_string: str
 
 
 @TEMPLATE_TABS_API.route("/<string:tab_id>/")
@@ -88,7 +88,7 @@ class TemplateTabView(MethodView):
         found_tab.description = template_tab_data["description"]
         found_tab.sort_key = template_tab_data["sort_key"]
         found_tab.location = template_tab_data["location"]
-        found_tab.plugin_filter = template_tab_data["plugin_filter"]
+        found_tab.filter_string = template_tab_data["filter_string"]
 
         DB.session.commit()
         apply_filter_for_tab.delay(found_tab.id)
