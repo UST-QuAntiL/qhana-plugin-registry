@@ -121,7 +121,6 @@ def get_plugin_ids_with_unmet_requirements(context: RecommendationContext) -> Se
 def filter_votes(
     context: RecommendationContext, votes: Sequence[Tuple[int, float]]
 ) -> Sequence[Tuple[int, float]]:
-
     ids_to_exclude = get_plugin_ids_with_unmet_requirements(context)
 
     # plugin ids that are not for working with data

@@ -127,7 +127,6 @@ class TemplatesRootView(MethodView):
     @TEMPLATES_API.arguments(TemplateSchema(exclude=("self", "tabs")))
     @TEMPLATES_API.response(HTTPStatus.OK, get_api_response_schema(NewApiObjectSchema))
     def post(self, template_data):
-
         tags: Sequence[str] = (template_data.get("tags", []),)
 
         created_template = UiTemplate(
