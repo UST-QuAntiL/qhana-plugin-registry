@@ -49,7 +49,6 @@ def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
     plugin_mapping = {plugin.id: plugin for plugin in DB.session.query(RAMP).all()}
 
     def get_plugins_from_filter(filter_dict: dict) -> list[RAMP]:
-        # TODO: add match for plugin description
         match filter_dict:
             case {"and": filter_expr}:
                 return set.intersection(
@@ -94,6 +93,9 @@ def apply_filter_for_tab(self, tab_id):
 
 @CELERY.task(name=f"{_name}.update_plugin_lists", bind=True, ignore_result=True)
 def update_plugin_lists(self, plugin_id):
+    found_plugin = RAMP.get_by_id(plugin_id)
     for tab in DB.session.query(TemplateTab).all():
-        # TODO: reevaluate plugin_filter and update plugin list if necessary
-        pass
+        plugins = evaluate_plugin_filter(tab.plugin_filter)
+        if plugin_id in (p.id for p in plugins):
+            tab.plugins = plugins
+            DB.session.commit()
