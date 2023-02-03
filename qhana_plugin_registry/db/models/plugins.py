@@ -27,7 +27,6 @@ from sqlalchemy.sql import sqltypes as sql
 from sqlalchemy.sql.schema import Column, ForeignKey, Index, UniqueConstraint
 
 from .model_helpers import (
-    FULLTEXT_INDEX_PARAMS,
     ExistsMixin,
     IdMixin,
     NameDescriptionMixin,
@@ -69,9 +68,6 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
 
     __table_args__ = (
         UniqueConstraint("plugin_id", "version", name=f"uix_{__tablename__}"),
-        Index(
-            f"ix_search_{__tablename__}", "name", "description", **FULLTEXT_INDEX_PARAMS
-        ),
     )
 
     _seed_id: Optional[int] = field(

@@ -32,11 +32,32 @@ To override any variable create a `.env` file.
 Environment variables in `.env` take precedence over `.flaskenv`.
 See the content of the `.flaskenv` file for the default environment variables.
 
+Create dev database
+```
+poetry run flask create-db
+```
+
 Run the development server with
 
 ```bash
 poetry run flask run
 ```
+
+Start redis instance in docker container (if not started yet) and start worker process used for executing background tasks with
+
+```
+poetry run invoke start-broker
+poetry run invoke worker --beat
+```
+
+## Environment variables
+
+- the database can be configured with `SQLALCHEMY_DATABASE_URI`
+- the broker can be configured with `BROKER_URL`, `RESULT_BACKEND` and `CELERY_QUEUE`
+- the plugin discovery process can be configured with `PLUGIN_DISCOVERY_INTERVAL`, `PLUGIN_BATCH_SIZE`, `PLUGIN_PURGE_INTERVAL` and `PLUGIN_PURGE_AFTER`
+- environment variables that are prefixed with `QHANA_ENV_` get loaded environment into the DB without the prefix
+- add initial seeds and services with `INITIAL_PLUGIN_SEEDS` and `PRECONFIGURED_SERVICES`
+- add regex rewrite rules for urls with `URL_MAP_FROM_LOCALHOST` and `URL_MAP_TO_LOCALHOST`
 
 ### Trying out the Template
 
@@ -77,6 +98,9 @@ The graph will be saved as `graph.svg`.
 This graph can be very huge and messy.
 
 To create a graph that is small and tidy you can render only circular dependencies with `pydeps qhana_plugin_registry -o graph.svg --noshow --show-cycles`.
+
+### Import error for packaging version 22.0
+See <https://github.com/UST-QuAntiL/qhana-plugin-registry/issues/7>
 
 
 ## What this Template contains

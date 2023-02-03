@@ -20,8 +20,6 @@ from sqlalchemy.sql.elements import literal
 
 from ..db import DB
 
-FULLTEXT_INDEX_PARAMS = {"mysql_prefix": "FULLTEXT", "postgresql_using": "gin"}
-
 
 class ExistsMixin:
     @classmethod

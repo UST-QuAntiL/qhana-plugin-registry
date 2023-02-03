@@ -17,10 +17,10 @@ from typing import Optional, Union
 
 from celery.utils.log import get_task_logger
 from flask.globals import current_app
-from requests import get
 from requests.exceptions import ConnectionError, JSONDecodeError
 from sqlalchemy.sql.expression import delete, desc, select
 
+from .url_mapped_requests import open_url, map_url
 from ..celery import CELERY
 from ..db.db import DB
 from ..db.models.plugins import RAMP
@@ -66,14 +66,18 @@ def discover_plugins_from_seeds(
         return
     now = datetime.now(timezone.utc)
     try:
-        data = get(seed, timeout=5).json()
+        data = open_url(seed, timeout=5).json()
     except JSONDecodeError or ConnectionError as err:
         return
     if data.keys() >= PLUGIN_KEYS:
         # Data matches the structure of a plugin resource => is most likely a plugin
         plugin: RAMP
+
+        mapped_seed = map_url(seed, "URL_MAP_TO_LOCALHOST")
+        mapped_root_seed = map_url(root_seed, "URL_MAP_TO_LOCALHOST")
+
         plugin, is_new_plugin = update_plugin_data(
-            data, url=seed, now=now, seed_url=root_seed
+            data, url=mapped_seed, now=now, seed_url=mapped_root_seed
         )
         if is_new_plugin:
             update_plugin_lists.delay(plugin.id)
@@ -82,7 +86,7 @@ def discover_plugins_from_seeds(
 
     # treat seed as plugin runner
     try:
-        plugin_data = get(seed.rstrip("/") + "/plugins", timeout=10).json()
+        plugin_data = open_url(seed.rstrip("/") + "/plugins", timeout=10).json()
     except JSONDecodeError or ConnectionError as err:
         return
 

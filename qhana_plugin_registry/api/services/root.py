@@ -15,7 +15,7 @@
 """Module containing the root endpoint of the services API."""
 
 from http import HTTPStatus
-from typing import List, cast
+from typing import List, Optional, cast
 
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
@@ -59,7 +59,7 @@ class ServicesRootView(MethodView):
 
     @SERVICES_API.arguments(ServicesPageArgumentsSchema, location="query", as_kwargs=True)
     @SERVICES_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
-    def get(self, service_id: str | None = None, **kwargs):
+    def get(self, service_id: Optional[str] = None, **kwargs):
         """Get a list of services."""
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
