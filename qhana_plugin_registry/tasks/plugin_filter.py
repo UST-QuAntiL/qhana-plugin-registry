@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import re
+from typing import Generator
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import SpecifierSet
@@ -27,8 +28,48 @@ _name = "qhana-plugin-registry.tasks.tabs"
 
 TASK_LOGGER = get_task_logger(_name)
 
+DEFAULT_BATCH_SIZE = 500
 
-def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
+
+def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP]:
+    match filter_dict:
+        case {"and": filter_expr}:
+            return set.intersection(
+                *(get_plugins_from_filter(f, plugin_mapping) for f in filter_expr)
+            )
+        case {"or": filter_expr}:
+            return set.union(
+                *(get_plugins_from_filter(f, plugin_mapping) for f in filter_expr)
+            )
+        case {"not": filter_expr}:
+            return plugin_mapping.keys() - get_plugins_from_filter(
+                filter_expr, plugin_mapping
+            )
+        case {"tag": tag}:
+            has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
+            return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
+        case {"version": version}:
+            specifier_str = re.sub(
+                r"([^\s,])(\s+)", r"\1,\2", version
+            )  # add commas to whitespace
+            try:
+                specifier = SpecifierSet(specifier_str)
+            except InvalidSpecifier:
+                TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
+                return set()
+            return {
+                p_id
+                for p_id, p in plugin_mapping.items()
+                if Version(p.version) in specifier
+            }
+        case {"name": name}:
+            return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
+        case _:
+            TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
+            return set()
+
+
+def evaluate_plugin_filter(plugin_filter: dict) -> Generator[RAMP, None, None]:
     """Get a list of plugins from a filter.
 
     Args:
@@ -43,43 +84,15 @@ def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
     Returns:
         list: A list of plugins.
     """
-    # TODO: filter plugins in batches
-    plugin_mapping = {plugin.id: plugin for plugin in DB.session.query(RAMP).all()}
-
-    def get_plugins_from_filter(filter_dict: dict) -> set[RAMP]:
-        match filter_dict:
-            case {"and": filter_expr}:
-                return set.intersection(
-                    *(get_plugins_from_filter(f) for f in filter_expr)
-                )
-            case {"or": filter_expr}:
-                return set.union(*(get_plugins_from_filter(f) for f in filter_expr))
-            case {"not": filter_expr}:
-                return plugin_mapping.keys() - get_plugins_from_filter(filter_expr)
-            case {"tag": tag}:
-                has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
-                return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
-            case {"version": version}:
-                specifier_str = re.sub(
-                    r"([^\s,])(\s+)", r"\1,\2", version
-                )  # add commas to whitespace
-                try:
-                    specifier = SpecifierSet(specifier_str)
-                except InvalidSpecifier:
-                    TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
-                    return set()
-                return {
-                    p_id
-                    for p_id, p in plugin_mapping.items()
-                    if Version(p.version) in specifier
-                }
-            case {"name": name}:
-                return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
-            case _:
-                TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
-                return set()
-
-    return [plugin_mapping[p_id] for p_id in get_plugins_from_filter(plugin_filter)]
+    count = DB.session.query(RAMP).count()
+    for offset in range(0, count, DEFAULT_BATCH_SIZE):
+        plugin_mapping = {
+            plugin.id: plugin
+            for plugin in DB.session.query(RAMP).limit(DEFAULT_BATCH_SIZE).offset(offset)
+        }
+        p_ids = get_plugins_from_filter(plugin_filter, plugin_mapping)
+        for p_id in p_ids:
+            yield plugin_mapping[p_id]
 
 
 @CELERY.task(name=f"{_name}.apply_filter_for_tab", bind=True, ignore_result=True)
@@ -88,14 +101,14 @@ def apply_filter_for_tab(self, tab_id):
     if not found_tab or not isinstance(found_tab, TemplateTab):
         TASK_LOGGER.warning(f"Tab with id {tab_id} not found.")
         return
-    found_tab.plugins = evaluate_plugin_filter(found_tab.plugin_filter)
+    found_tab.plugins = list(evaluate_plugin_filter(found_tab.plugin_filter))
     DB.session.commit()
 
 
 @CELERY.task(name=f"{_name}.update_plugin_lists", bind=True, ignore_result=True)
 def update_plugin_lists(self, plugin_id):
     for tab in DB.session.query(TemplateTab).all():
-        plugins = evaluate_plugin_filter(tab.plugin_filter)
+        plugins = list(evaluate_plugin_filter(tab.plugin_filter))
         if plugin_id in (p.id for p in plugins):
             tab.plugins = plugins
             DB.session.commit()
