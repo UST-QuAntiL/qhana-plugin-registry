@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import re
 from celery.utils.log import get_task_logger
-from sqlalchemy.sql.expression import select
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import SpecifierSet
-from packaging.specifiers import Version
+from packaging.version import Version
 
 from ..celery import CELERY
 from ..db.models.templates import TemplateTab
@@ -48,7 +46,7 @@ def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
     # TODO: filter plugins in batches
     plugin_mapping = {plugin.id: plugin for plugin in DB.session.query(RAMP).all()}
 
-    def get_plugins_from_filter(filter_dict: dict) -> list[RAMP]:
+    def get_plugins_from_filter(filter_dict: dict) -> set[RAMP]:
         match filter_dict:
             case {"and": filter_expr}:
                 return set.intersection(
@@ -87,13 +85,15 @@ def evaluate_plugin_filter(plugin_filter: dict) -> list[RAMP]:
 @CELERY.task(name=f"{_name}.apply_filter_for_tab", bind=True, ignore_result=True)
 def apply_filter_for_tab(self, tab_id):
     found_tab = TemplateTab.get_by_id(tab_id)
+    if not found_tab or not isinstance(found_tab, TemplateTab):
+        TASK_LOGGER.warning(f"Tab with id {tab_id} not found.")
+        return
     found_tab.plugins = evaluate_plugin_filter(found_tab.plugin_filter)
     DB.session.commit()
 
 
 @CELERY.task(name=f"{_name}.update_plugin_lists", bind=True, ignore_result=True)
 def update_plugin_lists(self, plugin_id):
-    found_plugin = RAMP.get_by_id(plugin_id)
     for tab in DB.session.query(TemplateTab).all():
         plugins = evaluate_plugin_filter(tab.plugin_filter)
         if plugin_id in (p.id for p in plugins):
