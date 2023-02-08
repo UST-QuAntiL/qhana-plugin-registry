@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import re
-from typing import Generator
+from typing import Iterator
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import SpecifierSet
@@ -32,6 +32,16 @@ DEFAULT_BATCH_SIZE = 500
 
 
 def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP]:
+    """Get the plugins that match a filter.
+
+    Args:
+        filter_dict (dict): the filter to evaluate
+        plugin_mapping (dict): a mapping from plugin ids to plugins
+
+    Returns:
+        set[RAMP]: the plugin ids that match the filter
+    """
+
     match filter_dict:
         case {"and": filter_expr}:
             return set.intersection(
@@ -69,8 +79,8 @@ def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP
             return set()
 
 
-def evaluate_plugin_filter(plugin_filter: dict) -> Generator[RAMP, None, None]:
-    """Get a list of plugins from a filter.
+def evaluate_plugin_filter(plugin_filter: dict) -> Iterator[RAMP]:
+    """Evaluate a plugin filter and return the matching plugins (calls `get_plugins_from_filter` in batches).
 
     Args:
         plugin_filter (str): the recursivly parsed JSON filter string. The following key-value pairs are allowed:
@@ -82,7 +92,7 @@ def evaluate_plugin_filter(plugin_filter: dict) -> Generator[RAMP, None, None]:
             - "name": plugin name
 
     Returns:
-        list: A list of plugins.
+        Iterator[RAMP]: an iterator over the plugins that match the filter
     """
     count = DB.session.query(RAMP).count()
     for offset in range(0, count, DEFAULT_BATCH_SIZE):
