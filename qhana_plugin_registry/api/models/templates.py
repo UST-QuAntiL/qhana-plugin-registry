@@ -14,7 +14,9 @@
 
 from dataclasses import dataclass
 from typing import Sequence
-
+import json
+import re
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 import marshmallow as ma
 from marshmallow.validate import Length
 
@@ -54,8 +56,44 @@ class TemplateTabSchema(ApiObjectSchema):
     description = ma.fields.String(required=True, allow_none=False)
     location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
-    filter_string = ma.fields.String(required=True, allow_none=False)
+    filter_string = ma.fields.String(required=True, allow_none=False, default="{}")
     plugins = ma.fields.Nested(ApiLinkSchema)
+
+    @staticmethod
+    def validate_filter(filter_dict: dict):
+        match filter_dict:
+            case {"and": l} | {"or": l}:
+                if not isinstance(l, list):
+                    raise ma.ValidationError("Invalid plugin filter.")
+                for f in l:
+                    TemplateTabSchema.validate_filter(f)
+            case {"not": f}:
+                TemplateTabSchema.validate_filter(f)
+            case {"name": f} | {"tag": f}:
+                if not isinstance(f, str):
+                    raise ma.ValidationError("Invalid plugin filter.")
+            case {"version": v}:
+                if not isinstance(v, str):
+                    raise ma.ValidationError("Invalid plugin filter.")
+                specifier_str = re.sub(
+                    r"([^\s,])(\s+)", r"\1,\2", v
+                )  # add commas to whitespace
+                try:
+                    SpecifierSet(specifier_str)
+                except InvalidSpecifier:
+                    raise ma.ValidationError("Invalid plugin filter.")
+            case {**keys} if not keys:
+                return
+            case _:
+                raise ma.ValidationError("Invalid plugin filter.")
+
+    @ma.validates("filter_string")
+    def validate_filter_string(self, value):
+        try:
+            filter_dict = json.loads(value)
+        except json.JSONDecodeError:
+            raise ma.ValidationError("Invalid plugin filter.")
+        TemplateTabSchema.validate_filter(filter_dict)
 
 
 class TemplateGroupSchema(CollectionResourceSchema):
