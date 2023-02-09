@@ -60,21 +60,18 @@ class TemplateTabSchema(ApiObjectSchema):
     plugins = ma.fields.Nested(ApiLinkSchema)
 
     @staticmethod
-    def validate_filter(filter_dict: dict, path: list[str] = []):
+    def validate_filter(filter_dict: dict, path: str = ""):
         if len(filter_dict) > 1:
             raise ma.ValidationError(
-                [f"Invalid plugin filter: Only one filter key allowed per level."] + path
+                f"Invalid plugin filter: Only one filter key allowed per level. (Path: {path})"
             )
-        k, v = next(iter(filter_dict.items()))
-        current_path = path + [f"{k}: {v}"]
+        key = next(iter(filter_dict.keys()))
+        current_path = path + f".{key}"
         match filter_dict:
             case {"and": l} | {"or": l}:
                 if not isinstance(l, list):
                     raise ma.ValidationError(
-                        [
-                            f"Invalid plugin filter: 'and' and 'or' must be lists, not '{type(l)}'."
-                        ]
-                        + current_path
+                        f"Invalid plugin filter: 'and' and 'or' must be lists, not '{type(l)}'. (Path: {current_path})"
                     )
                 for f in l:
                     TemplateTabSchema.validate_filter(f, current_path)
@@ -83,16 +80,12 @@ class TemplateTabSchema(ApiObjectSchema):
             case {"name": f} | {"tag": f}:
                 if not isinstance(f, str):
                     raise ma.ValidationError(
-                        [f"Invalid plugin filter: Name and tag must be strings '{f}'."]
-                        + current_path
+                        f"Invalid plugin filter: Name and tag must be strings '{f}'. (Path: {current_path})"
                     )
             case {"version": v}:
                 if not isinstance(v, str):
                     raise ma.ValidationError(
-                        [
-                            f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string)."
-                        ]
-                        + current_path
+                        f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string). (Path: {current_path})"
                     )
                 specifier_str = re.sub(
                     r"([^\s,])(\s+)", r"\1,\2", v
@@ -101,16 +94,13 @@ class TemplateTabSchema(ApiObjectSchema):
                     SpecifierSet(specifier_str)
                 except InvalidSpecifier:
                     raise ma.ValidationError(
-                        [
-                            f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier."
-                        ]
-                        + current_path
+                        f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier. (Path: {current_path})"
                     )
             case {**keys} if not keys:
                 return
             case f:
                 raise ma.ValidationError(
-                    [f"Invalid plugin filter: Unknown key '{f}'."] + current_path
+                    f"Invalid plugin filter: Unknown key '{key}'. (Path: {current_path}))"
                 )
 
     @ma.validates("filter_string")
