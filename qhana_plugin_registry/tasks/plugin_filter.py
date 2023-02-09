@@ -44,10 +44,14 @@ def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP
 
     match filter_dict:
         case {"and": filter_expr}:
+            if not filter_expr:
+                return set()
             return set.intersection(
                 *(get_plugins_from_filter(f, plugin_mapping) for f in filter_expr)
             )
         case {"or": filter_expr}:
+            if not filter_expr:
+                return set()
             return set.union(
                 *(get_plugins_from_filter(f, plugin_mapping) for f in filter_expr)
             )
