@@ -60,39 +60,65 @@ class TemplateTabSchema(ApiObjectSchema):
     plugins = ma.fields.Nested(ApiLinkSchema)
 
     @staticmethod
-    def validate_filter(filter_dict: dict):
+    def validate_filter(filter_dict: dict, path: list[str] = []):
+        if len(filter_dict) > 1:
+            raise ma.ValidationError(
+                [f"Invalid plugin filter: Only one filter key allowed per level."] + path
+            )
+        k, v = next(iter(filter_dict.items()))
+        current_path = path + [f"{k}: {v}"]
         match filter_dict:
             case {"and": l} | {"or": l}:
                 if not isinstance(l, list):
-                    raise ma.ValidationError("Invalid plugin filter.")
+                    raise ma.ValidationError(
+                        [
+                            f"Invalid plugin filter: 'and' and 'or' must be lists, not '{type(l)}'."
+                        ]
+                        + current_path
+                    )
                 for f in l:
-                    TemplateTabSchema.validate_filter(f)
+                    TemplateTabSchema.validate_filter(f, current_path)
             case {"not": f}:
-                TemplateTabSchema.validate_filter(f)
+                TemplateTabSchema.validate_filter(f, current_path)
             case {"name": f} | {"tag": f}:
                 if not isinstance(f, str):
-                    raise ma.ValidationError("Invalid plugin filter.")
+                    raise ma.ValidationError(
+                        [f"Invalid plugin filter: Name and tag must be strings '{f}'."]
+                        + current_path
+                    )
             case {"version": v}:
                 if not isinstance(v, str):
-                    raise ma.ValidationError("Invalid plugin filter.")
+                    raise ma.ValidationError(
+                        [
+                            f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string)."
+                        ]
+                        + current_path
+                    )
                 specifier_str = re.sub(
                     r"([^\s,])(\s+)", r"\1,\2", v
                 )  # add commas to whitespace
                 try:
                     SpecifierSet(specifier_str)
                 except InvalidSpecifier:
-                    raise ma.ValidationError("Invalid plugin filter.")
+                    raise ma.ValidationError(
+                        [
+                            f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier."
+                        ]
+                        + current_path
+                    )
             case {**keys} if not keys:
                 return
-            case _:
-                raise ma.ValidationError("Invalid plugin filter.")
+            case f:
+                raise ma.ValidationError(
+                    [f"Invalid plugin filter: Unknown key '{f}'."] + current_path
+                )
 
     @ma.validates("filter_string")
     def validate_filter_string(self, value):
         try:
             filter_dict = json.loads(value)
         except json.JSONDecodeError:
-            raise ma.ValidationError("Invalid plugin filter.")
+            raise ma.ValidationError("Invalid plugin filter: Not a valid JSON string.")
         TemplateTabSchema.validate_filter(filter_dict)
 
 
