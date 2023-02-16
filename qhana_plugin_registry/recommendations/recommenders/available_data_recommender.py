@@ -29,7 +29,6 @@ class AvailableDataRecommender(PluginRecommender):
     def get_votes(
         self, context: RecommendationContext, timeout: float
     ) -> Union[Signature, Sequence[Signature], None]:
-
         available_data = context.get("available_data", {})
         if not available_data:
             return None

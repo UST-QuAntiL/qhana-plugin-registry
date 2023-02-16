@@ -20,7 +20,6 @@ from ..util import RecommendationContext
 
 
 class PluginRecommender:
-
     __recommenders: Dict[str, "PluginRecommender"] = {}
 
     def __init_subclass__(cls) -> None:

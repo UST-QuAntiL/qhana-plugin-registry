@@ -127,7 +127,6 @@ class TemplatesRootView(MethodView):
     @TEMPLATES_API.arguments(TemplateSchema(exclude=("self",)))
     @TEMPLATES_API.response(HTTPStatus.OK, get_api_response_schema(NewApiObjectSchema))
     def post(self, service_data):
-
         created_template = WorkspaceTemplate(
             name=service_data["name"],
             description=service_data["description"],

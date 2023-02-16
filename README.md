@@ -58,6 +58,7 @@ poetry run invoke worker --beat
 - environment variables that are prefixed with `QHANA_ENV_` get loaded environment into the DB without the prefix
 - add initial seeds and services with `INITIAL_PLUGIN_SEEDS` and `PRECONFIGURED_SERVICES`
 - add regex rewrite rules for urls with `URL_MAP_FROM_LOCALHOST` and `URL_MAP_TO_LOCALHOST`
+- The docker container includes a proxy to redirect requests to the host machine. To configure the ports that should be redirected set the environment variable `LOCALHOST_PROXY_PORTS` to e.g. `:1234 :2345`.
 
 ### Trying out the Template
 
