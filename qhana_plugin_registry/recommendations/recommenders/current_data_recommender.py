@@ -30,7 +30,6 @@ class CurrentDataRecommender(PluginRecommender):
     def get_votes(
         self, context: RecommendationContext, timeout: float
     ) -> Union[Signature, Sequence[Signature], None]:
-
         current_data = context.get("current_data", [])
         if not current_data:
             return None
