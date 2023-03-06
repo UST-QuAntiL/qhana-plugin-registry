@@ -15,7 +15,6 @@
 from dataclasses import dataclass
 from typing import Sequence
 import json
-import re
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 import marshmallow as ma
 from marshmallow.validate import Length
@@ -61,6 +60,8 @@ class TemplateTabSchema(ApiObjectSchema):
 
     @staticmethod
     def validate_filter(filter_dict: dict, path: str = ""):
+        if len(filter_dict) == 0:
+            return
         if len(filter_dict) > 1:
             raise ma.ValidationError(
                 f"Invalid plugin filter: Only one filter key allowed per level. (Path: {path})"
@@ -87,18 +88,13 @@ class TemplateTabSchema(ApiObjectSchema):
                     raise ma.ValidationError(
                         f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string). (Path: {current_path})"
                     )
-                specifier_str = re.sub(
-                    r"([^\s,])(\s+)", r"\1,\2", v
-                )  # add commas to whitespace
                 try:
-                    SpecifierSet(specifier_str)
+                    SpecifierSet(v)
                 except InvalidSpecifier:
                     raise ma.ValidationError(
                         f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier. (Path: {current_path})"
                     )
-            case {**keys} if not keys:
-                return
-            case f:
+            case _:
                 raise ma.ValidationError(
                     f"Invalid plugin filter: Unknown key '{key}'. (Path: {current_path}))"
                 )

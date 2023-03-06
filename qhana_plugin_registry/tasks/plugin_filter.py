@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
 from typing import Iterator
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
@@ -63,11 +62,8 @@ def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP
             has_tag = lambda p, t: any(tag.tag == t for tag in p.tags)
             return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
         case {"version": version}:
-            specifier_str = re.sub(
-                r"([^\s,])(\s+)", r"\1,\2", version
-            )  # add commas to whitespace
             try:
-                specifier = SpecifierSet(specifier_str)
+                specifier = SpecifierSet(version)
             except InvalidSpecifier:
                 TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
                 return set()
