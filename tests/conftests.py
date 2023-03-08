@@ -28,8 +28,8 @@ MODULE_NAME = "qhana_plugin_registry"
 
 from qhana_plugin_registry import create_app
 from qhana_plugin_registry.db.cli import create_db_function
-from qhana_plugin_registry.util.config.celery_config import CELERY_DEBUG_CONFIG
-
+from qhana_plugin_registry.util.config.celery_config import CELERY_PRODUCTION_CONFIG
+from collections import ChainMap
 
 DEFAULT_TEST_CONFIG = {
     "SECRET_KEY": "test",
@@ -40,7 +40,10 @@ DEFAULT_TEST_CONFIG = {
     "DEFAULT_LOG_SEVERITY": INFO,
     "DEFAULT_LOG_FORMAT_STYLE": "{",
     "DEFAULT_LOG_FORMAT": "{asctime} [{levelname:^7}] [{module:<30}] {message}    <{funcName}, {lineno}; {pathname}>",
-    "CELERY": CELERY_DEBUG_CONFIG,
+    "CELERY": ChainMap(
+        {"result_backend": "redis://", "broker_url": "memory://localhost/"},
+        CELERY_PRODUCTION_CONFIG,
+    ),
     "DEFAULT_FILE_STORE": "local_filesystem",
     "FILE_STORE_ROOT_PATH": "files",
     "OPENAPI_VERSION": "3.0.2",
