@@ -18,8 +18,7 @@ from datetime import datetime, timezone
 from functools import partial
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-from packaging.version import LegacyVersion
-from packaging.version import parse as parse_version
+from packaging.version import parse as parse_version, Version
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select
@@ -44,8 +43,7 @@ def get_version_sorting_string(version: str) -> str:
     correctly using lexicographical sort order.
     """
     parsed = parse_version(version)
-    if isinstance(parsed, LegacyVersion):
-        return version
+    assert isinstance(parsed, Version)
     release = ".".join(f"{n:04}" for n in parsed.release)
     extra = []
     if parsed.pre is not None:
