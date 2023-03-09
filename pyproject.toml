@@ -23,7 +23,6 @@ requests = "^2.25.1"
 typing-extensions = "^3.10.0"
 psycopg2 = {version = "^2.9.3", optional = true}
 PyMySQL = {version = "^1.0.2", optional = true}
-hypothesis = "^6.68.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
@@ -45,6 +44,9 @@ PyMySQL = ["PyMySQL"]
 
 [tool.poetry.scripts]
 #flask = 'flask.cli:main'
+
+[tool.poetry.group.dev.dependencies]
+hypothesis = "^6.68.2"
 
 [tool.black]
 target-version = ["py310"]
