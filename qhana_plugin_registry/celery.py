@@ -16,7 +16,7 @@ from logging import Logger
 
 from celery import Celery, Task
 from celery.signals import after_setup_task_logger
-from flask import globals as flask_flobals
+from flask.globals import app_ctx
 from flask.app import Flask
 
 
@@ -33,7 +33,7 @@ class FlaskTask(Task):
 
     def __call__(self, *args, **kwargs):
         """Execute task with an app context."""
-        if flask_flobals._app_ctx_stack.top is not None:
+        if app_ctx:
             # app context already established
             return self.run(*args, **kwargs)
         with self.app.flask_app.app_context():

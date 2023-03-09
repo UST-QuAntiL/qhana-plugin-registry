@@ -61,6 +61,16 @@ group_by_package = true
 honor_noqa = true
 atomic = true
 
+[tool.pytest.ini_options]
+# filter warnings of libraries until we update them
+filterwarnings = [
+    "once:Creating a LegacyVersion has been deprecated and will be removed in the next major release:DeprecationWarning",
+    # update celery/kombu to fix this
+    "once:SelectableGroups dict interface is deprecated. Use select.:DeprecationWarning", 
+    # update flask sqlalchemy to fix this
+    "once:'_app_ctx_stack' is deprecated and will be removed in Flask 2.3. Use 'g' to store data, or 'app_ctx' to access the current context.:DeprecationWarning"
+]
+
 [tool.sphinx]
 copyright-year = 2022
 enable-autodoc = true

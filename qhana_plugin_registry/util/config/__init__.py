@@ -16,8 +16,12 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     DEBUG = False
     TESTING = False
 
-    JSON_SORT_KEYS = False
-    JSONIFY_PRETTYPRINT_REGULAR = False
+    # JSON_SORT_KEYS = False
+    # JSONIFY_PRETTYPRINT_REGULAR = False
+    JSON = {
+        "sort_keys": True,
+        "compact": True,
+    }
 
     LOG_CONFIG = None  # if set this is preferred
 
@@ -61,6 +65,11 @@ class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
     SECRET_KEY = "debug_secret"  # FIXME make sure this NEVER! gets used in production!!!
 
     DEFAULT_LOG_SEVERITY = INFO
+
+    JSON = {
+        "sort_keys": True,
+        "compact": False,
+    }
 
     CELERY = CELERY_DEBUG_CONFIG
 
