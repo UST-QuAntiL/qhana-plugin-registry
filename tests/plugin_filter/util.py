@@ -13,63 +13,27 @@
 # limitations under the License.
 
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
-from qhana_plugin_registry.db.models.templates import UiTemplate, TemplateTab
+from qhana_plugin_registry.db.models.templates import TemplateTab
 from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
 
-import random
 from hypothesis import strategies as st
 from packaging.specifiers import Specifier
 import json
-from sqlalchemy.sql import exists
 
 
 def filter_strategy():
     return st.one_of(
+        st.fixed_dictionaries({}),
         st.fixed_dictionaries({"tag": st.text()}),
         st.fixed_dictionaries({"name": st.text()}),
-        st.fixed_dictionaries(
-            {"version": st.from_regex(Specifier._regex)}
-        ),  # TODO: type PEP 0440 version specifier
+        st.fixed_dictionaries({"version": st.from_regex(Specifier._regex)}),
         st.fixed_dictionaries({"and": st.lists(st.deferred(filter_strategy))}),
         st.fixed_dictionaries({"or": st.lists(st.deferred(filter_strategy))}),
         st.fixed_dictionaries({"not": st.deferred(filter_strategy)}),
     )
 
 
-def extract_key(key: str, filter_dict: dict):
-    if key in filter_dict:
-        yield filter_dict[key]
-    for k, v in filter_dict.items():
-        if k in ["and", "or"]:
-            for sub_filter in v:
-                extract_key(key, sub_filter)
-        if k == "not":
-            extract_key(key, v)
-
-
-def create_template(
-    tmp_db, name: str = "test_template", description: str = "test template"
-) -> str:
-    template_exists = tmp_db.session.query(
-        exists().where(UiTemplate.name == name)
-    ).scalar()
-    if template_exists:
-        return tmp_db.session.query(UiTemplate.id).first()[0]
-    template = UiTemplate(
-        name=name,
-        description=description,
-    )
-    tmp_db.session.add(template)
-    tmp_db.session.commit()
-    template_id = (
-        tmp_db.session.query(UiTemplate.id)
-        .filter(UiTemplate.name == template.name)
-        .first()[0]
-    )
-    return template_id
-
-
-def create_or_update_plugin(
+def create_plugin(
     tmp_db,
     name: str = "test-plugin",
     version: str = "0.0.0",
@@ -78,27 +42,6 @@ def create_or_update_plugin(
 ) -> RAMP:
     if not tags:
         tags = []
-    plugin_exists = tmp_db.session.query(
-        exists().where(RAMP.name == name, RAMP.version == version)
-    ).scalar()
-    if plugin_exists:
-        plugin = (
-            tmp_db.session.query(RAMP)
-            .filter(RAMP.name == name, RAMP.version == version)
-            .first()
-        )
-        plugin.plugin_id = f"{name}@{version}"
-        plugin.name = name
-        plugin.version = version
-        plugin.tags = tags
-        plugin.description = description
-        tmp_db.session.commit()
-        plugin_id = (
-            tmp_db.session.query(RAMP.id)
-            .filter(RAMP.name == name, RAMP.version == version)
-            .first()[0]
-        )
-        return plugin_id
     plugin = RAMP(
         name=name,
         description=description,
@@ -114,21 +57,6 @@ def create_or_update_plugin(
         .first()[0]
     )
     return plugin_id
-
-
-def create_plugins(
-    tmp_db, tags: list[PluginTag], versions: list[str] = ["1.0.0", "1.1.0", "2.0.0"], n=3
-) -> None:
-    for i in range(n):
-        create_or_update_plugin(
-            tmp_db,
-            name=f"p{i}",
-            description=f"d{i}",
-            version=f"{random.choice(versions)}",
-            tags=[]
-            if not tags
-            else random.sample(tags, random.randint(1, len(tags) - 1)),
-        )
 
 
 def create_template_tab(
@@ -170,29 +98,25 @@ def create_template_tab(
     return template_tab_id
 
 
-def create_tags(tmp_db, tags: list[str] | None = None) -> list[PluginTag]:
-    if not tags:
-        plugin_tags = [PluginTag(f"t{tag}") for tag in range(5)]
-        tags = [tag.tag for tag in plugin_tags]
-    else:
-        plugin_tags = [PluginTag(tag) for tag in tags]
-    for tag in plugin_tags:
-        tag_exists = tmp_db.session.query(
-            exists().where(PluginTag.tag == tag.tag)
-        ).scalar()
-        if not tag_exists:
-            tmp_db.session.add(tag)
-    tmp_db.session.commit()
-    return tmp_db.session.query(PluginTag).filter(PluginTag.tag.in_(tags)).all()
-
-
-def compare_plugins(plugin: RAMP, other: RAMP):
-    assert plugin.name == other.name
-    assert plugin.description == other.description
-    assert plugin.version == other.version
-    assert plugin.plugin_id == other.plugin_id
-    assert len(plugin.tags) == len(other.tags)
-    assert all(tag in other.tags for tag in plugin.tags)
+def update_plugin_filter(tmp_db, client, template_tab: TemplateTab, filter_dict: dict):
+    response = client.put(
+        f"/api/templates/{template_tab.template_id}/tabs/{template_tab.id}/",
+        json={
+            "name": template_tab.name,
+            "description": template_tab.description,
+            "location": template_tab.location,
+            "filterString": json.dumps(filter_dict),
+            "sortKey": template_tab.sort_key,
+        },
+    )
+    assert response.status_code == 200
+    apply_filter_for_tab.apply(args=(template_tab.id,))
+    return (
+        tmp_db.session.query(TemplateTab)
+        .filter(TemplateTab.id == template_tab.id)
+        .first()
+        .plugins
+    )
 
 
 def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
@@ -205,10 +129,14 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
             spec = Specifier(version)
             return spec.contains(plugin.version)
         case {"and": and_filters}:
+            if not and_filters:
+                return False
             return all(
                 filter_matches_plugin(filter_dict, plugin) for filter_dict in and_filters
             )
         case {"or": or_filters}:
+            if not or_filters:
+                return False
             return any(
                 filter_matches_plugin(filter_dict, plugin) for filter_dict in or_filters
             )
