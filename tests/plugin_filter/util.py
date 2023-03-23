@@ -98,7 +98,9 @@ def create_template_tab(
     return template_tab_id
 
 
-def update_plugin_filter(tmp_db, client, template_tab: TemplateTab, filter_dict: dict):
+def update_plugin_filter(
+    tmp_db, client, template_tab: TemplateTab, filter_dict: dict
+) -> set[int]:
     response = client.put(
         f"/api/templates/{template_tab.template_id}/tabs/{template_tab.id}/",
         json={
@@ -111,12 +113,13 @@ def update_plugin_filter(tmp_db, client, template_tab: TemplateTab, filter_dict:
     )
     assert response.status_code == 200
     apply_filter_for_tab.apply(args=(template_tab.id,))
-    return (
+    plugins = (
         tmp_db.session.query(TemplateTab)
         .filter(TemplateTab.id == template_tab.id)
         .first()
         .plugins
     )
+    return set(plugin.id for plugin in plugins)
 
 
 def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
