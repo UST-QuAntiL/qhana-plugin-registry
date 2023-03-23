@@ -118,9 +118,7 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
         p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name == name).all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test single name excluded filter
     tab_plugin_ids = update_plugin_filter(
@@ -130,9 +128,7 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
         p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name != name).all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test multiple name filters
     additional_name = random.choice(plugins).name
@@ -146,9 +142,7 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
         .all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
 
 """
@@ -181,9 +175,7 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         .all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test single tag excluded filter
     tab_plugin_ids = update_plugin_filter(
@@ -196,9 +188,7 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         .all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test multiple tag filters
     tab_plugin_ids = update_plugin_filter(
@@ -214,9 +204,7 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         .all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     tab_plugin_ids = update_plugin_filter(
         tmp_db,
@@ -234,9 +222,7 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         .all()
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
 
 """
@@ -258,18 +244,14 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
         tmp_db, client, template_tab, {"version": version_spec}
     )
     filtered_plugin_ids = {p.id for p in db_plugins if spec.contains(p.version)}
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test single version excluded filter
     tab_plugin_ids = update_plugin_filter(
         tmp_db, client, template_tab, {"not": {"version": version_spec}}
     )
     filtered_plugin_ids = {p.id for p in db_plugins if not spec.contains(p.version)}
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     # test multiple version filters
     zero_spec = Specifier(f"=={plugins[-1].version}")
@@ -285,9 +267,7 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
         if spec.contains(p.version) or zero_spec.contains(p.version)
     }
     assert len(tab_plugin_ids) > 0
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
     zero_spec = Specifier(f"!={plugins[-1].version}")
     tab_plugin_ids = update_plugin_filter(
@@ -301,9 +281,7 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
         for p in db_plugins
         if spec.contains(p.version) and zero_spec.contains(p.version)
     }
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
 
 
 """
@@ -324,6 +302,4 @@ def test_plugin_filter(tmp_db, client, template_tab, plugins, filter_dict: dict)
     filtered_plugin_ids = {
         p.id for p in db_plugins if filter_matches_plugin(filter_dict, p)
     }
-    assert len(tab_plugin_ids) == len(filtered_plugin_ids)
-    for plugin_id in tab_plugin_ids:
-        assert plugin_id in filtered_plugin_ids
+    assert tab_plugin_ids == filtered_plugin_ids
