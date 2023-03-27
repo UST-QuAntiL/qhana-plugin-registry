@@ -119,7 +119,7 @@ def update_plugin_filter(
         .first()
         .plugins
     )
-    return set(plugin.id for plugin in plugins)
+    return {plugin.id for plugin in plugins}
 
 
 def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
