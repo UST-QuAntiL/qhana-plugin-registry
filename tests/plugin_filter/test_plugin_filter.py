@@ -113,36 +113,47 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
         create_plugin(tmp_db, name=name)
 
     # test single name filter
-    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, {"name": name})
+    filter_dict = {"name": name}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {
         p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name == name).all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by a single name failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single name failed (filter: '{filter_dict}')"
 
     # test single name excluded filter
-    tab_plugin_ids = update_plugin_filter(
-        tmp_db, client, template_tab, {"not": {"name": name}}
-    )
+    filter_dict = {"not": {"name": name}}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {
         p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name != name).all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by a single name failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single name failed (filter: '{filter_dict}')"
 
     # test multiple name filters
     additional_name = random.choice(plugins).name
-    tab_plugin_ids = update_plugin_filter(
-        tmp_db, client, template_tab, {"or": [{"name": name}, {"name": additional_name}]}
-    )
+    filter_dict = {"or": [{"name": name}, {"name": additional_name}]}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {
         p_id
         for p_id, in tmp_db.session.query(RAMP.id)
         .filter(RAMP.name.in_([name, additional_name]))
         .all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by multiple names failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by multiple names failed (filter: '{filter_dict}')"
 
 
 """
@@ -167,35 +178,44 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
     create_plugin(tmp_db, name=plugin_name, tags=[tag, additional_tag])
 
     # test single tag filter
-    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, {"tag": tag_name})
+    filter_dict = {"tag": tag_name}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {
         p_id
         for p_id, in tmp_db.session.query(RAMP.id)
         .filter(RAMP.tags.any(PluginTag.tag == tag_name))
         .all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by a single tag failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single tag failed (filter: '{filter_dict}')"
 
     # test single tag excluded filter
-    tab_plugin_ids = update_plugin_filter(
-        tmp_db, client, template_tab, {"not": {"tag": tag_name}}
-    )
+    filter_dict = {"not": {"tag": tag_name}}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {
         p_id
         for p_id, in tmp_db.session.query(RAMP.id)
         .filter(~RAMP.tags.any(PluginTag.tag == tag_name))
         .all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by a single tag failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single tag failed (filter: '{filter_dict}')"
 
     # test multiple tag filters
+    filter_dict = {"or": [{"tag": tag_name}, {"tag": additional_tag.tag}]}
     tab_plugin_ids = update_plugin_filter(
         tmp_db,
         client,
         template_tab,
-        {"or": [{"tag": tag_name}, {"tag": additional_tag.tag}]},
+        filter_dict,
     )
     filtered_plugin_ids = {
         p_id
@@ -203,14 +223,19 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         .filter(RAMP.tags.any(PluginTag.tag.in_([tag_name, additional_tag.tag])))
         .all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by multiple tags failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by multiple tags failed (filter: '{filter_dict}')"
 
+    filter_dict = {"and": [{"tag": tag_name}, {"tag": additional_tag.tag}]}
     tab_plugin_ids = update_plugin_filter(
         tmp_db,
         client,
         template_tab,
-        {"and": [{"tag": tag_name}, {"tag": additional_tag.tag}]},
+        filter_dict,
     )
     filtered_plugin_ids = {
         p_id
@@ -221,8 +246,12 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
         )
         .all()
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by multiple tags failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by multiple tags failed (filter: '{filter_dict}')"
 
 
 """
@@ -240,48 +269,58 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
     db_plugins = tmp_db.session.query(RAMP).all()
 
     # test single version filter
-    tab_plugin_ids = update_plugin_filter(
-        tmp_db, client, template_tab, {"version": version_spec}
-    )
+    filter_dict = {"version": version_spec}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {p.id for p in db_plugins if spec.contains(p.version)}
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single version failed (filter: '{filter_dict}')"
 
     # test single version excluded filter
-    tab_plugin_ids = update_plugin_filter(
-        tmp_db, client, template_tab, {"not": {"version": version_spec}}
-    )
+    filter_dict = {"not": {"version": version_spec}}
+    tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = {p.id for p in db_plugins if not spec.contains(p.version)}
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by a single version failed (filter: '{filter_dict}')"
 
     # test multiple version filters
     zero_spec = Specifier(f"=={plugins[-1].version}")
+    filter_dict = {"or": [{"version": version_spec}, {"version": str(zero_spec)}]}
     tab_plugin_ids = update_plugin_filter(
         tmp_db,
         client,
         template_tab,
-        {"or": [{"version": version_spec}, {"version": str(zero_spec)}]},
+        filter_dict,
     )
     filtered_plugin_ids = {
         p.id
         for p in db_plugins
         if spec.contains(p.version) or zero_spec.contains(p.version)
     }
-    assert len(tab_plugin_ids) > 0
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        len(tab_plugin_ids) > 0
+    ), f"filtering by multiple versions failed (filter: '{filter_dict}')"
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by multiple versions failed (filter: '{filter_dict}')"
 
     zero_spec = Specifier(f"!={plugins[-1].version}")
+    filter_dict = {"and": [{"version": version_spec}, {"version": str(zero_spec)}]}
     tab_plugin_ids = update_plugin_filter(
         tmp_db,
         client,
         template_tab,
-        {"and": [{"version": version_spec}, {"version": str(zero_spec)}]},
+        filter_dict,
     )
     filtered_plugin_ids = {
         p.id
         for p in db_plugins
         if spec.contains(p.version) and zero_spec.contains(p.version)
     }
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering by multiple versions failed (filter: '{filter_dict}')"
 
 
 """
@@ -302,4 +341,6 @@ def test_plugin_filter(tmp_db, client, template_tab, plugins, filter_dict: dict)
     filtered_plugin_ids = {
         p.id for p in db_plugins if filter_matches_plugin(filter_dict, p)
     }
-    assert tab_plugin_ids == filtered_plugin_ids
+    assert (
+        tab_plugin_ids == filtered_plugin_ids
+    ), f"filtering failed (filter: '{filter_dict}')"
