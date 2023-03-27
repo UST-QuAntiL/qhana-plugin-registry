@@ -5,7 +5,7 @@
 ![Python: >= 3.10](https://img.shields.io/badge/python-^3.10-blue)
 [![Documentation Status](https://readthedocs.org/projects/qhana-plugin-registry/badge/?version=latest)](https://qhana-plugin-registry.readthedocs.io/en/latest/?badge=latest)
 
-This package uses Poetry ([documentation](https://python-poetry.org/docs/)).
+This package uses Poetry `>=1.2` ([documentation](https://python-poetry.org/docs/)).
 
 Original template repository: <https://github.com/buehlefs/flask-template/>
 
