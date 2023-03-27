@@ -32,6 +32,7 @@ from .constants import (
     PUT_REL,
     ROOT_RESOURCE_DUMMY,
     TEMPLATE_ID_KEY,
+    TEMPLATE_TAB_REL_TYPE,
     UP_REL,
 )
 from .type_map import TYPE_TO_METADATA
@@ -45,7 +46,7 @@ from ..request_helpers import (
 )
 from ..templates import TemplateData
 from ..templates_raw import TemplateGroupRaw
-from ....db.models.templates import UiTemplate
+from ....db.models.templates import TemplateTab, UiTemplate
 
 # Template Page ################################################################
 
@@ -178,6 +179,39 @@ class DeleteTemplateLinkGenerator(
             return None
         link.rel = (DELETE_REL,)
         return link
+
+
+# navigation links
+class TemplateToTabsLinkGenerator(
+    LinkGenerator, resource_type=UiTemplate, relation=TEMPLATE_TAB_REL_TYPE
+):
+    def generate_link(
+        self,
+        resource: UiTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(TemplateTab, resource=resource, page_number=1),
+            extra_relations=(NAV_REL,),
+        )
+
+
+class TemplateCreateTabLinkGenerator(
+    LinkGenerator,
+    resource_type=UiTemplate,
+    relation=f"{TEMPLATE_TAB_REL_TYPE}_{CREATE_REL}",
+):
+    def generate_link(
+        self,
+        resource: UiTemplate,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(TemplateTab, resource=resource, page_number=1),
+            for_relation=CREATE_REL,
+        )
 
 
 class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
