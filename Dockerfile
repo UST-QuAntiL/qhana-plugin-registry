@@ -26,6 +26,16 @@ ENV CELERY_WORKER_POOL=threads
 RUN mkdir --parents /app/instance \
     && chown --recursive gunicorn /app && chmod --recursive u+rw /app/instance
 
+# install proxy
+ADD https://raw.githubusercontent.com/UST-QuAntiL/docker-localhost-proxy/v0.3/install_proxy.sh install_proxy.sh
+RUN chmod +x install_proxy.sh && ./install_proxy.sh
+
+# add localhost proxy files
+ADD https://raw.githubusercontent.com/UST-QuAntiL/docker-localhost-proxy/v0.3/Caddyfile.template Caddyfile.template
+RUN chown gunicorn Caddyfile.template
+ADD https://raw.githubusercontent.com/UST-QuAntiL/docker-localhost-proxy/v0.3/start_proxy.sh start_proxy.sh
+RUN chown gunicorn start_proxy.sh && chmod +x start_proxy.sh
+
 # Wait for database
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /wait
 RUN chmod +x /wait
@@ -43,4 +53,4 @@ EXPOSE 8080
 
 USER gunicorn
 
-ENTRYPOINT ["python","-m", "invoke", "start-docker"]
+ENTRYPOINT ["sh", "-c", "./start_proxy.sh && python -m invoke start-docker"]
