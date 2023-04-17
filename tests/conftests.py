@@ -29,19 +29,23 @@ MODULE_NAME = "qhana_plugin_registry"
 from qhana_plugin_registry import create_app
 from qhana_plugin_registry.db.cli import create_db_function
 from qhana_plugin_registry.util.config.celery_config import CELERY_PRODUCTION_CONFIG
+from collections import ChainMap
 
 DEFAULT_TEST_CONFIG = {
     "SECRET_KEY": "test",
     "DEBUG": False,
     "TESTING": True,
-    "JSON_SORT_KEYS": True,
-    "JSONIFY_PRETTYPRINT_REGULAR": False,
+    "JSON": {
+        "sort_keys": True,
+        "compact": True,
+    },
     "DEFAULT_LOG_SEVERITY": INFO,
     "DEFAULT_LOG_FORMAT_STYLE": "{",
     "DEFAULT_LOG_FORMAT": "{asctime} [{levelname:^7}] [{module:<30}] {message}    <{funcName}, {lineno}; {pathname}>",
-    "CELERY": CELERY_PRODUCTION_CONFIG,
-    "DEFAULT_FILE_STORE": "local_filesystem",
-    "FILE_STORE_ROOT_PATH": "files",
+    "CELERY": ChainMap(
+        {"result_backend": "redis://", "broker_url": "memory://localhost/"},
+        CELERY_PRODUCTION_CONFIG,
+    ),
     "OPENAPI_VERSION": "3.0.2",
     "OPENAPI_JSON_PATH": "api-spec.json",
     "OPENAPI_URL_PREFIX": "",
@@ -49,12 +53,21 @@ DEFAULT_TEST_CONFIG = {
 
 
 @pytest.fixture(scope="function")
-def tmp_db():
+def tmp_app():
     test_config = {}
     test_config.update(DEFAULT_TEST_CONFIG)
     test_config.update({"SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
+    tmp_app = create_app(test_config)
+    yield tmp_app
 
-    app = create_app(test_config)
-    with app.app_context():
-        create_db_function(app)
+
+@pytest.fixture()
+def client(tmp_app):
+    return tmp_app.test_client()
+
+
+@pytest.fixture(scope="function")
+def tmp_db(tmp_app):
+    with tmp_app.app_context():
+        create_db_function(tmp_app)
         yield DB

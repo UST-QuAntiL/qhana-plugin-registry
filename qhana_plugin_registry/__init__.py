@@ -84,6 +84,14 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         # load the test config if passed in
         config.from_mapping(test_config)
 
+    # pass config to json provider
+    json_conf: dict = config.get("JSON", {})
+    if json_conf:
+        if "sort_keys" in json_conf:
+            app.json.sort_keys = json_conf["sort_keys"]
+        if "compact" in json_conf:
+            app.json.compact = json_conf["compact"]
+
     # End Loading config #################
 
     # Configure logging

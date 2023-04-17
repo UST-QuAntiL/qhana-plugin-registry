@@ -14,7 +14,8 @@
 
 from dataclasses import dataclass
 from typing import Sequence
-
+import json
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 import marshmallow as ma
 from marshmallow.validate import Length
 
@@ -23,38 +24,118 @@ from .base_models import (
     ApiLinkSchema,
     ApiObjectSchema,
     BaseApiObject,
+    CollectionResource,
+    CollectionResourceSchema,
     MaBaseSchema,
+    CursorPageArgumentsSchema,
 )
 
 __all__ = [
+    "TemplateTabSchema",
+    "TemplateGroupSchema",
     "TemplateSchema",
     "TemplateTabData",
+    "TemplateGroupData",
     "TemplateData",
 ]
 
 
-class TemplateTabSchema(MaBaseSchema):
+class TemplatePageArgumentsSchema(CursorPageArgumentsSchema):
+    template_id = ma.fields.Integer(
+        data_key="template-id", allow_none=True, load_only=True
+    )
+
+
+class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
+    group = ma.fields.String(allow_none=True, load_only=True)
+
+
+class TemplateTabSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
-    plugin_filter = ma.fields.String(required=True, allow_none=False)
-    plugins = ma.fields.List(ma.fields.Nested(ApiLinkSchema))
+    location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
+    sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
+    filter_string = ma.fields.String(required=True, allow_none=False, default="{}")
+    plugins = ma.fields.Nested(ApiLinkSchema)
+
+    @staticmethod
+    def validate_filter(filter_dict: dict, path: str = ""):
+        if len(filter_dict) == 0:
+            return
+        if len(filter_dict) > 1:
+            raise ma.ValidationError(
+                f"Invalid plugin filter: Only one filter key allowed per level. (Path: {path})"
+            )
+        key = next(iter(filter_dict.keys()))
+        current_path = path + f".{key}"
+        match filter_dict:
+            case {"and": l} | {"or": l}:
+                if not isinstance(l, list):
+                    raise ma.ValidationError(
+                        f"Invalid plugin filter: 'and' and 'or' must be lists, not '{type(l)}'. (Path: {current_path})"
+                    )
+                for f in l:
+                    TemplateTabSchema.validate_filter(f, current_path)
+            case {"not": f}:
+                TemplateTabSchema.validate_filter(f, current_path)
+            case {"name": f} | {"tag": f}:
+                if not isinstance(f, str):
+                    raise ma.ValidationError(
+                        f"Invalid plugin filter: Name and tag must be strings '{f}'. (Path: {current_path})"
+                    )
+            case {"version": v}:
+                if not isinstance(v, str):
+                    raise ma.ValidationError(
+                        f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string). (Path: {current_path})"
+                    )
+                try:
+                    SpecifierSet(v)
+                except InvalidSpecifier:
+                    raise ma.ValidationError(
+                        f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier. (Path: {current_path})"
+                    )
+            case _:
+                raise ma.ValidationError(
+                    f"Invalid plugin filter: Unknown key '{key}'. (Path: {current_path}))"
+                )
+
+    @ma.validates("filter_string")
+    def validate_filter_string(self, value):
+        try:
+            filter_dict = json.loads(value)
+        except json.JSONDecodeError:
+            raise ma.ValidationError("Invalid plugin filter: Not a valid JSON string.")
+        TemplateTabSchema.validate_filter(filter_dict)
+
+
+class TemplateGroupSchema(CollectionResourceSchema):
+    location = ma.fields.String(
+        required=True, allow_none=False, dump_only=True, validate=Length(max=255)
+    )
 
 
 class TemplateSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
     tags = ma.fields.List(ma.fields.String(), required=True, allow_none=False)
-    tabs = ma.fields.List(
-        ma.fields.Nested(TemplateTabSchema()), required=True, allow_none=False
+    groups = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
     )
 
 
 @dataclass
-class TemplateTabData:
+class TemplateTabData(BaseApiObject):
     name: str
     description: str
-    plugin_filter: str
-    plugins: Sequence[ApiLink]
+    location: str
+    sort_key: int
+    filter_string: str
+    plugins: ApiLink
+
+
+@dataclass
+class TemplateGroupData(CollectionResource):
+    location: str
 
 
 @dataclass
@@ -62,4 +143,4 @@ class TemplateData(BaseApiObject):
     name: str
     description: str
     tags: Sequence[str]
-    tabs: Sequence[TemplateTabData]
+    groups: Sequence[ApiLink]

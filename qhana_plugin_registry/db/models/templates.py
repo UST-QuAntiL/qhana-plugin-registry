@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple, Union
 
@@ -28,10 +29,10 @@ from ..db import DB, REGISTRY
 
 @REGISTRY.mapped
 @dataclass
-class WorkspaceTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
-    """DB model of a plugin workspace template."""
+class UiTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
+    """DB model of a user interface template."""
 
-    __tablename__ = "WorkspaceTemplate"
+    __tablename__ = "UiTemplate"
 
     __sa_dataclass_metadata_key__ = "sa"
 
@@ -101,7 +102,7 @@ class TemplateTag(IdMixin, ExistsMixin):
 
     @classmethod
     def get_or_create_all(
-        cls, tags: List[Union[str, Tuple[str, str]]]
+        cls, tags: Sequence[Union[str, Tuple[str, str]]]
     ) -> "List[TemplateTag]":
         if not tags:
             return []
@@ -137,7 +138,7 @@ class TagToTemplate:
         metadata={
             "sa": Column(
                 sql.Integer,
-                ForeignKey(WorkspaceTemplate.id, ondelete="CASCADE"),
+                ForeignKey(UiTemplate.id, ondelete="CASCADE"),
                 primary_key=True,
             )
         },
@@ -149,14 +150,14 @@ class TagToTemplate:
         },
     )
 
-    template: Optional[WorkspaceTemplate] = field(
+    template: Optional[UiTemplate] = field(
         default=None,
         repr=False,
         hash=False,
         compare=False,
         metadata={
             "sa": relationship(
-                WorkspaceTemplate, innerjoin=True, lazy="select", back_populates="_tags"
+                UiTemplate, innerjoin=True, lazy="select", back_populates="_tags"
             )
         },
     )
@@ -180,15 +181,14 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
         metadata={
             "sa": Column(
                 sql.Integer,
-                ForeignKey(WorkspaceTemplate.id, ondelete="CASCADE"),
+                ForeignKey(UiTemplate.id, ondelete="CASCADE"),
                 nullable=False,
             )
         },
     )
     sort_key: int = field(default=0, metadata={"sa": Column(sql.Integer())})
-    plugin_filter: str = field(
-        default="", metadata={"sa": Column(sql.Text())}
-    )  # FIXME default
+    location: str = field(default="workspace", metadata={"sa": Column(sql.String(255))})
+    filter_string: str = field(default="", metadata={"sa": Column(sql.Text())})
 
     _plugins: List["RampToTemplateTab"] = field(
         init=False,
@@ -206,14 +206,14 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
         },
     )
 
-    template: Optional[WorkspaceTemplate] = field(
+    template: Optional[UiTemplate] = field(
         default=None,
         repr=False,
         hash=False,
         compare=False,
         metadata={
             "sa": relationship(
-                WorkspaceTemplate, innerjoin=True, lazy="select", back_populates="tabs"
+                UiTemplate, innerjoin=True, lazy="select", back_populates="tabs"
             )
         },
     )
@@ -226,6 +226,10 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
             )
         },
     )
+
+    @property
+    def plugin_filter(self) -> dict:
+        return json.loads(self.filter_string)
 
 
 @REGISTRY.mapped

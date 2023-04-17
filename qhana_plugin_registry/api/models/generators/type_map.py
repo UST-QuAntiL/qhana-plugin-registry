@@ -43,9 +43,10 @@ def populate_metadata():
     from ..recommendations import RecommendationCollectionSchema, RecommendationDataRaw
     from ..root import RootSchema
     from ..root_raw import RootDataRaw
+    from ..templates_raw import TemplateGroupRaw
     from ..seeds import SeedSchema
     from ..service import ServiceSchema
-    from ..templates import TemplateSchema
+    from ..templates import TemplateSchema, TemplateGroupSchema, TemplateTabSchema
     from ... import (
         ENV_API,
         PLUGINS_API,
@@ -54,6 +55,7 @@ def populate_metadata():
         SEEDS_API,
         SERVICES_API,
         TEMPLATES_API,
+        TEMPLATE_TABS_API,
     )
     from ...env.env import EnvView
     from ...env.root import EnvRootView
@@ -67,11 +69,13 @@ def populate_metadata():
     from ...services.service import ServiceView
     from ...templates.root import TemplatesRootView
     from ...templates.template import TemplateView
+    from ...template_tabs.root import TemplateTabsRootView
+    from ...template_tabs.tab import TemplateTabView
     from ....db.models.env import Env
     from ....db.models.plugins import RAMP
     from ....db.models.seeds import Seed
     from ....db.models.services import Service
-    from ....db.models.templates import WorkspaceTemplate
+    from ....db.models.templates import UiTemplate, TemplateTab
 
     TYPE_TO_METADATA[RootDataRaw] = ResourceMetadata(
         rel_type=c.ROOT_REL_TYPE,
@@ -97,13 +101,29 @@ def populate_metadata():
         schema_id=ServiceSchema.schema_name(),
         collection_endpoint=f"{SERVICES_API.name}.{ServicesRootView.__name__}",
     )
-    TYPE_TO_METADATA[WorkspaceTemplate] = ResourceMetadata(
+    TYPE_TO_METADATA[UiTemplate] = ResourceMetadata(
         rel_type=c.TEMPLATE_REL_TYPE,
         extra_link_rels=c.TEMPLATE_EXTRA_LINK_RELATIONS,
         endpoint=f"{TEMPLATES_API.name}.{TemplateView.__name__}",
         schema=TemplateSchema,
         schema_id=TemplateSchema.schema_name(),
         collection_endpoint=f"{TEMPLATES_API.name}.{TemplatesRootView.__name__}",
+    )
+    TYPE_TO_METADATA[TemplateGroupRaw] = ResourceMetadata(
+        rel_type=c.TEMPLATE_TAB_REL_TYPE,
+        extra_link_rels=c.TEMPLATE_TAB_EXTRA_LINK_RELATIONS,
+        endpoint="",
+        schema=TemplateGroupSchema,
+        schema_id=TemplateGroupSchema.schema_name(),
+        collection_endpoint=f"{TEMPLATE_TABS_API.name}.{TemplateTabsRootView.__name__}",
+    )
+    TYPE_TO_METADATA[TemplateTab] = ResourceMetadata(
+        rel_type=c.TEMPLATE_TAB_REL_TYPE,
+        extra_link_rels=c.TEMPLATE_TAB_EXTRA_LINK_RELATIONS,
+        endpoint=f"{TEMPLATE_TABS_API.name}.{TemplateTabView.__name__}",
+        schema=TemplateTabSchema,
+        schema_id=TemplateTabSchema.schema_name(),
+        collection_endpoint=f"{TEMPLATE_TABS_API.name}.{TemplateTabsRootView.__name__}",
     )
     TYPE_TO_METADATA[Seed] = ResourceMetadata(
         rel_type=c.SEED_REL_TYPE,

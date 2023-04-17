@@ -62,7 +62,9 @@ ENV_ID_KEY = "envId"
 
 SERVICE_ID_KEY = "serviceId"
 
-TEMPLATE_ID_KEY = "wsTemplateId"
+TEMPLATE_ID_KEY = "uiTemplateId"
+
+TEMPLATE_TAB_ID_KEY = "uiTemplateTabId"
 
 SEED_ID_KEY = "seedId"
 
@@ -71,6 +73,8 @@ PLUGIN_ID_KEY = "pluginId"
 
 # query keys
 ITEM_COUNT_QUERY_KEY = "item-count"
+
+TEMPLATE_GROUP_QUERY_KEY = "group"
 
 
 # key defaults
@@ -85,7 +89,9 @@ ENV_REL_TYPE = "env"
 
 SERVICE_REL_TYPE = "service"
 
-TEMPLATE_REL_TYPE = "ws-template"
+TEMPLATE_REL_TYPE = "ui-template"
+
+TEMPLATE_TAB_REL_TYPE = "ui-template-tab"
 
 SEED_REL_TYPE = "seed"
 
@@ -101,13 +107,19 @@ ROOT_EXTRA_LINK_RELATIONS = (
     ENV_REL_TYPE,
     PLUGIN_REL_TYPE,
     RECOMMENDATION_REL_TYPE,
+    TEMPLATE_REL_TYPE,
 )
 
 ENV_EXTRA_LINK_RELATIONS = tuple()
 
 SERVICE_EXTRA_LINK_RELATIONS = tuple()
 
-TEMPLATE_EXTRA_LINK_RELATIONS = tuple()
+TEMPLATE_EXTRA_LINK_RELATIONS = (
+    TEMPLATE_TAB_REL_TYPE,
+    f"{TEMPLATE_TAB_REL_TYPE}_{CREATE_REL}",
+)
+
+TEMPLATE_TAB_EXTRA_LINK_RELATIONS = (PLUGIN_REL_TYPE,)
 
 SEED_EXTRA_LINK_RELATIONS = tuple()
 

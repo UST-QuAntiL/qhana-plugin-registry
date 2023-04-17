@@ -27,6 +27,7 @@ from .constants import (
     RECOMMENDATION_REL_TYPE,
     SEED_REL_TYPE,
     SERVICE_REL_TYPE,
+    TEMPLATE_REL_TYPE,
 )
 from .type_map import TYPE_TO_METADATA
 from ..base_models import ApiLink, ApiResponse
@@ -45,6 +46,7 @@ from ....db.models.env import Env
 from ....db.models.plugins import RAMP
 from ....db.models.seeds import Seed
 from ....db.models.services import Service
+from ....db.models.templates import UiTemplate
 
 # Root #########################################################################
 
@@ -126,6 +128,18 @@ class RootDataRecommendationsNavLinkGenerator(
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             RecommendationDataRaw([], []),
+            extra_relations=(NAV_REL, API_REL),
+        )
+
+
+class RootDataTemplatesNavLinkGenerator(
+    LinkGenerator, resource_type=RootDataRaw, relation=TEMPLATE_REL_TYPE
+):
+    def generate_link(
+        self, resource: RootDataRaw, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(UiTemplate, resource=resource, page_number=1),
             extra_relations=(NAV_REL, API_REL),
         )
 
