@@ -76,9 +76,6 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         # load config from file specified in env var
         config.from_envvar(f"{CONFIG_ENV_VAR_PREFIX}_SETTINGS", silent=True)
 
-        if "SERVER_NAME" in environ:
-            config["SERVER_NAME"] = environ["SERVER_NAME"]
-
         load_config_from_env(config)
     else:
         # load the test config if passed in

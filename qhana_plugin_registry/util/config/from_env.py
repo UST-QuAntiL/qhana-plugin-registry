@@ -20,6 +20,7 @@ def load_config_from_env(config: Config):
     _load_preconfigured_values(config)
     _load_url_rewrite_rules(config, "URL_MAP_FROM_LOCALHOST")
     _load_url_rewrite_rules(config, "URL_MAP_TO_LOCALHOST")
+    _load_flask_config_from_env(config)
 
 
 def _load_database_uri_from_env(config: Config):
@@ -128,3 +129,8 @@ def _load_url_rewrite_rules(config: Config, key: str):
 
         if len(config[key]) != len(url_map):
             pass  # TODO some rewrite rules were dismissed as invalid!
+
+
+def _load_flask_config_from_env(config: Config):
+    if "SERVER_NAME" in environ:
+        config["SERVER_NAME"] = environ["SERVER_NAME"]
