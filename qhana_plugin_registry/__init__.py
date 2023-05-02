@@ -79,6 +79,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         if "SERVER_NAME" in environ:
             config["SERVER_NAME"] = environ["SERVER_NAME"]
 
+        if "REVERSE_PROXY_COUNT" in environ:
+            config["REVERSE_PROXY_COUNT"] = environ["REVERSE_PROXY_COUNT"]
+
         load_config_from_env(config)
     else:
         # load the test config if passed in
