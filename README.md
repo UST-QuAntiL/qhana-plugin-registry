@@ -59,6 +59,7 @@ poetry run invoke worker --beat
 - add initial seeds and services with `INITIAL_PLUGIN_SEEDS` and `PRECONFIGURED_SERVICES`
 - add regex rewrite rules for urls with `URL_MAP_FROM_LOCALHOST` and `URL_MAP_TO_LOCALHOST`
 - The docker container includes a proxy to redirect requests to the host machine. To configure the ports that should be redirected set the environment variable `LOCALHOST_PROXY_PORTS` to e.g. `:1234 :2345`.
+- To force a specific scheme such as `https` for generated URLs, set `PREFERRED_URL_SCHEME` to the desired scheme 
 
 ### Trying out the Template
 
