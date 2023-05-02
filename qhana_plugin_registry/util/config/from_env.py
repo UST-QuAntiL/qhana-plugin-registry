@@ -134,3 +134,7 @@ def _load_url_rewrite_rules(config: Config, key: str):
 def _load_flask_config_from_env(config: Config):
     if "SERVER_NAME" in environ:
         config["SERVER_NAME"] = environ["SERVER_NAME"]
+
+    if "PREFERRED_URL_SCHEME" in environ:
+        config["PREFERRED_URL_SCHEME"] = environ["PREFERRED_URL_SCHEME"]
+
