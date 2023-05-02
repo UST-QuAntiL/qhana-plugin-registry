@@ -131,7 +131,12 @@ class TemplateSelfLinkGenerator(LinkGenerator, resource_type=UiTemplate):
         scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
 
         return ApiLink(
-            href=url_for(meta.endpoint, template_id=str(resource.id), _external=True, _scheme=scheme),
+            href=url_for(
+                meta.endpoint,
+                template_id=str(resource.id),
+                _external=True,
+                _scheme=scheme,
+            ),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
