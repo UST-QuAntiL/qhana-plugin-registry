@@ -16,7 +16,7 @@
 
 from typing import Dict, Iterable, Optional
 
-from flask import url_for
+from flask import url_for, current_app
 
 from .constants import (
     API_REL,
@@ -62,12 +62,14 @@ class RootDataLinkGenerator(LinkGenerator, resource_type=RootDataRaw):
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[RootDataRaw]
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
-            href=url_for(meta.endpoint, _external=True),
+            href=url_for(meta.endpoint, _external=True, _scheme=scheme),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=url_for(API_SPEC_RESOURCE, _external=True)
+            schema=url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)
             + f"#/components/schemas/{meta.schema_id}",
         )
 

@@ -16,7 +16,7 @@
 
 from typing import Dict, Iterable, Optional
 
-from flask import url_for
+from flask import url_for, current_app
 
 from .constants import (
     API_SPEC_RESOURCE,
@@ -71,12 +71,14 @@ class RecommendationCollectionLinkGenerator(
         if query_params is None:
             query_params = {}
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
-            href=url_for(endpoint, **query_params, _external=True),
+            href=url_for(endpoint, **query_params, _external=True, _scheme=scheme),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{RecommendationCollectionSchema.schema_name()}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{RecommendationCollectionSchema.schema_name()}",
         )
 
 

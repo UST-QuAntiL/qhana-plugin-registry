@@ -137,4 +137,3 @@ def _load_flask_config_from_env(config: Config):
 
     if "PREFERRED_URL_SCHEME" in environ:
         config["PREFERRED_URL_SCHEME"] = environ["PREFERRED_URL_SCHEME"]
-

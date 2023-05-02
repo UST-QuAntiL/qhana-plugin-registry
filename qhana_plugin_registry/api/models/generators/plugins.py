@@ -16,7 +16,7 @@
 
 from typing import Dict, Iterable, Optional
 
-from flask import url_for
+from flask import url_for, current_app
 
 from .constants import (
     API_SPEC_RESOURCE,
@@ -64,12 +64,14 @@ class PluginPageLinkGenerator(LinkGenerator, resource_type=RAMP, page=True):
         endpoint = meta.collection_endpoint
         assert endpoint is not None
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
-            href=url_for(endpoint, **query_params, _external=True),
+            href=url_for(endpoint, **query_params, _external=True, _scheme=scheme),
             rel=(COLLECTION_REL, PAGE_REL),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{CursorPageSchema.schema_name()}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{CursorPageSchema.schema_name()}",
         )
 
 
@@ -104,12 +106,14 @@ class PluginSelfLinkGenerator(LinkGenerator, resource_type=RAMP):
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[RAMP]
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
-            href=url_for(meta.endpoint, plugin_id=str(resource.id), _external=True),
+            href=url_for(meta.endpoint, plugin_id=str(resource.id), _external=True, _scheme=scheme),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{meta.schema_id}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{meta.schema_id}",
             name=f"{resource.name} ({resource.version})",
         )
 

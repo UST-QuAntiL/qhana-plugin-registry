@@ -16,7 +16,7 @@
 
 from typing import Dict, Iterable, Optional
 
-from flask import url_for
+from flask import url_for, current_app
 
 from .constants import (
     API_SPEC_RESOURCE,
@@ -67,17 +67,20 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
         else:
             query_params[TEMPLATE_GROUP_QUERY_KEY] = resource.location
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
             href=url_for(
                 endpoint,
                 template_id=str(resource.template.id),
                 **query_params,
                 _external=True,
+                _scheme=scheme
             ),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{TemplateGroupSchema.schema_name()}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{TemplateGroupSchema.schema_name()}",
             name=f"Tab Group: {resource.location}",
         )
 

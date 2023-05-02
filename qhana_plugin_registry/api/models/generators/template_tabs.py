@@ -16,7 +16,7 @@
 
 from typing import Dict, Iterable, Optional
 
-from flask import url_for
+from flask import url_for, current_app
 
 from .constants import (
     API_SPEC_RESOURCE,
@@ -78,17 +78,20 @@ class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, pag
         endpoint = meta.collection_endpoint
         assert endpoint is not None
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
             href=url_for(
                 endpoint,
                 template_id=str(resource.resource.id),
                 **query_params,
                 _external=True,
+                _scheme=scheme
             ),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{CursorPageSchema.schema_name()}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{CursorPageSchema.schema_name()}",
         )
 
 
@@ -147,17 +150,20 @@ class TemplateTabSelfLinkGenerator(LinkGenerator, resource_type=TemplateTab):
     ) -> Optional[ApiLink]:
         meta = TYPE_TO_METADATA[TemplateTab]
 
+        scheme = current_app.config.get("PREFERRED_URL_SCHEME", "http")
+
         return ApiLink(
             href=url_for(
                 meta.endpoint,
                 template_id=str(resource.template_id),
                 tab_id=str(resource.id),
                 _external=True,
+                _scheme=scheme
             ),
             rel=tuple(),
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource),
-            schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{meta.schema_id}",
+            schema=f"{url_for(API_SPEC_RESOURCE, _external=True, _scheme=scheme)}#/components/schemas/{meta.schema_id}",
             name=resource.name,
         )
 
