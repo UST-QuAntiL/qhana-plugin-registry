@@ -31,6 +31,7 @@ from tomli import load as load_toml
 from . import api, babel, celery, db, licenses
 from .util.config import DebugConfig, ProductionConfig
 from .util.config.from_env import load_config_from_env
+from .util.reverse_proxy_fix import apply_reverse_proxy_fix
 
 # change this to change tha flask app name and the config env var prefix
 # must not contain any spaces!
@@ -78,6 +79,10 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
 
         if "SERVER_NAME" in environ:
             config["SERVER_NAME"] = environ["SERVER_NAME"]
+
+        if "REVERSE_PROXY_COUNT" in environ:
+            config["REVERSE_PROXY_COUNT"] = int(environ["REVERSE_PROXY_COUNT"])
+            apply_reverse_proxy_fix(app)
 
         load_config_from_env(config)
     else:
