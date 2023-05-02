@@ -75,7 +75,7 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
                 template_id=str(resource.template.id),
                 **query_params,
                 _external=True,
-                _scheme=scheme
+                _scheme=scheme,
             ),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,

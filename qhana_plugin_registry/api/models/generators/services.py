@@ -127,7 +127,10 @@ class ServiceSelfLinkGenerator(LinkGenerator, resource_type=Service):
 
         return ApiLink(
             href=url_for(
-                meta.endpoint, service_id=str(resource.service_id), _external=True, _scheme=scheme
+                meta.endpoint,
+                service_id=str(resource.service_id),
+                _external=True,
+                _scheme=scheme,
             ),
             rel=tuple(),
             resource_type=meta.rel_type,

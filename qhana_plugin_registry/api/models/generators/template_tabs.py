@@ -86,7 +86,7 @@ class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, pag
                 template_id=str(resource.resource.id),
                 **query_params,
                 _external=True,
-                _scheme=scheme
+                _scheme=scheme,
             ),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
@@ -158,7 +158,7 @@ class TemplateTabSelfLinkGenerator(LinkGenerator, resource_type=TemplateTab):
                 template_id=str(resource.template_id),
                 tab_id=str(resource.id),
                 _external=True,
-                _scheme=scheme
+                _scheme=scheme,
             ),
             rel=tuple(),
             resource_type=meta.rel_type,
