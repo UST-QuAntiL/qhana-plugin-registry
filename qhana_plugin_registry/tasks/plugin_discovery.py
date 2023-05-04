@@ -17,7 +17,7 @@ from typing import Optional, Union
 
 from celery.utils.log import get_task_logger
 from flask.globals import current_app
-from requests.exceptions import ConnectionError, JSONDecodeError
+from requests.exceptions import ConnectionError, JSONDecodeError, HTTPError
 from sqlalchemy.sql.expression import delete, desc, select
 
 from .url_mapped_requests import open_url, map_url
@@ -69,6 +69,11 @@ def discover_plugins_from_seeds(
         data = open_url(seed, timeout=5).json()
     except JSONDecodeError or ConnectionError as err:
         return
+    except HTTPError as err:
+        if err.response is not None and err.response.status_code == 404:
+            # FIXME properly catch errors in starmap tasks to not affect other tasks!
+            return  # ignore not found status codes
+        raise
     if data.keys() >= PLUGIN_KEYS:
         # Data matches the structure of a plugin resource => is most likely a plugin
         plugin: RAMP
