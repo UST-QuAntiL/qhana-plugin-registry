@@ -50,7 +50,7 @@ SERVICES_API = Blueprint(
     name="api-services",
     import_name=__name__,
     description="The basic services url API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/services",
+    url_prefix="/services",
 )
 
 

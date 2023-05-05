@@ -57,7 +57,7 @@ PLUGINS_API = Blueprint(
     name="api-plugins",
     import_name=__name__,
     description="The basic plugins API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/plugins",
+    url_prefix="/plugins",
 )
 
 

@@ -49,7 +49,7 @@ TEMPLATES_API = Blueprint(
     name="api-templates",
     import_name=__name__,
     description="The basic templates url API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/templates",
+    url_prefix="/templates",
 )
 
 

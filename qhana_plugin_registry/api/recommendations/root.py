@@ -39,7 +39,7 @@ RECOMMENDATIONS_API = Blueprint(
     name="api-recommendations",
     import_name=__name__,
     description="The basic recommendations API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/recommendations",
+    url_prefix="/recommendations",
 )
 
 

@@ -42,7 +42,7 @@ ENV_API = Blueprint(
     name="api-env",
     import_name=__name__,
     description="The basic env url API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/env",
+    url_prefix="/env",
 )
 
 

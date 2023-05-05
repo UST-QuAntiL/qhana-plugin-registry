@@ -48,7 +48,7 @@ SEEDS_API = Blueprint(
     name="api-seeds",
     import_name=__name__,
     description="The basic seed url API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/seeds",
+    url_prefix="/seeds",
 )
 
 

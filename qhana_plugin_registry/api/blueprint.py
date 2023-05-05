@@ -21,6 +21,5 @@ API = Api(spec_kwargs={"title": "RAMP Registry API", "version": "v1"})
 ROOT_ENDPOINT = SmorestBlueprint(
     "api-root",
     "root",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api"),
     description="The API endpoint pointing towards all resources.",
 )
