@@ -82,6 +82,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         if "URL_PREFIX" in environ:
             config["URL_PREFIX"] = environ["URL_PREFIX"]
 
+        if "OPENAPI_URL_PREFIX" in environ:
+            config["OPENAPI_URL_PREFIX"] = environ["OPENAPI_URL_PREFIX"]
+
         load_config_from_env(config)
     else:
         # load the test config if passed in
