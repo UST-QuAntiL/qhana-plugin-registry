@@ -45,7 +45,8 @@ TEMPLATE_TABS_API = Blueprint(
     name="api-template-tabs",
     import_name=__name__,
     description="The basic template tabs API.",
-    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/templates/<string:template_id>/tabs/",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api")
+    + "/templates/<string:template_id>/tabs/",
 )
 
 
