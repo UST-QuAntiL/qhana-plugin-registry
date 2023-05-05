@@ -17,6 +17,7 @@
 from http import HTTPStatus
 from typing import Sequence
 
+from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint
 
@@ -41,7 +42,7 @@ ENV_API = Blueprint(
     name="api-env",
     import_name=__name__,
     description="The basic env url API.",
-    url_prefix="/api/env",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/env",
 )
 
 

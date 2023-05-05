@@ -17,6 +17,7 @@
 from http import HTTPStatus
 from typing import List, Optional, cast
 
+from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.sql.expression import ColumnElement
@@ -49,7 +50,7 @@ SERVICES_API = Blueprint(
     name="api-services",
     import_name=__name__,
     description="The basic services url API.",
-    url_prefix="/api/services",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/services",
 )
 
 

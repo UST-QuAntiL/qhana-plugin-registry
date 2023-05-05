@@ -79,6 +79,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         if "SERVER_NAME" in environ:
             config["SERVER_NAME"] = environ["SERVER_NAME"]
 
+        if "URL_PREFIX" in environ:
+            config["URL_PREFIX"] = environ["URL_PREFIX"]
+
         load_config_from_env(config)
     else:
         # load the test config if passed in

@@ -17,6 +17,7 @@
 from http import HTTPStatus
 from typing import List, cast, Sequence, Optional
 
+from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from sqlalchemy.sql.expression import ColumnElement
@@ -48,7 +49,7 @@ TEMPLATES_API = Blueprint(
     name="api-templates",
     import_name=__name__,
     description="The basic templates url API.",
-    url_prefix="/api/templates",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/templates",
 )
 
 

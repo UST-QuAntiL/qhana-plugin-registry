@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from flask import current_app
 from flask_smorest import Api
 from flask_smorest import Blueprint as SmorestBlueprint
 
@@ -21,6 +21,6 @@ API = Api(spec_kwargs={"title": "RAMP Registry API", "version": "v1"})
 ROOT_ENDPOINT = SmorestBlueprint(
     "api-root",
     "root",
-    url_prefix="/api",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api"),
     description="The API endpoint pointing towards all resources.",
 )

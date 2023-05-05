@@ -17,6 +17,7 @@
 from http import HTTPStatus
 from typing import List, cast, Optional, Union
 
+from flask import current_app
 from flask.views import MethodView
 from flask_smorest import abort
 from flask_smorest import Blueprint
@@ -44,7 +45,7 @@ TEMPLATE_TABS_API = Blueprint(
     name="api-template-tabs",
     import_name=__name__,
     description="The basic template tabs API.",
-    url_prefix="/api/templates/<string:template_id>/tabs/",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/templates/<string:template_id>/tabs/",
 )
 
 

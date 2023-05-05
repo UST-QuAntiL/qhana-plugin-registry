@@ -17,6 +17,7 @@
 from http import HTTPStatus
 from typing import List, Optional, Sequence, Union, cast, Tuple, Set
 
+from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
@@ -56,7 +57,7 @@ PLUGINS_API = Blueprint(
     name="api-plugins",
     import_name=__name__,
     description="The basic plugins API.",
-    url_prefix="/api/plugins",
+    url_prefix=current_app.config.get("URL_PREFIX", "/api") + "/plugins",
 )
 
 
