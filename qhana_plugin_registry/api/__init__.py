@@ -43,8 +43,14 @@ def register_root_api(app: Flask):
     API.register_blueprint(ENV_API, url_prefix=url_prefix + ENV_API.url_prefix)
     API.register_blueprint(SEEDS_API, url_prefix=url_prefix + SEEDS_API.url_prefix)
     API.register_blueprint(SERVICES_API, url_prefix=url_prefix + SERVICES_API.url_prefix)
-    API.register_blueprint(TEMPLATES_API, url_prefix=url_prefix + TEMPLATES_API.url_prefix)
-    API.register_blueprint(TEMPLATE_TABS_API, url_prefix=url_prefix + TEMPLATE_TABS_API.url_prefix)
-    API.register_blueprint(RECOMMENDATIONS_API, url_prefix=url_prefix + RECOMMENDATIONS_API.url_prefix)
+    API.register_blueprint(
+        TEMPLATES_API, url_prefix=url_prefix + TEMPLATES_API.url_prefix
+    )
+    API.register_blueprint(
+        TEMPLATE_TABS_API, url_prefix=url_prefix + TEMPLATE_TABS_API.url_prefix
+    )
+    API.register_blueprint(
+        RECOMMENDATIONS_API, url_prefix=url_prefix + RECOMMENDATIONS_API.url_prefix
+    )
 
     populate_metadata()
