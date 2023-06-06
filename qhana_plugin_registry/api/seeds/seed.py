@@ -18,6 +18,7 @@ from http import HTTPStatus
 
 from flask.views import MethodView
 from flask_smorest import abort
+from sqlalchemy.sql import select
 
 from .root import SEEDS_API
 from ..models.base_models import (
@@ -29,6 +30,7 @@ from ..models.request_helpers import ApiResponseGenerator, PageResource
 from ..models.seeds import SeedSchema
 from ...db.db import DB
 from ...db.models.seeds import Seed
+from ...db.models.plugins import RAMP
 
 
 @SEEDS_API.route("/<string:seed_id>/")
@@ -52,7 +54,10 @@ class SeedView(MethodView):
             abort(HTTPStatus.BAD_REQUEST, message="The seedId is in the wrong format!")
         found_seed = Seed.get_by_id(int(seed_id))
         if found_seed:
-            # FIXME handle related plugins!
+            plugin_q = select(RAMP.id).where(RAMP.seed == found_seed)
+            ramps = DB.session.execute(plugin_q).all()
+            DB.session.delete(ramps)
+
             DB.session.delete(found_seed)
             DB.session.commit()
         else:

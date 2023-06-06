@@ -42,6 +42,8 @@ from ..models.request_helpers import (
 from ..models.seeds import SeedSchema
 from ...db.db import DB
 from ...db.models.seeds import Seed
+from ...tasks.plugin_discovery import discover_plugins_from_seeds
+
 
 SEEDS_API = Blueprint(
     name="api-seeds",
@@ -126,7 +128,7 @@ class SeedsRootView(MethodView):
         DB.session.add(created_seed)
         DB.session.commit()
 
-        # FIXME kick of plugin discovery
+        discover_plugins_from_seeds.s(created_seed.url).apply_async()
 
         return ApiResponseGenerator.get_api_response(
             NewApiObjectRaw(self=PageResource(Seed), new=created_seed)
