@@ -24,6 +24,7 @@ from .constants import (
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
     NAV_REL,
+    POST_REL,
     PAGE_REL,
     PLUGIN_ID_KEY,
     ROOT_RESOURCE_DUMMY,
@@ -83,6 +84,18 @@ class PluginPageUpLinkGenerator(
         link = LinkGenerator.get_link_of(parent_resource, query_params=query_params)
         assert link is not None
         link.rel = (UP_REL,)
+        return link
+
+
+class PluginPagePostLinkGenerator(
+    LinkGenerator, resource_type=RAMP, page=True, relation=POST_REL
+):
+    def generate_link(
+        self, resource: PageResource, *, query_params: Optional[Dict[str, str]] = None
+    ) -> Optional[ApiLink]:
+        link = LinkGenerator.get_link_of(resource, query_params={})
+        assert link is not None
+        link.rel = (POST_REL,)
         return link
 
 

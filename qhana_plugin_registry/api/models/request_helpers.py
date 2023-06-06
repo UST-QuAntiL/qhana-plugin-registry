@@ -194,7 +194,7 @@ class KeyGenerator:
         raise NotImplementedError()
 
 
-LINK_ACTIONS = {"create", "update", "delete", "restore"}
+LINK_ACTIONS = {"create", "update", "delete", "restore", "post"}
 
 
 class LinkGenerator:
