@@ -52,6 +52,10 @@ class PluginsPageArgumentsSchema(CursorPageArgumentsSchema):
     )
 
 
+class PluginsPOSTArgumentsSchema(MaBaseSchema):
+    url = ma.fields.String(allow_none=False, load_only=True)
+
+
 class DataMetadataSchema(MaBaseSchema):
     data_type = ma.fields.String(
         required=True,

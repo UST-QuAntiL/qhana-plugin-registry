@@ -16,12 +16,18 @@
 
 from http import HTTPStatus
 from typing import List, Optional, Sequence, Union, cast, Tuple, Set
+from urllib.parse import urlparse
 
+from flask import Response
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
+from sqlalchemy.sql import select
 
-from qhana_plugin_registry.api.models.plugins import PluginsPageArgumentsSchema
+from qhana_plugin_registry.api.models.plugins import (
+    PluginsPageArgumentsSchema,
+    PluginsPOSTArgumentsSchema,
+)
 
 from ..models.base_models import (
     CursorPageSchema,
@@ -40,6 +46,7 @@ from ..models.request_helpers import (
     PageResource,
 )
 from ...db.db import DB
+from ...db.models.seeds import Seed
 from ...db.models.plugins import RAMP, PluginTag
 from ...db.filters import (
     filter_impossible,
@@ -51,6 +58,7 @@ from ...db.filters import (
     filter_ramps_by_input_data,
     filter_ramps_by_template_tab,
 )
+from ...tasks.plugin_discovery import discover_plugins_from_seeds
 
 PLUGINS_API = Blueprint(
     name="api-plugins",
@@ -242,3 +250,25 @@ class PluginsRootView(MethodView):
             ],
             extra_embedded=embedded_items,
         )
+
+    @PLUGINS_API.arguments(PluginsPOSTArgumentsSchema, location="query", as_kwargs=True)
+    @PLUGINS_API.response(HTTPStatus.NO_CONTENT)
+    def post(self, url: str):
+        """Trigger discovery of a new plugin. The plugin must be reachable via a seed to trigger the discovery!"""
+
+        _, netloc, path, *_ = urlparse(url)
+
+        seed_q = select(Seed).where(Seed.url.contains(netloc))
+
+        seeds = DB.session.execute(seed_q).scalars().all()
+
+        for seed in sorted(seeds, key=lambda s: (len(s.url), s.url)):
+            seed_url_components = urlparse(seed.url)
+            if seed_url_components[1] == netloc and path.startswith(
+                seed_url_components[2]
+            ):
+                # starting plugin discovery for plugin from found seed
+                discover_plugins_from_seeds.s(seed=url, root_seed=seed.url).apply_async()
+                break
+
+        return Response(status=HTTPStatus.NO_CONTENT)
