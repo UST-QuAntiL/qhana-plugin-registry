@@ -77,6 +77,7 @@ class TemplateTabsRootView(MethodView):
             tabs = [t for t in found_template.tabs if t.location == group]
         else:
             tabs = list(found_template.tabs)
+        tabs = sorted(tabs, key=lambda t: t.sort_key)
 
         embedded_responses = (
             ApiResponseGenerator.get_api_response(EmbeddedResource(item)) for item in tabs
