@@ -94,13 +94,13 @@ def get_page_info(
             order_by_clauses.append(sort_direction(sort_column))
     row_numbers: Any = func.row_number().over(order_by=order_by_clauses)
 
-    query_filter: Any = and_(*filter_criteria)
+    query_filter: List[Any] = [and_(*filter_criteria)] if filter_criteria else []
 
     collection_size: int = DB.session.execute(
         select(func.count())
         .select_from(model)
         .options(lazyload("*"))
-        .filter(query_filter)
+        .filter(*query_filter)
     ).scalar_one_or_none()
 
     if cursor is not None:
@@ -114,7 +114,7 @@ def get_page_info(
             .scalar()  # none or value of the cursor
         )
 
-    item_query: Query = select(model).filter(query_filter).order_by(*order_by_clauses)
+    item_query: Query = select(model).filter(*query_filter).order_by(*order_by_clauses)
 
     if collection_size <= item_count:
         return PaginationInfo(
