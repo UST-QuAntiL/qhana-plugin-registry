@@ -129,16 +129,20 @@ def get_page_info(
     cursor_row: Union[int, Any] = 0
 
     if cursor is not None:
-        # always include cursor row
-        query_filter = or_(cursor_column == cursor, and_(*filter_criteria))
-        item_query = select(model).filter(query_filter).order_by(*order_by_clauses)
+        if filter_criteria:
+            # always include cursor row
+            query_filter = [or_(cursor_column == cursor, and_(*filter_criteria))]
+        else:
+            query_filter = []
+
+        item_query = select(model).filter(*query_filter).order_by(*order_by_clauses)
 
         cursor_row_cte: CTE = (
             DB.session.query(
                 row_numbers.label("row"),
                 cursor_column,
             )
-            .filter(query_filter)
+            .filter(*query_filter)
             .from_self(column("row"))
             .filter(cursor_column == cursor)
             .cte("cursor_row")
@@ -152,7 +156,7 @@ def get_page_info(
             (row_numbers / item_count).label("page"),
             (row_numbers % item_count).label("modulo"),
         )
-        .filter(query_filter)
+        .filter(*query_filter)
         .order_by(column("row").asc())
         .cte("pages")
     )
@@ -162,7 +166,7 @@ def get_page_info(
             row_numbers.label("row"),
             (row_numbers / item_count).label("page"),
         )
-        .filter(query_filter)
+        .filter(*query_filter)
         .order_by(column("row").desc())
         .limit(1)
         .cte("last-page")
