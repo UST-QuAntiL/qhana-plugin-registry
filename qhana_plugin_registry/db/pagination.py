@@ -88,7 +88,9 @@ def get_page_info(
         sort_column = sortables[col_name]
         if "collate" in sort_column.info:
             order_by_clauses.append(
-                sort_direction(sort_column.collate(sort_column.info["collate"][DB.engine.name]))
+                sort_direction(
+                    sort_column.collate(sort_column.info["collate"][DB.engine.name])
+                )
             )
         else:
             order_by_clauses.append(sort_direction(sort_column))
