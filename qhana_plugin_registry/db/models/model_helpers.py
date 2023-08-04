@@ -62,7 +62,17 @@ class NameDescriptionMixin:
         default="",
         metadata={
             "sa": DB.Column(
-                DB.Unicode, nullable=False, index=True, info={"collate": "NOCASE"}
+                DB.Unicode,
+                nullable=False,
+                index=True,
+                info={
+                    "collate": {
+                        "postgresql": "POSIX",
+                        "mysql": "utf8mb4_bin",
+                        "sqlite": "NOCASE",
+                        "mssql": "Latin1_General_CI_AS",
+                    }
+                },
             )
         },
     )
