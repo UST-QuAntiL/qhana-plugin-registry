@@ -31,6 +31,7 @@ from sqlalchemy.orm.query import Query
 from sqlalchemy.sql import column, func, select
 from sqlalchemy.sql.expression import and_, asc, desc, or_, ColumnElement
 from sqlalchemy.sql.selectable import CTE
+from flask import current_app
 
 from .db import DB, MODEL
 from .models.model_helpers import IdMixin
@@ -86,11 +87,18 @@ def get_page_info(
         sort_direction: Any = desc if direction == "desc" else asc
 
         sort_column = sortables[col_name]
-        if "collate" in sort_column.info:
-            order_by_clauses.append(
-                sort_direction(sort_column.collate(sort_column.info["collate"]))
-            )
+        collate_dict = sort_column.info.get("collate", None)
+        if isinstance(collate_dict, dict):
+            collate = collate_dict.get(DB.engine.name, None)
+            if collate:
+                order_by_clauses.append(sort_direction(sort_column.collate(collate)))
+            else:
+                current_app.logger.warning(
+                    f"Collate missing for engine {DB.engine.name}: {collate_dict}"
+                )
         else:
+            if collate_dict is not None:
+                current_app.logger.warning(f"Collate is not a dict: {collate_dict}")
             order_by_clauses.append(sort_direction(sort_column))
     row_numbers: Any = func.row_number().over(order_by=order_by_clauses)
 
