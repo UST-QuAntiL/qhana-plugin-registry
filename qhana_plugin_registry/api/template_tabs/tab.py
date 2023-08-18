@@ -28,6 +28,11 @@ from ..models.base_models import (
     ChangedApiObjectSchema,
     get_api_response_schema,
 )
+from ..models.request_helpers import (
+    ApiResponseGenerator,
+    EmbeddedResource,
+    PageResource,
+)
 from ..models.request_helpers import ApiResponseGenerator, PageResource
 from ..models.templates import TemplateTabSchema
 from ...db.db import DB
@@ -93,8 +98,16 @@ class TemplateTabView(MethodView):
         DB.session.commit()
         apply_filter_for_tab.delay(found_tab.id)
 
+        DB.session.refresh(found_template)
+        extra_embedded = []
+
+        # embed the template as well, as template groups might have changed
+        embedded = ApiResponseGenerator.get_api_response(EmbeddedResource(found_template))
+        if embedded:
+            extra_embedded.append(embedded)
+
         return ApiResponseGenerator.get_api_response(
-            ChangedApiObjectRaw(changed=found_tab)
+            ChangedApiObjectRaw(changed=found_tab), extra_embedded=extra_embedded
         )
 
     @TEMPLATE_TABS_API.response(
@@ -124,9 +137,18 @@ class TemplateTabView(MethodView):
                 template=found_template,
             )
 
+        DB.session.refresh(found_template)
+        extra_embedded = []
+
+        # embed the template as well, as template groups might have changed
+        embedded = ApiResponseGenerator.get_api_response(EmbeddedResource(found_template))
+        if embedded:
+            extra_embedded.append(embedded)
+
         return ApiResponseGenerator.get_api_response(
             DeletedApiObjectRaw(
                 deleted=found_tab,
                 redirect_to=PageResource(UiTemplate, page_number=1),
-            )
+            ),
+            extra_embedded=extra_embedded,
         )

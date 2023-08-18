@@ -144,6 +144,15 @@ class TemplateTabsRootView(MethodView):
         DB.session.refresh(created_tab)
         apply_filter_for_tab.delay(created_tab.id)
 
+        DB.session.refresh(found_template)
+        extra_embedded = []
+
+        # embed the template as well, as template groups might have changed
+        embedded = ApiResponseGenerator.get_api_response(EmbeddedResource(found_template))
+        if embedded:
+            extra_embedded.append(embedded)
+
         return ApiResponseGenerator.get_api_response(
-            NewApiObjectRaw(self=PageResource(UiTemplate), new=created_tab)
+            NewApiObjectRaw(self=PageResource(UiTemplate), new=created_tab),
+            extra_embedded=extra_embedded
         )
