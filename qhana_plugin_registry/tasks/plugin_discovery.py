@@ -17,11 +17,16 @@ from typing import Optional, Union
 
 from celery.utils.log import get_task_logger
 from flask.globals import current_app
-from requests.exceptions import ConnectionError, JSONDecodeError, HTTPError
+from requests.exceptions import (
+    ConnectionError,
+    JSONDecodeError,
+    HTTPError,
+    RequestException,
+)
 from sqlalchemy.sql.expression import delete, desc, select
 
 from .url_mapped_requests import open_url, map_url
-from ..celery import CELERY
+from ..celery import CELERY, FlaskTask
 from ..db.db import DB
 from ..db.models.plugins import RAMP
 from ..db.models.seeds import Seed
@@ -36,7 +41,7 @@ DEFAULT_BATCH_SIZE = 20
 
 
 @CELERY.task(name=f"{_name}.start_plugin_discovery", bind=True, ignore_result=True)
-def start_plugin_discovery(self):
+def start_plugin_discovery(self: FlaskTask):
     """Kick of plugin discovery process starting from the seed urls."""
     batch_size: int = current_app.config.get("PLUGIN_BATCH_SIZE", DEFAULT_BATCH_SIZE)
     seeds = DB.session.execute(select(Seed.url)).scalars().all()
@@ -50,7 +55,7 @@ PLUGIN_KEYS = {"name", "version", "title", "description", "type", "tags", "entry
 
 @CELERY.task(name=f"{_name}.discover_plugins_from_seeds", bind=True, ignore_result=True)
 def discover_plugins_from_seeds(
-    self, seed: str, root_seed: Optional[str] = None, nesting: int = 0
+    self: FlaskTask, seed: str, root_seed: Optional[str] = None, nesting: int = 0
 ):
     """Discover QHAna plugins starting off with a seed URL.
 
@@ -71,9 +76,17 @@ def discover_plugins_from_seeds(
         return
     except HTTPError as err:
         if err.response is not None and err.response.status_code == 404:
-            # FIXME properly catch errors in starmap tasks to not affect other tasks!
             return  # ignore not found status codes
-        raise
+        TASK_LOGGER.info(
+            f"Could not reach seed/plugin '{seed}' because of a server error. ({err})"
+        )
+        return
+    except RequestException as err:
+        TASK_LOGGER.info(
+            f"Could not reach seed/plugin '{seed}' because of a network error. ({err})"
+        )
+        return
+
     if data.keys() >= PLUGIN_KEYS:
         # Data matches the structure of a plugin resource => is most likely a plugin
         plugin: RAMP
@@ -92,7 +105,7 @@ def discover_plugins_from_seeds(
     # treat seed as plugin runner
     try:
         plugin_data = open_url(seed.rstrip("/") + "/plugins", timeout=10).json()
-    except JSONDecodeError or ConnectionError as err:
+    except JSONDecodeError or ConnectionError or RequestException as err:
         return
 
     root_seed = root_seed if root_seed else seed
