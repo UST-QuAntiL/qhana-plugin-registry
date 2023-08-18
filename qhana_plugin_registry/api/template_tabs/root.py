@@ -154,5 +154,5 @@ class TemplateTabsRootView(MethodView):
 
         return ApiResponseGenerator.get_api_response(
             NewApiObjectRaw(self=PageResource(UiTemplate), new=created_tab),
-            extra_embedded=extra_embedded
+            extra_embedded=extra_embedded,
         )
