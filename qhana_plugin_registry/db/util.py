@@ -157,7 +157,6 @@ def update_plugin_data(
     found_plugin.last_available = now
 
     # do not error for misbehaving plugins without a name
-    # FIXME properly catch errors in starmap tasks to not affect other tasks!
     if found_plugin.name is None:
         found_plugin.name = "UNNAMED"
 
