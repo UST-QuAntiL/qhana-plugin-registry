@@ -16,7 +16,7 @@ from typing import Optional, Sequence, Tuple, Union, cast
 
 from celery.canvas import Signature
 from sqlalchemy.sql.expression import Select, and_, or_, select
-from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.functions import count, sum as sql_sum
 
 from .base_recommender import PluginRecommender
 from ..util import DataItem, DataItemTuple, RecommendationContext
@@ -83,7 +83,7 @@ def fetch_votes(self, current_data: Sequence[Union[DataItemTuple, DataItem]]):
     required_alias = required_q.subquery("required")
 
     q: Select = (
-        select(DataToRAMP.ramp_id, count(), required_alias.c[1])
+        select(DataToRAMP.ramp_id, count(), sql_sum(required_alias.c[1]))
         .filter(*data_filters)
         .group_by(DataToRAMP.ramp_id)
     )
