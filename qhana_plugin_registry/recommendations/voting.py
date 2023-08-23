@@ -175,12 +175,12 @@ def get_recommendations(
     except TimeoutError:
         pass  # gather all finished results instead
     except Exception:
+        # log any unexpected exception (but proceed normally with the successful tasks)
         for n, r in results:
             if r.failed():
                 current_app.logger.warning(
                     f"Recommender {n} failed with an exception.", exc_info=r.result
                 )
-        pass
 
     # gather finished results
     votes = [(n, r.result) for n, r in results if r.successful()]
