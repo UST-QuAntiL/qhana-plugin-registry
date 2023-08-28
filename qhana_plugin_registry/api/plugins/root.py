@@ -268,7 +268,9 @@ class PluginsRootView(MethodView):
                 seed_url_components[2]
             ):
                 # starting plugin discovery for plugin from found seed
-                discover_plugins_from_seeds.s(seed=url, root_seed=seed.url, delete_on_missing=True).apply_async()
+                discover_plugins_from_seeds.s(
+                    seed=url, root_seed=seed.url, delete_on_missing=True
+                ).apply_async()
                 break
 
         return Response(status=HTTPStatus.NO_CONTENT)
