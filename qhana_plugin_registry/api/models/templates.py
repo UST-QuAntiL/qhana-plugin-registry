@@ -78,7 +78,7 @@ class TemplateTabSchema(ApiObjectSchema):
                     TemplateTabSchema.validate_filter(f, current_path)
             case {"not": f}:
                 TemplateTabSchema.validate_filter(f, current_path)
-            case {"name": f} | {"tag": f}:
+            case {"name": f} | {"tag": f} | {"id": f}:
                 if not isinstance(f, str):
                     raise ma.ValidationError(
                         f"Invalid plugin filter: Name and tag must be strings '{f}'. (Path: {current_path})"

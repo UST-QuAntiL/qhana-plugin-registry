@@ -30,7 +30,9 @@ TASK_LOGGER = get_task_logger(_name)
 DEFAULT_BATCH_SIZE = 500
 
 
-def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP]:
+def get_plugins_from_filter(
+    filter_dict: dict, plugin_mapping: dict[str, RAMP]
+) -> set[RAMP]:
     """Get the plugins that match a filter.
 
     Args:
@@ -74,6 +76,10 @@ def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP
             }
         case {"name": name}:
             return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
+        case {"id": plugin_id}:
+            return {
+                p_id for p_id, p in plugin_mapping.items() if plugin_id == p.plugin_id
+            }
         case _:
             TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
             return set()
