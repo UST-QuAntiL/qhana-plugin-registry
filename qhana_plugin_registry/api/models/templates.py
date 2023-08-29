@@ -15,7 +15,7 @@
 from dataclasses import dataclass
 from typing import Sequence
 import json
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.specifiers import InvalidSpecifier, Specifier
 import marshmallow as ma
 from marshmallow.validate import Length
 
@@ -89,7 +89,7 @@ class TemplateTabSchema(ApiObjectSchema):
                         f"Invalid plugin filter: Invalid version '{v}'. Version must be a PEP 440 specifier (string). (Path: {current_path})"
                     )
                 try:
-                    SpecifierSet(v)
+                    Specifier(v)
                 except InvalidSpecifier:
                     raise ma.ValidationError(
                         f"Invalid plugin filter: Invalid version '{v}'. Version must be a valid PEP 440 specifier. (Path: {current_path})"
