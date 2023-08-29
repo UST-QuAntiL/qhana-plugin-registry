@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
 from qhana_plugin_registry.db.models.templates import TemplateTab
 from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
@@ -22,8 +23,10 @@ import json
 
 
 def filter_strategy():
+    """Strategy for generating filters."""
     return st.one_of(
         st.fixed_dictionaries({}),
+        st.fixed_dictionaries({"id": st.text()}),
         st.fixed_dictionaries({"tag": st.text()}),
         st.fixed_dictionaries({"name": st.text()}),
         st.fixed_dictionaries({"version": st.from_regex(Specifier._regex)}),
@@ -35,11 +38,24 @@ def filter_strategy():
 
 def create_plugin(
     tmp_db,
+    plugin_id: Optional[str] = None,
     name: str = "test-plugin",
     version: str = "0.0.0",
     tags: list[PluginTag] | None = None,
     description: str = "descr",
 ) -> RAMP:
+    """Create a plugin and return its id.
+
+    Args:
+        tmp_db: The database fixture.
+        plugin_id: The id of the plugin.
+        name: The name of the plugin.
+        version: The version of the plugin.
+        tags: The tags of the plugin.
+        description: The description of the plugin.
+
+    Returns:
+        The id of the created plugin."""
     if not tags:
         tags = []
     plugin = RAMP(
@@ -48,7 +64,10 @@ def create_plugin(
         version=version,
         tags=tags,
     )
-    plugin.plugin_id = f"{name}@{version}"
+    if plugin_id:
+        plugin.plugin_id = plugin_id
+    else:
+        plugin.plugin_id = f"{name}@{version}"
     tmp_db.session.add(plugin)
     tmp_db.session.commit()
     plugin_id = (
@@ -69,6 +88,21 @@ def create_template_tab(
     sort_key: int = 0,
     filter_dict: dict | None = None,
 ) -> int:
+    """Create a template tab and return its id.
+
+    Args:
+        tmp_db: The database fixture.
+        client: The client fixture.
+        template_id: The id of the template to which the tab belongs.
+        tab_name: The name of the tab.
+        tab_description: The description of the tab.
+        tab_location: The location of the tab.
+        sort_key: The sort key of the tab.
+        filter_dict: The filter of the tab.
+
+    Returns:
+        The id of the created template tab.
+    """
     if not filter_dict:
         filter_dict = {}
     filter_string = json.dumps(filter_dict)
@@ -101,6 +135,17 @@ def create_template_tab(
 def update_plugin_filter(
     tmp_db, client, template_tab: TemplateTab, filter_dict: dict
 ) -> set[int]:
+    """Update the filter of a template tab and return the ids of the plugins that match the filter.
+
+    Args:
+        tmp_db: The database fixture.
+        client: The client fixture.
+        template_tab: The template tab to update.
+        filter_dict: The new filter.
+
+    Returns:
+        The ids of the plugins that match the filter.
+    """
     response = client.put(
         f"/api/templates/{template_tab.template_id}/tabs/{template_tab.id}/",
         json={
@@ -123,7 +168,18 @@ def update_plugin_filter(
 
 
 def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
+    """Check if a plugin matches a filter.
+
+    Args:
+        filter_dict: The filter.
+        plugin: The plugin.
+
+    Returns:
+        True if the plugin matches the filter, False otherwise.
+    """
     match filter_dict:
+        case {"id": plugin_id}:
+            return plugin.plugin_id == plugin_id
         case {"name": name}:
             return plugin.name == name
         case {"tag": tag}:
