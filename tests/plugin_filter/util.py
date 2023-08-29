@@ -179,7 +179,10 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
     """
     match filter_dict:
         case {"id": plugin_id}:
-            return plugin.plugin_id == plugin_id
+            return plugin.plugin_id == plugin_id or (
+                "@" in plugin.plugin_id
+                and plugin.plugin_id[: plugin.plugin_id.rfind("@")] == plugin_id
+            )
         case {"name": name}:
             return plugin.name == name
         case {"tag": tag}:

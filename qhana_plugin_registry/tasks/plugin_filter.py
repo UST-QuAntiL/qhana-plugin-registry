@@ -77,9 +77,17 @@ def get_plugins_from_filter(
         case {"name": name}:
             return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
         case {"id": plugin_id}:
-            return {
-                p_id for p_id, p in plugin_mapping.items() if plugin_id == p.plugin_id
-            }
+            # match plugin id or plugin id without version
+            plugin_ids = set()
+            for p_id, p in plugin_mapping.items():
+                if plugin_id == p.plugin_id:
+                    plugin_ids.add(p_id)
+                elif (
+                    "@" in p.plugin_id
+                    and plugin_id == p.plugin_id[: p.plugin_id.rfind("@")]
+                ):
+                    plugin_ids.add(p_id)
+            return plugin_ids
         case _:
             TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
             return set()
