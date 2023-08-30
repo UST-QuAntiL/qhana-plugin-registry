@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Iterator
+from difflib import SequenceMatcher
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import Specifier
@@ -75,7 +76,12 @@ def get_plugins_from_filter(
                 if Version(p.version) in specifier
             }
         case {"name": name}:
-            return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
+            plugin_ids = set()
+            for p_id, p in plugin_mapping.items():
+                sm = SequenceMatcher(None, name.lower(), p.name.lower())
+                if sm.ratio() > 0.8:
+                    plugin_ids.add(p_id)
+            return plugin_ids
         case {"id": plugin_id}:
             # match plugin id or plugin id without version
             plugin_ids = set()
