@@ -55,7 +55,11 @@ PLUGIN_KEYS = {"name", "version", "title", "description", "type", "tags", "entry
 
 @CELERY.task(name=f"{_name}.discover_plugins_from_seeds", bind=True, ignore_result=True)
 def discover_plugins_from_seeds(
-    self: FlaskTask, seed: str, root_seed: Optional[str] = None, nesting: int = 0
+    self: FlaskTask,
+    seed: str,
+    root_seed: Optional[str] = None,
+    nesting: int = 0,
+    delete_on_missing: bool = False,
 ):
     """Discover QHAna plugins starting off with a seed URL.
 
@@ -63,6 +67,7 @@ def discover_plugins_from_seeds(
         seed (str): the current seed to discover plugins at
         root_seed (Optional[str], optional): the root seed at the start of discovery (e.g. an URL to a plugin runner). Defaults to None.
         nesting (int, optional): a nesting level to avoid catastrophic infinite recursions. Defaults to 0.
+        delete_on_missing (bool, optional): whether a plugin should be deleted from the registry if it's missing or a connection error occurred
     """
     if nesting > 3:
         TASK_LOGGER.error(
@@ -72,10 +77,20 @@ def discover_plugins_from_seeds(
     now = datetime.now(timezone.utc)
     try:
         data = open_url(seed, timeout=5).json()
-    except JSONDecodeError or ConnectionError as err:
+    except JSONDecodeError as err:
+        return
+    except ConnectionError as err:
+        if delete_on_missing:
+            TASK_LOGGER.info(f"Can't reach '{seed}', trying to delete it")
+            _delete_plugin(seed)
+
         return
     except HTTPError as err:
         if err.response is not None and err.response.status_code == 404:
+            if delete_on_missing:
+                TASK_LOGGER.info(f"Plugin/seed '{seed}' not found, trying to delete it")
+                _delete_plugin(seed)
+
             return  # ignore not found status codes
         TASK_LOGGER.info(
             f"Could not reach seed/plugin '{seed}' because of a server error. ({err})"
@@ -176,6 +191,17 @@ def purge_plugins():
     delete_query = (
         delete(RAMP)
         .filter(RAMP.last_available < purge_before_date)
+        .execution_options(synchronize_session="fetch")
+    )
+
+    DB.session.execute(delete_query)
+    DB.session.commit()
+
+
+def _delete_plugin(url: str):
+    delete_query = (
+        delete(RAMP)
+        .filter(RAMP.url == url)
         .execution_options(synchronize_session="fetch")
     )
 
