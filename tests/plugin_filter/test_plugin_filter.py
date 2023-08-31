@@ -21,6 +21,7 @@ from tests.plugin_filter.util import (
 )
 from qhana_plugin_registry.db.models.templates import TemplateTab, UiTemplate
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
+from qhana_plugin_registry.tasks.plugin_filter import PLUGIN_NAME_MATCHING_THREASHOLD
 
 from hypothesis import given, settings, HealthCheck, strategies as st
 import random
@@ -28,6 +29,7 @@ from packaging.specifiers import Specifier
 from packaging.version import Version
 import pytest
 from sqlalchemy.sql import exists
+from difflib import SequenceMatcher
 
 
 @pytest.fixture(scope="function")
@@ -214,9 +216,12 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     # test single name filter
     filter_dict = {"name": name}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name == name).all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
+        sm = SequenceMatcher(None, p_name, name)
+        if sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
+            filtered_plugin_ids.add(p_id)
+
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by a single name failed (filter: '{filter_dict}')"
@@ -227,9 +232,12 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     # test single name excluded filter
     filter_dict = {"not": {"name": name}}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id for p_id, in tmp_db.session.query(RAMP.id).filter(RAMP.name != name).all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
+        sm = SequenceMatcher(None, p_name, name)
+        if sm.ratio() <= PLUGIN_NAME_MATCHING_THREASHOLD:
+            filtered_plugin_ids.add(p_id)
+
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by a single name failed (filter: '{filter_dict}')"
@@ -241,12 +249,16 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     additional_name = random.choice(plugins).name
     filter_dict = {"or": [{"name": name}, {"name": additional_name}]}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
-        .filter(RAMP.name.in_([name, additional_name]))
-        .all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
+        sm1 = SequenceMatcher(None, p_name, name)
+        sm2 = SequenceMatcher(None, p_name, additional_name)
+        if (
+            sm1.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
+            or sm2.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
+        ):
+            filtered_plugin_ids.add(p_id)
+
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by multiple names failed (filter: '{filter_dict}')"

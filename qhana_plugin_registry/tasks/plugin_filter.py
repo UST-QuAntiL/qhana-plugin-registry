@@ -29,6 +29,7 @@ _name = "qhana-plugin-registry.tasks.tabs"
 TASK_LOGGER = get_task_logger(_name)
 
 DEFAULT_BATCH_SIZE = 500
+PLUGIN_NAME_MATCHING_THREASHOLD = 0.8
 
 
 def get_plugins_from_filter(
@@ -79,7 +80,7 @@ def get_plugins_from_filter(
             plugin_ids = set()
             for p_id, p in plugin_mapping.items():
                 sm = SequenceMatcher(None, name.lower(), p.name.lower())
-                if sm.ratio() > 0.8:
+                if sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
                     plugin_ids.add(p_id)
             return plugin_ids
         case {"id": plugin_id}:
