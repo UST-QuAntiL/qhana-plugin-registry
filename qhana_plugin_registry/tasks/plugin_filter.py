@@ -88,10 +88,7 @@ def get_plugins_from_filter(
             for p_id, p in plugin_mapping.items():
                 if plugin_id == p.plugin_id:
                     plugin_ids.add(p_id)
-                elif (
-                    "@" in p.plugin_id
-                    and plugin_id == p.plugin_id[: p.plugin_id.rfind("@")]
-                ):
+                elif plugin_id.split("@") == p.plugin_id.split("@")[:-1]:
                     plugin_ids.add(p_id)
             return plugin_ids
         case _:
