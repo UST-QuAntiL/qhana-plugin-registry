@@ -180,14 +180,14 @@ def test_plugin_filter_id_without_version(
     # test single id filter
     filter_dict = {"id": plugin_id_without_version}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
-        .filter(
-            RAMP.plugin_id.ilike(f"{plugin_id_without_version}@%")
-        )  # FIXME this includes all ids with prefix f"{plugin_id_without_version}@". Plugin ids that contain another "@" after the prefix are mistakenly included.
-        .all()
-    }
+
+    filtered_plugin_ids = set()
+    # plugin ids must be compared in python because the test database is not configured for utf-8 characters
+    for p_id, compare_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
+        compare_id_without_version = "@".join(compare_id.split("@")[:-1])
+        if compare_id_without_version == plugin_id_without_version:
+            filtered_plugin_ids.add(p_id)
+
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by a single plugin id (without version) failed (filter: '{filter_dict}')"
