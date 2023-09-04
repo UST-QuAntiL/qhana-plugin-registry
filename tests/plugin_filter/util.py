@@ -18,7 +18,7 @@ from qhana_plugin_registry.db.models.templates import TemplateTab
 from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
 
 from hypothesis import strategies as st
-from packaging.specifiers import Specifier
+from packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
 import json
 
 
@@ -188,7 +188,7 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
         case {"tag": tag}:
             return tag in (tag.tag for tag in plugin.tags)
         case {"version": version}:
-            spec = Specifier(version)
+            spec = SpecifierSet(version)
             return spec.contains(plugin.version)
         case {"and": and_filters}:
             if not and_filters:
@@ -206,3 +206,19 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
             return not filter_matches_plugin(not_filter, plugin)
         case _:
             return False
+
+
+def is_specifier_set(s: str) -> bool:
+    """Check if a string is a valid PEP 440 specifier set.
+
+    Args:
+        s: The string to check.
+
+    Returns:
+        True if the string is a valid PEP 440 specifier set, False otherwise.
+    """
+    try:
+        SpecifierSet(s)
+    except InvalidSpecifier:
+        return False
+    return True

@@ -16,7 +16,7 @@ from typing import Iterator
 from difflib import SequenceMatcher
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
-from packaging.specifiers import Specifier
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from ..celery import CELERY
@@ -67,7 +67,7 @@ def get_plugins_from_filter(
             return {p_id for p_id, p in plugin_mapping.items() if has_tag(p, tag)}
         case {"version": version}:
             try:
-                specifier = Specifier(version)
+                specifier = SpecifierSet(version)
             except InvalidSpecifier:
                 TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
                 return set()
