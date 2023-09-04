@@ -191,8 +191,8 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
                 or plugin_id.split("@") == plugin.plugin_id.split("@")[:-1]
             )
         case {"name": name}:
-            sm = SequenceMatcher(None, plugin.name, name)
-            return sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
+            matcher = SequenceMatcher(None, plugin.name, name)
+            return matcher.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
         case {"tag": tag}:
             return tag in (tag.tag for tag in plugin.tags)
         case {"version": version}:

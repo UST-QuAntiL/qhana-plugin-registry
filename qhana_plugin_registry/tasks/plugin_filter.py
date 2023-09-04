@@ -79,8 +79,8 @@ def get_plugins_from_filter(
         case {"name": name}:
             plugin_ids = set()
             for p_id, p in plugin_mapping.items():
-                sm = SequenceMatcher(None, name.lower(), p.name.lower())
-                if sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
+                matcher = SequenceMatcher(None, name.lower(), p.name.lower())
+                if matcher.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
                     plugin_ids.add(p_id)
             return plugin_ids
         case {"id": plugin_id}:
@@ -89,14 +89,17 @@ def get_plugins_from_filter(
             for p_id, p in plugin_mapping.items():
                 if plugin_id == p.plugin_id:
                     plugin_ids.add(p_id)
-                elif plugin_id.split("@") == p.plugin_id.split("@")[:-1]:
+                elif (
+                    plugin_id.split("@") == p.plugin_id.split("@")[:-1]
+                ):  # id matches, except for the version string
                     plugin_ids.add(p_id)
             return plugin_ids
         case {"type": plugin_type}:
+            plugin_type_lower = plugin_type.lower()
             return {
                 p_id
                 for p_id, p in plugin_mapping.items()
-                if p.plugin_type.lower() == plugin_type.lower()
+                if p.plugin_type.lower() == plugin_type_lower
             }
         case _:
             TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")

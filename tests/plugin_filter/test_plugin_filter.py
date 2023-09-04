@@ -221,8 +221,8 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = set()
     for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
-        sm = SequenceMatcher(None, p_name, name)
-        if sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
+        matcher = SequenceMatcher(None, p_name, name)
+        if matcher.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
             filtered_plugin_ids.add(p_id)
 
     assert (
@@ -237,8 +237,8 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = set()
     for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
-        sm = SequenceMatcher(None, p_name, name)
-        if sm.ratio() <= PLUGIN_NAME_MATCHING_THREASHOLD:
+        matcher = SequenceMatcher(None, p_name, name)
+        if matcher.ratio() <= PLUGIN_NAME_MATCHING_THREASHOLD:
             filtered_plugin_ids.add(p_id)
 
     assert (
@@ -254,11 +254,11 @@ def test_plugin_filter_name(tmp_db, client, template_tab, plugins, name: str):
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = set()
     for p_id, p_name in tmp_db.session.query(RAMP.id, RAMP.name).all():
-        sm1 = SequenceMatcher(None, p_name, name)
-        sm2 = SequenceMatcher(None, p_name, additional_name)
+        matcher = SequenceMatcher(None, p_name, name)
+        matcher_additional = SequenceMatcher(None, p_name, additional_name)
         if (
-            sm1.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
-            or sm2.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
+            matcher.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
+            or matcher_additional.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
         ):
             filtered_plugin_ids.add(p_id)
 
