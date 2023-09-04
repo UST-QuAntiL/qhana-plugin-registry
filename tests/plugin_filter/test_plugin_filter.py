@@ -124,12 +124,12 @@ def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str)
     # test single id filter
     filter_dict = {"id": plugin_id}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
-        .filter(RAMP.plugin_id == plugin_id)
-        .all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_plugin_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
+        if p_plugin_id == plugin_id:
+            filtered_plugin_ids.add(p_id)
+        elif p_plugin_id.split("@")[:-1] == plugin_id.split("@"):
+            filtered_plugin_ids.add(p_id)
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by a single plugin id failed (filter: '{filter_dict}')"
@@ -141,12 +141,14 @@ def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str)
     additional_id = random.choice(plugins).plugin_id
     filter_dict = {"or": [{"id": plugin_id}, {"id": additional_id}]}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
-        .filter(RAMP.plugin_id.in_([plugin_id, additional_id]))
-        .all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_plugin_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
+        if p_plugin_id == plugin_id or p_plugin_id == additional_id:
+            filtered_plugin_ids.add(p_id)
+        elif p_plugin_id.split("@")[:-1] == plugin_id.split("@"):
+            filtered_plugin_ids.add(p_id)
+        elif p_plugin_id.split("@")[:-1] == additional_id.split("@"):
+            filtered_plugin_ids.add(p_id)
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by multiple plugin ids failed (filter: '{filter_dict}')"
