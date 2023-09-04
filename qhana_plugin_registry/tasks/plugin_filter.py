@@ -92,6 +92,12 @@ def get_plugins_from_filter(
                 elif plugin_id.split("@") == p.plugin_id.split("@")[:-1]:
                     plugin_ids.add(p_id)
             return plugin_ids
+        case {"type": plugin_type}:
+            return {
+                p_id
+                for p_id, p in plugin_mapping.items()
+                if p.plugin_type.lower() == plugin_type.lower()
+            }
         case _:
             TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
             return set()
@@ -105,9 +111,11 @@ def evaluate_plugin_filter(plugin_filter: dict) -> Iterator[RAMP]:
             - "and": list of filters
             - "or": list of filters
             - "not": filter
+            - "id": plugin id
             - "tag": tag name
             - "version": version specifier (https://peps.python.org/pep-0440/#version-specifiers)
             - "name": plugin name
+            - "type": plugin type
 
     Returns:
         Iterator[RAMP]: an iterator over the plugins that match the filter

@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from difflib import SequenceMatcher
 from typing import Optional
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
 from qhana_plugin_registry.db.models.templates import TemplateTab
-from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
+from qhana_plugin_registry.tasks.plugin_filter import (
+    PLUGIN_NAME_MATCHING_THREASHOLD,
+    apply_filter_for_tab,
+)
 
 from hypothesis import strategies as st
 from packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
@@ -30,6 +34,7 @@ def filter_strategy():
         st.fixed_dictionaries({"tag": st.text()}),
         st.fixed_dictionaries({"name": st.text()}),
         st.fixed_dictionaries({"version": st.from_regex(Specifier._regex)}),
+        st.fixed_dictionaries({"type": st.text()}),
         st.fixed_dictionaries({"and": st.lists(st.deferred(filter_strategy))}),
         st.fixed_dictionaries({"or": st.lists(st.deferred(filter_strategy))}),
         st.fixed_dictionaries({"not": st.deferred(filter_strategy)}),
@@ -42,6 +47,7 @@ def create_plugin(
     name: str = "test-plugin",
     version: str = "0.0.0",
     tags: list[PluginTag] | None = None,
+    plugin_type: str = "test-type",
     description: str = "descr",
 ) -> RAMP:
     """Create a plugin and return its id.
@@ -63,6 +69,7 @@ def create_plugin(
         description=description,
         version=version,
         tags=tags,
+        plugin_type=plugin_type,
     )
     if plugin_id:
         plugin.plugin_id = plugin_id
@@ -184,12 +191,15 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
                 or plugin_id.split("@") == plugin.plugin_id.split("@")[:-1]
             )
         case {"name": name}:
-            return plugin.name == name
+            sm = SequenceMatcher(None, plugin.name, name)
+            return sm.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD
         case {"tag": tag}:
             return tag in (tag.tag for tag in plugin.tags)
         case {"version": version}:
             spec = SpecifierSet(version)
             return spec.contains(plugin.version)
+        case {"type": plugin_type}:
+            return plugin.plugin_type.lower() == plugin_type.lower()
         case {"and": and_filters}:
             if not and_filters:
                 return False
