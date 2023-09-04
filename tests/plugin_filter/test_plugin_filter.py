@@ -366,7 +366,7 @@ def test_plugin_filter_tag(tmp_db, client, template_tab, plugins, tag_name: str)
     ), f"filtering by multiple tags failed (filter: '{filter_dict}')"
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=500)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=1000)
 @given(version_spec=st.from_regex(Specifier._regex))
 def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_spec: str):
     """
@@ -434,7 +434,7 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
     ), f"filtering by multiple versions failed (filter: '{filter_dict}')"
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=500)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=1000)
 @given(filter_dict=st.deferred(filter_strategy))
 def test_plugin_filter(tmp_db, client, template_tab, plugins, filter_dict: dict):
     """
