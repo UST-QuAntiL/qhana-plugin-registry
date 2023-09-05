@@ -90,9 +90,8 @@ def get_plugins_from_filter(
             for p_id, p in plugin_mapping.items():
                 if plugin_id == p.plugin_id:
                     plugin_ids.add(p_id)
-                elif (
-                    plugin_id_split == p.plugin_id.split("@")[:-1]
-                ):  # id matches, except for the version string
+                elif plugin_id_split == p.plugin_id.split("@")[:-1]:
+                    # id matches, except for the version string
                     plugin_ids.add(p_id)
             return plugin_ids
         case {"type": plugin_type}:
