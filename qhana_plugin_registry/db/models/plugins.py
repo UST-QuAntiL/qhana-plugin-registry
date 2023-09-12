@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from functools import cached_property
 
 from packaging.version import parse as parse_version, Version
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -86,6 +87,11 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
 
     plugin_id: str = field(default="", metadata={"sa": Column(sql.String(255))})
     version: str = field(default="v0", metadata={"sa": Column(sql.String(100))})
+
+    @property
+    def full_id(self) -> str:
+        return f"{self.plugin_id}@{self.version}"
+
     sort_version: str = field(
         default="0", init=False, metadata={"sa": Column(sql.String(120))}
     )

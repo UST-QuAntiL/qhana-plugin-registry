@@ -88,9 +88,9 @@ def get_plugins_from_filter(
             plugin_ids = set()
             plugin_id_split = plugin_id.split("@")
             for p_id, p in plugin_mapping.items():
-                if plugin_id == p.plugin_id:
+                if plugin_id == p.full_id:
                     plugin_ids.add(p_id)
-                elif plugin_id_split == p.plugin_id.split("@")[:-1]:
+                elif plugin_id_split == p.full_id.split("@")[:-1]:
                     # id matches, except for the version string
                     plugin_ids.add(p_id)
             return plugin_ids
