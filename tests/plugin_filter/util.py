@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from difflib import SequenceMatcher
-from typing import Optional
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
 from qhana_plugin_registry.db.models.templates import TemplateTab
 from qhana_plugin_registry.tasks.plugin_filter import (
@@ -24,6 +22,21 @@ from qhana_plugin_registry.tasks.plugin_filter import (
 from hypothesis import strategies as st
 from packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
 import json
+from packaging.version import VERSION_PATTERN
+from difflib import SequenceMatcher
+import re
+
+
+@st.composite
+def plugin_id_strategy(draw):
+    """Strategy for generating plugin ids. The plugin id is a string of the form <name>@<version>."""
+    name = draw(st.from_regex(r"^[^@]+$"))  # names cannot contain @
+    version_regex = re.compile(
+        r"^\s*" + VERSION_PATTERN + r"\s*$",
+        re.VERBOSE | re.IGNORECASE,
+    )
+    version = draw(st.from_regex(version_regex))
+    return f"{name}@{version}"
 
 
 def filter_strategy():
@@ -43,7 +56,6 @@ def filter_strategy():
 
 def create_plugin(
     tmp_db,
-    plugin_id: Optional[str] = None,
     name: str = "test-plugin",
     version: str = "0.0.0",
     tags: list[PluginTag] | None = None,
@@ -65,21 +77,18 @@ def create_plugin(
     if not tags:
         tags = []
     plugin = RAMP(
+        plugin_id=name,
         name=name,
         description=description,
         version=version,
         tags=tags,
         plugin_type=plugin_type,
     )
-    if plugin_id:
-        plugin.plugin_id = plugin_id
-    else:
-        plugin.plugin_id = f"{name}@{version}"
     tmp_db.session.add(plugin)
     tmp_db.session.commit()
     plugin_id = (
         tmp_db.session.query(RAMP.id)
-        .filter(RAMP.name == name, RAMP.version == version)
+        .filter(RAMP.plugin_id == name, RAMP.version == version)
         .first()[0]
     )
     return plugin_id
@@ -187,8 +196,8 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
     match filter_dict:
         case {"id": plugin_id}:
             return (
-                plugin.plugin_id == plugin_id
-                or plugin_id.split("@") == plugin.plugin_id.split("@")[:-1]
+                plugin.full_id == plugin_id
+                or plugin_id.split("@") == plugin.full_id.split("@")[:-1]
             )
         case {"name": name}:
             matcher = SequenceMatcher(None, plugin.name, name)

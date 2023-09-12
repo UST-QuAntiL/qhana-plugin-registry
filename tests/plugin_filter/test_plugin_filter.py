@@ -19,6 +19,7 @@ from tests.plugin_filter.util import (
     filter_matches_plugin,
     update_plugin_filter,
     is_specifier_set,
+    plugin_id_strategy,
 )
 from qhana_plugin_registry.db.models.templates import TemplateTab, UiTemplate
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag
@@ -106,7 +107,7 @@ def plugins(tmp_db):
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=500)
-@given(plugin_id=st.text(min_size=1))
+@given(plugin_id=plugin_id_strategy())
 def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str):
     """
     Test plugin filtering by id.
@@ -116,21 +117,22 @@ def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str)
     """
 
     # create plugin
+    name, version = plugin_id.split("@")
     plugin_exists = tmp_db.session.query(
-        exists().where(RAMP.plugin_id == plugin_id)
+        exists().where((RAMP.plugin_id == name), (RAMP.version == version))
     ).scalar()
     if not plugin_exists:
-        create_plugin(tmp_db, plugin_id=plugin_id)
+        create_plugin(tmp_db, name=name, version=version)
 
     # test single id filter
     filter_dict = {"id": plugin_id}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = set()
-    for p_id, p_plugin_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
-        if p_plugin_id == plugin_id:
-            filtered_plugin_ids.add(p_id)
-        elif p_plugin_id.split("@")[:-1] == plugin_id.split("@"):
-            filtered_plugin_ids.add(p_id)
+    for plugin in tmp_db.session.query(RAMP).all():
+        if plugin.full_id == plugin_id:
+            filtered_plugin_ids.add(plugin.id)
+        elif plugin.full_id.split("@")[:-1] == plugin_id.split("@"):
+            filtered_plugin_ids.add(plugin.id)
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by a single plugin id failed (filter: '{filter_dict}')"
@@ -139,17 +141,17 @@ def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str)
     ), f"filtering by a single plugin id failed (filter: '{filter_dict}')"
 
     # test multiple id filters
-    additional_id = random.choice(plugins).plugin_id
+    additional_id = random.choice(plugins).full_id
     filter_dict = {"or": [{"id": plugin_id}, {"id": additional_id}]}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
     filtered_plugin_ids = set()
-    for p_id, p_plugin_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
-        if p_plugin_id == plugin_id or p_plugin_id == additional_id:
-            filtered_plugin_ids.add(p_id)
-        elif p_plugin_id.split("@")[:-1] == plugin_id.split("@"):
-            filtered_plugin_ids.add(p_id)
-        elif p_plugin_id.split("@")[:-1] == additional_id.split("@"):
-            filtered_plugin_ids.add(p_id)
+    for plugin in tmp_db.session.query(RAMP).all():
+        if plugin.full_id == plugin_id or plugin.full_id == additional_id:
+            filtered_plugin_ids.add(plugin.id)
+        elif plugin.full_id.split("@")[:-1] == plugin_id.split("@"):
+            filtered_plugin_ids.add(plugin.id)
+        elif plugin.full_id.split("@")[:-1] == additional_id.split("@"):
+            filtered_plugin_ids.add(plugin.id)
     assert (
         len(tab_plugin_ids) > 0
     ), f"filtering by multiple plugin ids failed (filter: '{filter_dict}')"
@@ -159,11 +161,9 @@ def test_plugin_filter_id(tmp_db, client, template_tab, plugins, plugin_id: str)
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=500)
-@given(
-    plugin_id_without_version=st.text(min_size=1), version=st.from_regex(Version._regex)
-)
+@given(plugin_id=plugin_id_strategy())
 def test_plugin_filter_id_without_version(
-    tmp_db, client, template_tab, plugins, plugin_id_without_version: str, version: str
+    tmp_db, client, template_tab, plugins, plugin_id: str
 ):
     """
     Test plugin filtering by id (without version).
@@ -173,25 +173,23 @@ def test_plugin_filter_id_without_version(
     """
 
     # create plugin
-    plugin_id = f"{plugin_id_without_version}@{version}"
+    name, version = plugin_id.split("@")
     plugin_exists = tmp_db.session.query(
-        exists().where(RAMP.plugin_id == plugin_id)
+        exists().where(RAMP.name == name, RAMP.version == version)
     ).scalar()
     if not plugin_exists:
-        create_plugin(
-            tmp_db, plugin_id=plugin_id, name=plugin_id_without_version, version=version
-        )
+        create_plugin(tmp_db, name=name, version=version)
 
     # test single id filter
-    filter_dict = {"id": plugin_id_without_version}
+    filter_dict = {"id": name}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
 
     filtered_plugin_ids = set()
     # plugin ids must be compared in python because the test database is not configured for utf-8 characters
-    for p_id, compare_id in tmp_db.session.query(RAMP.id, RAMP.plugin_id).all():
-        compare_id_without_version = "@".join(compare_id.split("@")[:-1])
-        if compare_id_without_version == plugin_id_without_version:
-            filtered_plugin_ids.add(p_id)
+    for plugin in tmp_db.session.query(RAMP).all():
+        compare_id_without_version = "@".join(plugin.full_id.split("@")[:-1])
+        if compare_id_without_version == name:
+            filtered_plugin_ids.add(plugin.id)
 
     assert (
         len(tab_plugin_ids) > 0
@@ -439,7 +437,7 @@ def test_plugin_filter_version(tmp_db, client, template_tab, plugins, version_sp
     ), f"filtering by multiple versions failed (filter: '{filter_dict}')"
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=500)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=1000)
 @given(plugin_type=st.text(min_size=1))
 def test_plugin_filter_type(tmp_db, client, template_tab, plugins, plugin_type: str):
     """
@@ -456,12 +454,14 @@ def test_plugin_filter_type(tmp_db, client, template_tab, plugins, plugin_type: 
     # test single type filter
     filter_dict = {"type": plugin_type}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
+    filtered_plugin_ids = set()
+    for p_id, p_type in (
+        tmp_db.session.query(RAMP.id, RAMP.plugin_type)
         .filter(RAMP.plugin_type.ilike(plugin_type))
         .all()
-    }
+    ):
+        if p_type.lower() == plugin_type.lower():  # for cases where plugin_type == '%'
+            filtered_plugin_ids.add(p_id)
 
     assert (
         len(tab_plugin_ids) > 0
@@ -473,12 +473,10 @@ def test_plugin_filter_type(tmp_db, client, template_tab, plugins, plugin_type: 
     # test single type excluded filter
     filter_dict = {"not": {"type": plugin_type}}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
-        .filter(~RAMP.plugin_type.ilike(plugin_type))
-        .all()
-    }
+    filtered_plugin_ids = set()
+    for p_id, p_type in tmp_db.session.query(RAMP.id, RAMP.plugin_type).all():
+        if p_type.lower() != plugin_type.lower():
+            filtered_plugin_ids.add(p_id)
 
     assert (
         len(tab_plugin_ids) > 0
@@ -491,14 +489,20 @@ def test_plugin_filter_type(tmp_db, client, template_tab, plugins, plugin_type: 
     additional_type = random.choice(plugins).plugin_type
     filter_dict = {"or": [{"type": plugin_type}, {"type": additional_type}]}
     tab_plugin_ids = update_plugin_filter(tmp_db, client, template_tab, filter_dict)
-    filtered_plugin_ids = {
-        p_id
-        for p_id, in tmp_db.session.query(RAMP.id)
+    filtered_plugin_ids = set()
+    for p_id, p_type in (
+        tmp_db.session.query(RAMP.id, RAMP.plugin_type)
         .filter(
             RAMP.plugin_type.ilike(plugin_type) | RAMP.plugin_type.ilike(additional_type)
         )
         .all()
-    }
+    ):
+        if (
+            p_type.lower() == plugin_type.lower()
+            or p_type.lower() == additional_type.lower()
+        ):
+            # for cases where plugin_type == '%' or additional_type == '%'
+            filtered_plugin_ids.add(p_id)
 
     assert (
         len(tab_plugin_ids) > 0
