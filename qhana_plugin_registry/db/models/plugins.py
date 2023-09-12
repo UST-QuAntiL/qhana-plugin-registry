@@ -24,7 +24,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select
 from sqlalchemy.sql import sqltypes as sql
-from sqlalchemy.sql.schema import Column, ForeignKey, Index, UniqueConstraint
+from sqlalchemy.sql.schema import Column, ForeignKey, UniqueConstraint
 
 from .model_helpers import (
     ExistsMixin,
@@ -88,7 +88,7 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
     plugin_id: str = field(default="", metadata={"sa": Column(sql.String(255))})
     version: str = field(default="v0", metadata={"sa": Column(sql.String(100))})
 
-    @property
+    @cached_property
     def full_id(self) -> str:
         return f"{self.plugin_id}@{self.version}"
 
