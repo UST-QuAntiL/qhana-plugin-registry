@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Iterator
+from difflib import SequenceMatcher
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import SpecifierSet
@@ -28,9 +29,12 @@ _name = "qhana-plugin-registry.tasks.tabs"
 TASK_LOGGER = get_task_logger(_name)
 
 DEFAULT_BATCH_SIZE = 500
+PLUGIN_NAME_MATCHING_THREASHOLD = 0.8
 
 
-def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP]:
+def get_plugins_from_filter(
+    filter_dict: dict, plugin_mapping: dict[str, RAMP]
+) -> set[RAMP]:
     """Get the plugins that match a filter.
 
     Args:
@@ -73,7 +77,30 @@ def get_plugins_from_filter(filter_dict: dict, plugin_mapping: dict) -> set[RAMP
                 if Version(p.version) in specifier
             }
         case {"name": name}:
-            return {p_id for p_id, p in plugin_mapping.items() if name == p.name}
+            plugin_ids = set()
+            for p_id, p in plugin_mapping.items():
+                matcher = SequenceMatcher(None, name.lower(), p.name.lower())
+                if matcher.ratio() > PLUGIN_NAME_MATCHING_THREASHOLD:
+                    plugin_ids.add(p_id)
+            return plugin_ids
+        case {"id": plugin_id}:
+            # match plugin id or plugin id without version
+            plugin_ids = set()
+            plugin_id_split = plugin_id.split("@")
+            for p_id, p in plugin_mapping.items():
+                if plugin_id == p.full_id:
+                    plugin_ids.add(p_id)
+                elif plugin_id_split == p.full_id.split("@")[:-1]:
+                    # id matches, except for the version string
+                    plugin_ids.add(p_id)
+            return plugin_ids
+        case {"type": plugin_type}:
+            plugin_type_lower = plugin_type.lower()
+            return {
+                p_id
+                for p_id, p in plugin_mapping.items()
+                if p.plugin_type.lower() == plugin_type_lower
+            }
         case _:
             TASK_LOGGER.warning(f"Invalid filter: '{filter_dict}'")
             return set()
@@ -87,9 +114,11 @@ def evaluate_plugin_filter(plugin_filter: dict) -> Iterator[RAMP]:
             - "and": list of filters
             - "or": list of filters
             - "not": filter
+            - "id": plugin id
             - "tag": tag name
             - "version": version specifier (https://peps.python.org/pep-0440/#version-specifiers)
             - "name": plugin name
+            - "type": plugin type
 
     Returns:
         Iterator[RAMP]: an iterator over the plugins that match the filter
