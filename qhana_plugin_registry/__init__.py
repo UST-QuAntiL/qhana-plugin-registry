@@ -32,6 +32,7 @@ from . import api, babel, celery, db, licenses
 from .util.config import DebugConfig, ProductionConfig
 from .util.config.from_env import load_config_from_env
 from .util.reverse_proxy_fix import apply_reverse_proxy_fix
+from .util.ui_templates import load_ui_templates
 
 # change this to change tha flask app name and the config env var prefix
 # must not contain any spaces!
@@ -83,6 +84,11 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         if "REVERSE_PROXY_COUNT" in environ:
             config["REVERSE_PROXY_COUNT"] = int(environ["REVERSE_PROXY_COUNT"])
             apply_reverse_proxy_fix(app)
+
+        if "UI_TEMPLATE_PATHS" in environ:
+            config["UI_TEMPLATE_PATHS"] = [
+                path for path in environ["UI_TEMPLATE_PATHS"].split(":") if path
+            ]
 
         load_config_from_env(config)
     else:
@@ -147,6 +153,10 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
     db.register_db(app)
 
     api.register_root_api(app)
+
+    # load ui templates from configured files
+    with app.app_context():
+        load_ui_templates(app)
 
     # allow cors requests everywhere (CONFIGURE THIS TO YOUR PROJECTS NEEDS!)
     CORS(app)

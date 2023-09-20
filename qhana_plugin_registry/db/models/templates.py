@@ -21,6 +21,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select
 from sqlalchemy.sql import sqltypes as sql
 from sqlalchemy.sql.schema import Column, ForeignKey
+from sqlalchemy.exc import MultipleResultsFound
 
 from .model_helpers import ExistsMixin, IdMixin, NameDescriptionMixin
 from .plugins import RAMP
@@ -74,6 +75,41 @@ class UiTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
             )
         },
     )
+
+    @classmethod
+    def get_by_name(cls, name: str) -> "UiTemplate":
+        q = select(cls).filter(cls.name == name)
+        try:
+            found_template: UiTemplate = DB.session.execute(q).scalar_one_or_none()
+        except MultipleResultsFound:
+            found_template = DB.session.execute(q).first()[0]
+        return found_template
+
+    @classmethod
+    def from_json(cls, template_dict: dict) -> "UiTemplate":
+        template = UiTemplate(
+            name=template_dict["name"],
+            description=template_dict["description"],
+            tags=TemplateTag.get_or_create_all(template_dict["tags"]),
+            tabs=[],  # FIXME tabs are added later since they need the template
+        )
+        return template
+
+    @classmethod
+    def get_or_create_from_json(cls, template_dict: dict) -> "UiTemplate":
+        from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
+
+        # only checks if template with same name exists
+        template: Optional[UiTemplate] = cls.get_by_name(template_dict["name"])
+        if template is None:
+            template = cls.from_json(template_dict)
+            for tab in template_dict["tabs"]:
+                tab["template"] = template
+            template.tabs = TemplateTab.get_or_create_all(template_dict["tabs"])
+            for tab in template.tabs:
+                apply_filter_for_tab(tab.id)
+            DB.session.add(template)
+        return template
 
 
 @REGISTRY.mapped
@@ -230,6 +266,34 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     @property
     def plugin_filter(self) -> dict:
         return json.loads(self.filter_string)
+
+    @classmethod
+    def get_by_name(cls, name: str) -> "Optional[TemplateTab]":
+        q = select(cls).filter(cls.name == name)
+        found_tab: Optional[TemplateTab] = DB.session.execute(q).scalar_one_or_none()
+        return found_tab
+
+    @classmethod
+    def get_or_create(cls, tab: dict) -> "TemplateTab":
+        found_tab: Optional[TemplateTab] = cls.get_by_name(tab["name"])
+        if found_tab is None:
+            found_tab = cls(
+                name=tab["name"],
+                description=tab["description"],
+                sort_key=tab["sort_key"],
+                location=tab["location"],
+                filter_string=json.dumps(tab["filter"]),
+                template=tab["template"],
+            )
+            DB.session.add(found_tab)
+            DB.session.commit()
+        return found_tab
+
+    @classmethod
+    def get_or_create_all(cls, tabs: Sequence[dict]) -> "List[TemplateTab]":
+        if not tabs:
+            return []
+        return [cls.get_or_create(tab) for tab in tabs]
 
 
 @REGISTRY.mapped
