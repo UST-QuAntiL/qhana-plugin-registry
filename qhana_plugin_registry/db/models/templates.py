@@ -83,28 +83,17 @@ class UiTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
         return found_template
 
     @classmethod
-    def from_json(cls, template_dict: dict) -> "UiTemplate":
-        template = UiTemplate(
-            name=template_dict["name"],
-            description=template_dict["description"],
-            tags=TemplateTag.get_or_create_all(template_dict["tags"]),
-            tabs=[],  # FIXME tabs are added later since they need the template
-        )
-        return template
-
-    @classmethod
     def get_or_create_from_json(cls, template_dict: dict) -> "UiTemplate":
-        from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
-
         # only checks if template with same name exists
         template: Optional[UiTemplate] = cls.get_by_name(template_dict["name"])
         if template is None:
-            template = cls.from_json(template_dict)
-            for tab in template_dict["tabs"]:
-                tab["template"] = template
-            template.tabs = TemplateTab.get_or_create_all(template_dict["tabs"])
-            for tab in template.tabs:
-                apply_filter_for_tab(tab.id)
+            template = UiTemplate(
+                name=template_dict["name"],
+                description=template_dict["description"],
+                tags=TemplateTag.get_or_create_all(template_dict["tags"]),
+                tabs=[],  # will be added later
+            )
+            template.tabs = TemplateTab.get_or_create_all(template_dict["tabs"], template)
             DB.session.add(template)
         return template
 
@@ -271,7 +260,11 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
         return found_tab
 
     @classmethod
-    def get_or_create(cls, tab: dict) -> "TemplateTab":
+    def get_or_create(
+        cls, tab: dict, template: Optional[UiTemplate] = None
+    ) -> "TemplateTab":
+        from qhana_plugin_registry.tasks.plugin_filter import apply_filter_for_tab
+
         found_tab: Optional[TemplateTab] = cls.get_by_name(tab["name"])
         if found_tab is None:
             found_tab = cls(
@@ -280,17 +273,20 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
                 sort_key=tab["sort_key"],
                 location=tab["location"],
                 filter_string=json.dumps(tab["filter"]),
-                template=tab["template"],
+                template=template if template else tab["template"],
             )
             DB.session.add(found_tab)
             DB.session.commit()
+            apply_filter_for_tab(found_tab.id)
         return found_tab
 
     @classmethod
-    def get_or_create_all(cls, tabs: Sequence[dict]) -> "List[TemplateTab]":
+    def get_or_create_all(
+        cls, tabs: Sequence[dict], template: Optional[UiTemplate] = None
+    ) -> "List[TemplateTab]":
         if not tabs:
             return []
-        return [cls.get_or_create(tab) for tab in tabs]
+        return [cls.get_or_create(tab, template) for tab in tabs]
 
 
 @REGISTRY.mapped
