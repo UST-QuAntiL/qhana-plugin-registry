@@ -26,7 +26,7 @@ def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
         return
 
     try:
-        with open(file, "r") as f:
+        with file.open("r") as f:
             template_json = load(f)
             app.logger.info(f"Loaded template from file '{file}'.")
     except Exception:
