@@ -21,7 +21,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select
 from sqlalchemy.sql import sqltypes as sql
 from sqlalchemy.sql.schema import Column, ForeignKey
-from sqlalchemy.exc import MultipleResultsFound
 
 from .model_helpers import ExistsMixin, IdMixin, NameDescriptionMixin
 from .plugins import RAMP
@@ -78,11 +77,9 @@ class UiTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
 
     @classmethod
     def get_by_name(cls, name: str) -> "UiTemplate":
-        q = select(cls).filter(cls.name == name)
-        try:
-            found_template: UiTemplate = DB.session.execute(q).scalar_one_or_none()
-        except MultipleResultsFound:
-            found_template = DB.session.execute(q).first()[0]
+        # TODO: handle multiple results properly
+        q = select(cls).filter(cls.name == name).limit(1)
+        found_template: UiTemplate = DB.session.execute(q).scalar_one_or_none()
         return found_template
 
     @classmethod
