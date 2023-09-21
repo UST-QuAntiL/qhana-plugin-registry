@@ -1,10 +1,13 @@
+import json
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 from flask import Flask
 from json import load
 
+from qhana_plugin_registry.tasks.plugin_filter import evaluate_plugin_filter
+
 from ..db.db import DB
-from ..db.models.templates import UiTemplate
+from ..db.models.templates import TemplateTab, TemplateTag, UiTemplate
 
 
 def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
@@ -36,9 +39,22 @@ def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
         )
         return
 
-    template = UiTemplate.get_or_create_from_json(template_json)
-    app.logger.info(f"Loaded template '{template.name}' from file '{file}'.")
+    template: Optional[UiTemplate] = UiTemplate.get_by_name(template_json["name"])
+    if template is None:
+        template = UiTemplate(
+            name=template_json["name"],
+            description=template_json["description"],
+            tags=TemplateTag.get_or_create_all(template_json["tags"]),
+            tabs=[],  # will be added later
+        )
+        DB.session.add(template)
+        for tab in template_json["tabs"]:
+            tab["filter_string"] = json.dumps(tab.pop("filter"))
+            new_tab = TemplateTab.get_or_create(template=template, **tab)
+            template.tabs.append(new_tab)
+
     DB.session.commit()
+    app.logger.info(f"Loaded template '{template.name}' from file '{file}'.")
 
 
 def _load_templates_from_folder(app: Flask, folder: Union[str, Path]) -> None:
