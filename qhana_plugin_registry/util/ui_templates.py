@@ -52,8 +52,7 @@ def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
             tab["filter_string"] = json.dumps(tab.pop("filter"))
             new_tab = TemplateTab.get_or_create(template=template, **tab)
             template.tabs.append(new_tab)
-
-    DB.session.commit()
+        DB.session.commit()
     app.logger.info(f"Loaded template '{template.name}' from file '{file}'.")
 
 
