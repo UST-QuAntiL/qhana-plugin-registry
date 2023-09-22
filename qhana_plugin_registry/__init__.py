@@ -156,7 +156,7 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
 
     # load ui templates from configured files
     with app.app_context():
-        load_ui_templates(app)
+        load_ui_templates()
 
     # allow cors requests everywhere (CONFIGURE THIS TO YOUR PROJECTS NEEDS!)
     CORS(app)

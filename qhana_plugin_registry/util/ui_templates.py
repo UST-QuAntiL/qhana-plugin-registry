@@ -1,16 +1,14 @@
 import json
 from pathlib import Path
 from typing import Optional, Union
-from flask import Flask
 from json import load
-
-from qhana_plugin_registry.tasks.plugin_filter import evaluate_plugin_filter
+from flask import current_app as app
 
 from ..db.db import DB
 from ..db.models.templates import TemplateTab, TemplateTag, UiTemplate
 
 
-def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
+def _load_template_from_file(file: Union[str, Path]) -> None:
     """Load a template from a file.
 
     Args:
@@ -56,7 +54,7 @@ def _load_template_from_file(app: Flask, file: Union[str, Path]) -> None:
     app.logger.info(f"Loaded template '{template.name}' from file '{file}'.")
 
 
-def _load_templates_from_folder(app: Flask, folder: Union[str, Path]) -> None:
+def _load_templates_from_folder(folder: Union[str, Path]) -> None:
     """Load templates from a folder.
 
     Args:
@@ -76,10 +74,10 @@ def _load_templates_from_folder(app: Flask, folder: Union[str, Path]) -> None:
 
     files = folder.glob("*.json")
     for file in files:
-        _load_template_from_file(app, file)
+        _load_template_from_file(file)
 
 
-def load_ui_templates(app: Flask) -> None:
+def load_ui_templates() -> None:
     """Load templates from the plugin folders.
 
     Args:
@@ -91,9 +89,9 @@ def load_ui_templates(app: Flask) -> None:
     for folder in template_folders:
         path = Path(folder)
         if path.is_dir():
-            _load_templates_from_folder(app, path)
+            _load_templates_from_folder(path)
         elif path.is_file():
-            _load_template_from_file(app, path)
+            _load_template_from_file(path)
         else:
             app.logger.warning(
                 f"Tried to load templates from '{path}' but it is neither a file nor a folder."
