@@ -238,12 +238,16 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     def plugin_filter(self) -> dict:
         return json.loads(self.filter_string)
 
-    def get_by_name(template: UiTemplate, name: str) -> "Optional[TemplateTab]":
+    def get_by_name(
+        template: UiTemplate, name: str, location: Optional[str] = None
+    ) -> "Optional[TemplateTab]":
         q = (
             select(TemplateTab)
             .filter(TemplateTab.template == template)
             .filter(TemplateTab.name == name)
         )
+        if location is not None:
+            q = q.filter(TemplateTab.location == location)
         found_tab: Optional[TemplateTab] = DB.session.execute(q).scalar_one_or_none()
         return found_tab
 
@@ -251,7 +255,7 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     def get_or_create(cls, template: UiTemplate, **kwargs) -> "TemplateTab":
         from qhana_plugin_registry.tasks.plugin_filter import evaluate_plugin_filter
 
-        found_tab: Optional[TemplateTab] = cls.get_by_name(template, kwargs["name"])
+        found_tab = cls.get_by_name(template, kwargs["name"], kwargs.get("location"))
         if found_tab is None:
             found_tab = cls(template=template, **kwargs)
             found_tab.plugins = list(evaluate_plugin_filter(found_tab.plugin_filter))
