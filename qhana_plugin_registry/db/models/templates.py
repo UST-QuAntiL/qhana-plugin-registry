@@ -243,8 +243,7 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     ) -> "Optional[TemplateTab]":
         q = (
             select(TemplateTab)
-            .filter(TemplateTab.template == template)
-            .filter(TemplateTab.name == name)
+            .filter(TemplateTab.template == template, TemplateTab.name == name)
         )
         if location is not None:
             q = q.filter(TemplateTab.location == location)
