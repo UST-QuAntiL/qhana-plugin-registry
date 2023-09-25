@@ -75,6 +75,13 @@ class UiTemplate(IdMixin, NameDescriptionMixin, ExistsMixin):
         },
     )
 
+    @classmethod
+    def get_by_name(cls, name: str) -> "UiTemplate":
+        # TODO: handle multiple results properly
+        q = select(cls).filter(cls.name == name).limit(1)
+        found_template: UiTemplate = DB.session.execute(q).scalar_one_or_none()
+        return found_template
+
 
 @REGISTRY.mapped
 @dataclass
@@ -230,6 +237,28 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     @property
     def plugin_filter(self) -> dict:
         return json.loads(self.filter_string)
+
+    def get_by_name(
+        template: UiTemplate, name: str, location: Optional[str] = None
+    ) -> "Optional[TemplateTab]":
+        q = select(TemplateTab).filter(
+            TemplateTab.template == template, TemplateTab.name == name
+        )
+        if location is not None:
+            q = q.filter(TemplateTab.location == location)
+        found_tab: Optional[TemplateTab] = DB.session.execute(q).scalar_one_or_none()
+        return found_tab
+
+    @classmethod
+    def get_or_create(cls, template: UiTemplate, **kwargs) -> "TemplateTab":
+        from qhana_plugin_registry.tasks.plugin_filter import evaluate_plugin_filter
+
+        found_tab = cls.get_by_name(template, kwargs["name"], kwargs.get("location"))
+        if found_tab is None:
+            found_tab = cls(template=template, **kwargs)
+            found_tab.plugins = list(evaluate_plugin_filter(found_tab.plugin_filter))
+            DB.session.add(found_tab)
+        return found_tab
 
 
 @REGISTRY.mapped
