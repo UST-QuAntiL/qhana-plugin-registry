@@ -241,9 +241,8 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     def get_by_name(
         template: UiTemplate, name: str, location: Optional[str] = None
     ) -> "Optional[TemplateTab]":
-        q = (
-            select(TemplateTab)
-            .filter(TemplateTab.template == template, TemplateTab.name == name)
+        q = select(TemplateTab).filter(
+            TemplateTab.template == template, TemplateTab.name == name
         )
         if location is not None:
             q = q.filter(TemplateTab.location == location)
