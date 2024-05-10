@@ -18,8 +18,8 @@ from typing import Type, cast
 
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_sqlalchemy.model import DefaultMeta, Model
-from sqlalchemy.orm.decl_api import registry
+from flask_sqlalchemy.model import Model
+from sqlalchemy.orm import DeclarativeBase, registry
 from sqlalchemy.schema import MetaData
 
 DB: SQLAlchemy = SQLAlchemy(
@@ -36,14 +36,13 @@ DB: SQLAlchemy = SQLAlchemy(
 
 
 # Model constant to be importable directly
-MODEL = cast(Type[Model], DB.Model)
-if type(MODEL) is not DefaultMeta or not issubclass(MODEL, Model):
+MODEL = cast(Type[DeclarativeBase], DB.Model)
+if not issubclass(MODEL, Model):
     raise Warning(
         f"Please update the type cast of db.MODEL to reflect the current type {type(MODEL)}."
     )
 
-# only for sqlalchemy 1.4!
 assert hasattr(MODEL, "registry")
-REGISTRY = cast(registry, MODEL.registry)  # type: ignore
+REGISTRY: registry = MODEL.registry
 
 MIGRATE = Migrate()
