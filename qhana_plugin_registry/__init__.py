@@ -103,6 +103,14 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         if "compact" in json_conf:
             app.json.compact = json_conf["compact"]
 
+    # fix psycopg2 database urls of old docker compose files
+    if (db_url := config.get("SQLALCHEMY_DATABASE_URI", "")).startswith(
+        "postgresql+psycopg2:"
+    ):
+        config["SQLALCHEMY_DATABASE_URI"] = db_url.replace(
+            "postgresql+psycopg2:", "postgresql+psycopg:", 1
+        )
+
     # End Loading config #################
 
     # Configure logging

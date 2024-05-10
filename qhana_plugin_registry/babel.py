@@ -27,8 +27,7 @@ SUPPORTED_LOCALES = ["de", "en"]
 BABEL = Babel()
 
 
-@BABEL.localeselector
-def get_locale():
+def _get_locale():
     if "lang" in g:
         # check LanguageAccept option in g context
         accepted_languages = g.get("lang")
@@ -38,6 +37,9 @@ def get_locale():
     # try to guess the language from the user accept
     # header the browser transmits. We support SUPPORTED_LOCALES The best match wins.
     return request.accept_languages.best_match(SUPPORTED_LOCALES)
+
+
+BABEL = Babel(locale_selector=_get_locale)
 
 
 def inject_lang_from_header():

@@ -8,39 +8,40 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-flask = { extras = ["dotenv"], version = "^2.0.0" }
-invoke = "^1.6.0"
-Flask-JWT-Extended = "^4.0.0"
-Flask-Cors = "^3.0.10"
-Flask-SQLAlchemy = "^2.5.1"
-Flask-Migrate = "^3.0.0"
-flask-babel = "^2.0.0"
-flask-smorest = "^0.39.0"
-tomli = "^2.0.0"
+flask = { extras = ["dotenv"], version = "^3.0.0" }
+invoke = "^2.0.0"
+Flask-JWT-Extended = "^4.6.0"
+Flask-Cors = "^4.0.0"
+Flask-SQLAlchemy = "^3.1.1"
+SQLAlchemy = "^2.0.23"
+Flask-Migrate = "^4.0.5"
+flask-babel = "^4.0.0"
+flask-smorest = "^0.42.3"
+tomli = "^2.0.1"
 celery = "^5.2.2"
-redis = "^3.5.3"
-requests = "^2.25.1"
-typing-extensions = "^3.10.0"
-psycopg2 = {version = "^2.9.3", optional = true}
-PyMySQL = {version = "^1.0.2", optional = true}
+redis = "^5.0.0"
+requests = "^2.31.0"
+typing-extensions = "^4.0.0"
+psycopg = { version = "^3.1.18", optional = true }
+PyMySQL = { version = "^1.1.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-black = "^22.6.0"
-flake8 = "^3.9.2"
-pytest = "^6.2.4"
-flake8-docstrings = "^1.6.0"
-flake8-bugbear = "^21.4.3"
-Sphinx = "^4.0.0"
-recommonmark = "^0.7.0"
+black = "^24.0.0"
+flake8 = "^6.1.0"
+pytest = "^7.4.2"
+flake8-docstrings = "^1.7.0"
+flake8-bugbear = "^24.0.0"
+Sphinx = "^7.2.6"
 sphinxcontrib-redoc = "^1.6.0"
-sphinx-click = "^3.0.0"
-myst-parser = "^0.15.1"
-pip-licenses = "^3.5.3"
+sphinx-click = "^5.1.0"
+sphinx-rtd-theme = "^2.0.0"
+myst-parser = "^2.0.0"
+pip-licenses = "^4.3.3"
 pydeps = "^1.10.24"
 hypothesis = "^6.68.2"
 
 [tool.poetry.extras]
-psycopg2 = ["psycopg2"]
+psycopg = ["psycopg"]
 PyMySQL = ["PyMySQL"]
 
 [tool.poetry.scripts]
@@ -64,13 +65,14 @@ atomic = true
 filterwarnings = [
     "once:Creating a LegacyVersion has been deprecated and will be removed in the next major release:DeprecationWarning",
     # update celery/kombu to fix this
-    "once:SelectableGroups dict interface is deprecated. Use select.:DeprecationWarning", 
+    "once:SelectableGroups dict interface is deprecated. Use select.:DeprecationWarning",
     # update flask sqlalchemy to fix this
-    "once:'_app_ctx_stack' is deprecated and will be removed in Flask 2.3. Use 'g' to store data, or 'app_ctx' to access the current context.:DeprecationWarning"
+    "once:'_app_ctx_stack' is deprecated and will be removed in Flask 2.3. Use 'g' to store data, or 'app_ctx' to access the current context.:DeprecationWarning",
 ]
 
 [tool.sphinx]
 copyright-year = 2022
+theme = "sphinx_rtd_theme"     # theme must be added to the requirements first!
 enable-autodoc = true
 enable-autosectionlabel = true
 # documentation for myst: <https://myst-parser.readthedocs.io/en/latest>
@@ -105,12 +107,6 @@ extensions = [
 ]
 # substitutions = {"key": "substitution value"}
 
-[tool.sphinx.recommonmark]
-# deprecated: use the MyST parser and settings instead
-auto-toc-tree-section = "Contents"
-enable-math = false
-enable-inline-math = false
-enable-eval-rst = true
 
 [build-system]
 requires = ["poetry>=1.2.0"]
