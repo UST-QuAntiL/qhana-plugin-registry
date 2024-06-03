@@ -39,6 +39,8 @@ myst-parser = "^2.0.0"
 pip-licenses = "^4.3.3"
 pydeps = "^1.10.24"
 hypothesis = "^6.68.2"
+# setuptools is required by sphinxcontrib-redoc
+setuptools = "^70.0.0"
 
 [tool.poetry.extras]
 psycopg = ["psycopg"]
