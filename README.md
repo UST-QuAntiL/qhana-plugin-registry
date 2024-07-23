@@ -47,7 +47,7 @@ Start redis instance in docker container (if not started yet) and start worker p
 
 ```
 poetry run invoke start-broker
-poetry run invoke worker --beat
+poetry run invoke worker --beat --watch
 ```
 
 ## Environment variables
