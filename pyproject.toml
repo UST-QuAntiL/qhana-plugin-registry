@@ -41,6 +41,7 @@ pydeps = "^1.10.24"
 hypothesis = "^6.68.2"
 # setuptools is required by sphinxcontrib-redoc
 setuptools = "^70.0.0"
+watchdog = "^4.0.1"
 
 [tool.poetry.extras]
 psycopg = ["psycopg"]

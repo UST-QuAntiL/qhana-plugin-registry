@@ -47,8 +47,21 @@ Start redis instance in docker container (if not started yet) and start worker p
 
 ```
 poetry run invoke start-broker
-poetry run invoke worker --beat
+poetry run invoke worker --beat --watch
 ```
+
+### Debugging the worker with PyCharm
+
+1. Create a new "Run/Debug Configuration" of the type "Python Debug Server"
+2. Follow the instructions inside this config e.g.:
+   1. `pip install pydevd-pycharm~=241.18034.82`
+   2. add the following code somewhere before the lines you want to debug:
+   ```
+    import pydevd_pycharm
+    pydevd_pycharm.settrace('localhost', port=1234, stdoutToServer=True, stderrToServer=True)
+   ```
+3. Start the "Python Debug Server" config
+4. Start the worker
 
 ## Environment variables
 

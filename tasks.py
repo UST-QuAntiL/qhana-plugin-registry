@@ -137,7 +137,9 @@ def start_broker(c, port=None):
 
 
 @task
-def worker(c, pool="solo", concurrency=1, dev=False, log_level="INFO", beat=False):
+def worker(
+    c, pool="solo", concurrency=1, dev=False, log_level="INFO", beat=False, watch=False
+):
     """Run the celery worker, optionally starting the redis broker.
 
     Args:
@@ -146,7 +148,8 @@ def worker(c, pool="solo", concurrency=1, dev=False, log_level="INFO", beat=Fals
         concurrency (int, optional): the number of concurrent workers (defaults to 1 for development)
         dev (bool, optional): If true the redis docker container will be started before the worker and stopped after the workers finished. Defaults to False.
         log_level (str, optional): The log level of the celery logger in the worker (DEBUG|INFO|WARNING|ERROR|CRITICAL|FATAL). Defaults to "INFO".
-        beat (bool, optional): If true a celery beat scheduler will be started alongside the worker. This is needed for periodic tasks. Should only be set to True for one worker otherwise the periodic tasks get executed too often (see readme file).
+        beat (bool, optional): If True, a celery beat scheduler will be started alongside the worker. This is needed for periodic tasks. Should only be set to True for one worker otherwise the periodic tasks get executed too often (see readme file).
+        watch (bool, optional): If True, watch for file changes and restart workers automatically. Defaults to False.
     """
     if dev:
         start_broker(c)
@@ -163,6 +166,19 @@ def worker(c, pool="solo", concurrency=1, dev=False, log_level="INFO", beat=Fals
         log_level.upper(),
         "-E",
     ]
+
+    if watch:
+        cmd = [
+            "watchmedo",
+            "auto-restart",
+            f"--directory=./{MODULE_NAME}",
+            "--pattern=*.py",
+            "--recursive",
+            "--debounce-interval=3",
+            "--kill-after=10",
+            "--no-restart-on-command-exit",
+            "--",
+        ] + cmd
 
     if beat:
         cmd += ["-B"]
