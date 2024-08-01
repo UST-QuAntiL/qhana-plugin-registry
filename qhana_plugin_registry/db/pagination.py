@@ -145,13 +145,17 @@ def get_page_info(
 
         item_query = select(model).filter(*query_filter).order_by(*order_by_clauses)
 
-        cursor_row_cte: CTE = (
+        cursor_row_subq = (
             DB.session.query(
                 row_numbers.label("row"),
                 cursor_column,
             )
             .filter(*query_filter)
-            .from_self(column("row"))
+            .subquery()
+        )
+
+        cursor_row_cte: CTE = (
+            select(cursor_row_subq.c.row)
             .filter(cursor_column == cursor)
             .cte("cursor_row")
         )
