@@ -22,7 +22,7 @@ from flask_smorest import abort
 from flask_smorest import Blueprint
 
 from ..models.base_models import (
-    CursorPageSchema,
+    CollectionResourceSchema,
     NewApiObjectRaw,
     NewApiObjectSchema,
     get_api_response_schema,
@@ -55,7 +55,9 @@ class TemplateTabsRootView(MethodView):
     @TEMPLATE_TABS_API.arguments(
         TemplateTabCollectionArgumentsSchema, location="query", as_kwargs=True
     )
-    @TEMPLATE_TABS_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
+    @TEMPLATE_TABS_API.response(
+        HTTPStatus.OK, get_api_response_schema(CollectionResourceSchema)
+    )
     def get(self, template_id: str, **kwargs):
         """Get a list of templates."""
         if not template_id or not template_id.isdecimal():
