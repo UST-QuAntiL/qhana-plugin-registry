@@ -43,8 +43,10 @@ from ...tasks.plugin_filter import apply_filter_for_tab
 class TemplateTabData(TypedDict):
     name: str
     description: str
+    icon: Optional[str]
     sort_key: int
     location: str
+    group_key: str
     filter_string: str
 
 
@@ -91,8 +93,10 @@ class TemplateTabView(MethodView):
         found_tab.template = found_template
         found_tab.name = template_tab_data["name"]
         found_tab.description = template_tab_data["description"]
+        found_tab.icon = template_tab_data["icon"]
         found_tab.sort_key = template_tab_data["sort_key"]
         found_tab.location = template_tab_data["location"]
+        found_tab.group_key = template_tab_data["group_key"]
         found_tab.filter_string = template_tab_data["filter_string"]
 
         DB.session.commit()

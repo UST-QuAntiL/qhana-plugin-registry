@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Optional
 import json
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 import marshmallow as ma
@@ -53,8 +53,14 @@ class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
 class TemplateTabSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
+    icon = ma.fields.String(
+        required=False, allow_none=True, missing=None, validate=Length(max=64)
+    )
     location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
+    group_key = ma.fields.String(
+        required=False, allow_none=False, missing="", validate=Length(max=32)
+    )
     filter_string = ma.fields.String(required=True, allow_none=False, default="{}")
     plugins = ma.fields.Nested(ApiLinkSchema)
 
@@ -101,11 +107,21 @@ class TemplateTabSchema(ApiObjectSchema):
 
     @ma.validates("filter_string")
     def validate_filter_string(self, value):
+        if value == "":
+            return
         try:
             filter_dict = json.loads(value)
         except json.JSONDecodeError:
             raise ma.ValidationError("Invalid plugin filter: Not a valid JSON string.")
         TemplateTabSchema.validate_filter(filter_dict)
+
+    @ma.validates_schema
+    def validate_leaf_flag(self, data, **kwargs):
+        if data.get("group_key", ""):
+            if data.get("filter_string", ""):
+                raise ma.ValidationError(
+                    "Filter string must be empty for non leaf nodes!", "filter_string"
+                )
 
 
 class TemplateGroupSchema(CollectionResourceSchema):
@@ -127,7 +143,9 @@ class TemplateSchema(ApiObjectSchema):
 class TemplateTabData(BaseApiObject):
     name: str
     description: str
+    icon: Optional[str]
     location: str
+    group_key: str
     sort_key: int
     filter_string: str
     plugins: ApiLink

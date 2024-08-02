@@ -137,8 +137,10 @@ class TemplateTabsRootView(MethodView):
             template=found_template,
             name=tab_data["name"],
             description=tab_data["description"],
+            icon=tab_data["icon"],
             sort_key=tab_data["sort_key"],
             location=tab_data["location"],
+            group_key=tab_data["group_key"],
             filter_string=tab_data["filter_string"],
         )
         DB.session.add(created_tab)
