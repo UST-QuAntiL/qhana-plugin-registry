@@ -193,8 +193,10 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
             )
         },
     )
+    icon: Optional[str] = field(default=None, metadata={"sa": Column(sql.String(64))})
     sort_key: int = field(default=0, metadata={"sa": Column(sql.Integer())})
     location: str = field(default="workspace", metadata={"sa": Column(sql.String(255))})
+    group_key: str = field(default="", metadata={"sa": Column(sql.String(32))})
     filter_string: str = field(default="", metadata={"sa": Column(sql.Text())})
 
     _plugins: List["RampToTemplateTab"] = field(
@@ -236,6 +238,8 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
 
     @property
     def plugin_filter(self) -> dict:
+        if not self.filter_string:
+            return {}
         return json.loads(self.filter_string)
 
     def get_by_name(
