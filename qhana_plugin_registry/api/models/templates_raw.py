@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Optional
 from ...db.models.templates import UiTemplate, TemplateTab
 
 
@@ -21,4 +21,5 @@ from ...db.models.templates import UiTemplate, TemplateTab
 class TemplateGroupRaw:
     template: UiTemplate
     location: str
+    name: Optional[str]
     items: Sequence[TemplateTab]

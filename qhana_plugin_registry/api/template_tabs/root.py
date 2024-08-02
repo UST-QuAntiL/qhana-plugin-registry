@@ -89,9 +89,18 @@ class TemplateTabsRootView(MethodView):
         resource: Union[CollectionResource, TemplateGroupRaw]
 
         if group:
+            group_name = None
+            if "." in group:
+                *group_tab_group, group_key = group.split(".")
+                group_location = ".".join(group_tab_group)
+                for tab in found_template.tabs:
+                    if tab.location == group_location and tab.group_key == group_key:
+                        group_name = tab.name
+                        break
             resource = TemplateGroupRaw(
                 template=found_template,
                 location=group,
+                name=group_name,
                 items=tabs,
             )
         else:

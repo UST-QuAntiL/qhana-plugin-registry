@@ -131,7 +131,7 @@ class TemplateTabKeyGenerator(KeyGenerator, resource_type=TemplateTab):
         assert isinstance(resource, TemplateTab)
         template = resource.template
         assert template is not None
-        parent_resource = TemplateGroupRaw(template, resource.location, [])
+        parent_resource = TemplateGroupRaw(template, resource.location, None, [])
         parent_key = KeyGenerator.generate_key(parent_resource)
         key.update(parent_key)
         key[TEMPLATE_TAB_ID_KEY] = str(resource.id)
@@ -173,7 +173,7 @@ class TemplateTabUpLinkGenerator(
     ) -> Optional[ApiLink]:
         template = resource.template
         assert template is not None
-        parent_resource = TemplateGroupRaw(template, resource.location, [])
+        parent_resource = TemplateGroupRaw(template, resource.location, None, [])
         return LinkGenerator.get_link_of(
             parent_resource,
             extra_relations=(UP_REL,),
