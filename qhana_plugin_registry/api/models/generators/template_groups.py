@@ -67,6 +67,11 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
         else:
             query_params[TEMPLATE_GROUP_QUERY_KEY] = resource.location
 
+        if resource.name:
+            name = resource.name
+        else:
+            name = f"Tab Group: {resource.location}"
+
         return ApiLink(
             href=url_for(
                 endpoint,
@@ -78,7 +83,7 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
             resource_type=meta.rel_type,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
             schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{TemplateGroupSchema.schema_name()}",
-            name=f"Tab Group: {resource.location}",
+            name=name,
         )
 
 

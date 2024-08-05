@@ -22,7 +22,7 @@ from flask_smorest import abort
 from flask_smorest import Blueprint
 
 from ..models.base_models import (
-    CursorPageSchema,
+    CollectionResourceSchema,
     NewApiObjectRaw,
     NewApiObjectSchema,
     get_api_response_schema,
@@ -55,7 +55,9 @@ class TemplateTabsRootView(MethodView):
     @TEMPLATE_TABS_API.arguments(
         TemplateTabCollectionArgumentsSchema, location="query", as_kwargs=True
     )
-    @TEMPLATE_TABS_API.response(HTTPStatus.OK, get_api_response_schema(CursorPageSchema))
+    @TEMPLATE_TABS_API.response(
+        HTTPStatus.OK, get_api_response_schema(CollectionResourceSchema)
+    )
     def get(self, template_id: str, **kwargs):
         """Get a list of templates."""
         if not template_id or not template_id.isdecimal():
@@ -87,9 +89,18 @@ class TemplateTabsRootView(MethodView):
         resource: Union[CollectionResource, TemplateGroupRaw]
 
         if group:
+            group_name = None
+            if "." in group:
+                *group_tab_group, group_key = group.split(".")
+                group_location = ".".join(group_tab_group)
+                for tab in found_template.tabs:
+                    if tab.location == group_location and tab.group_key == group_key:
+                        group_name = tab.name
+                        break
             resource = TemplateGroupRaw(
                 template=found_template,
                 location=group,
+                name=group_name,
                 items=tabs,
             )
         else:
@@ -135,8 +146,10 @@ class TemplateTabsRootView(MethodView):
             template=found_template,
             name=tab_data["name"],
             description=tab_data["description"],
+            icon=tab_data["icon"],
             sort_key=tab_data["sort_key"],
             location=tab_data["location"],
+            group_key=tab_data["group_key"],
             filter_string=tab_data["filter_string"],
         )
         DB.session.add(created_tab)
