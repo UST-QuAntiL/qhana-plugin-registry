@@ -122,6 +122,10 @@ class TemplateTabSchema(ApiObjectSchema):
                 raise ma.ValidationError(
                     "Filter string must be empty for non leaf nodes!", "filter_string"
                 )
+            if data.get("location", "").startswith("workspace"):
+                raise ma.ValidationError(
+                    "Tab goups cannot be used in the experiment workspace!", "group_key"
+                )
 
 
 class TemplateGroupSchema(CollectionResourceSchema):
