@@ -25,6 +25,10 @@ __all__ = [
 ]
 
 
+class EnvPageArgumentsSchema(ApiObjectSchema):
+    name = ma.fields.String(required=False, allow_none=True, missing=None)
+
+
 class EnvSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     value = ma.fields.String(required=True, allow_none=False)

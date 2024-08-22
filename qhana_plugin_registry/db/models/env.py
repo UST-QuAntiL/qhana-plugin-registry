@@ -17,6 +17,7 @@ from typing import Optional, Sequence
 
 from sqlalchemy.sql import delete, select
 from sqlalchemy.sql import sqltypes as sql
+from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.schema import Column
 
 from .model_helpers import ExistsMixin
@@ -45,6 +46,11 @@ class Env(ExistsMixin):
     def get_items(cls) -> Sequence["Env"]:
         """Get a list of known env vars."""
         return DB.session.execute(select(cls)).scalars()
+
+    @classmethod
+    def get_count(cls) -> int:
+        """Get the amount of known env vars."""
+        return DB.session.execute(select(count(cls.name))).scalars().one()
 
     @classmethod
     def get(cls, name: str, default=None) -> Optional["Env"]:
