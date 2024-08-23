@@ -15,9 +15,10 @@
 """Module containing helpers for pagination that are better suited for the view functions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union, cast
+from typing import Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union, cast
 
 from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
+from marshmallow.exceptions import ValidationError
 
 from .base_models import ApiLink
 from .request_helpers import LinkGenerator, PageResource
@@ -89,11 +90,13 @@ def prepare_pagination_query_args(
     item_count: int = 25,
     sort: Optional[str] = None,
     _sort_default: str,
+    _cast_cursor: Optional[type[str] | type[int]] = None,
 ) -> PaginationOptions:
     """Prepare pagination query arguments into a PaginationOptions object.
 
     Args:
         _sort_default (str): a default sort string to apply if sort is None
+        _cast_cursor (type[str]|type[int], optional): if set, ensure that the cursor value is either an int or a string. Defaults to None.
         cursor (Optional[Union[str, int]], optional): the cursor of the current page. Defaults to None.
         item_count (int, optional): the current item count. Defaults to 25.
         sort (Optional[str], optional): the current sort argument. Defaults to None.
@@ -103,6 +106,14 @@ def prepare_pagination_query_args(
     """
     if sort is None and _sort_default is not None:
         sort = _sort_default
+
+    if cursor and _cast_cursor:
+        try:
+            cursor = _cast_cursor(cursor)
+        except ValueError:
+            raise ValidationError(
+                f"Page cursor was {cursor} but should have been {'a string' if _cast_cursor is str else 'an integer'}!"
+            )
 
     return PaginationOptions(
         sort=sort,

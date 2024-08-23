@@ -62,7 +62,7 @@ class TemplatesRootView(MethodView):
         """Get a list of templates."""
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="name"
+            **kwargs, _sort_default="name", _cast_cursor=int
         )
 
         pagination_info = default_get_page_info(

@@ -64,7 +64,7 @@ class SeedsRootView(MethodView):
         # abort(HTTPStatus.NOT_IMPLEMENTED, message="WIP, currently not implemented")
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="id"
+            **kwargs, _sort_default="id", _cast_cursor=int
         )
 
         pagination_info = default_get_page_info(Seed, tuple(), pagination_options)
