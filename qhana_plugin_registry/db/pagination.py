@@ -165,7 +165,7 @@ def get_page_info(
         DB.session.query(
             cursor_column,
             row_numbers.label("row"),
-            (row_numbers / item_count).label("page"),
+            func.floor(row_numbers / item_count).label("page"),
             (row_numbers % item_count).label("modulo"),
         )
         .filter(*query_filter)
