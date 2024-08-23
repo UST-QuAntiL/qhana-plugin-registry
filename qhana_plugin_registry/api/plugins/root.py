@@ -130,7 +130,7 @@ class PluginsRootView(MethodView):
             last_available_period = None
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="name,-version"
+            **kwargs, _sort_default="name,-version", _cast_cursor=int
         )
 
         filter_: List[ColumnOperators] = filter_ramps_by_id(parsed_plugin_ids)

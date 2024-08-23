@@ -63,7 +63,7 @@ class ServicesRootView(MethodView):
         """Get a list of services."""
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="service_id"
+            **kwargs, _sort_default="service_id", _cast_cursor=int
         )
 
         service_id_filter = service_id

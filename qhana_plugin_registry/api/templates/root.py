@@ -66,7 +66,7 @@ class TemplatesRootView(MethodView):
         template_id: Optional[int] = kwargs.pop("template_id", None)
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="name"
+            **kwargs, _sort_default="name", _cast_cursor=int
         )
 
         filter_ = filter_templates_by_template_id(template_id=template_id)
