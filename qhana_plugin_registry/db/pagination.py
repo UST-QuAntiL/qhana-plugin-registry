@@ -27,8 +27,7 @@ from typing import (
 )
 
 from sqlalchemy.orm import lazyload
-from sqlalchemy.orm.query import Query
-from sqlalchemy.sql import column, func, select
+from sqlalchemy.sql import column, func, select, Select
 from sqlalchemy.sql.expression import and_, asc, desc, or_, ColumnElement
 from sqlalchemy.sql.selectable import CTE
 from flask import current_app
@@ -63,7 +62,7 @@ class PaginationInfo:
     cursor_page: int
     surrounding_pages: List[PageInfo]
     last_page: Optional[PageInfo]
-    page_items_query: Query
+    page_items_query: Select[Any]
 
 
 def get_page_info(
@@ -122,7 +121,7 @@ def get_page_info(
             .scalar()  # none or value of the cursor
         )
 
-    item_query: Query = select(model).filter(*query_filter).order_by(*order_by_clauses)
+    item_query: Select = select(model).filter(*query_filter).order_by(*order_by_clauses)
 
     if collection_size <= item_count:
         return PaginationInfo(

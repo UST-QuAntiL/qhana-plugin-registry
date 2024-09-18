@@ -23,6 +23,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.sql.expression import ColumnElement, ColumnOperators
 from sqlalchemy.sql import select
+from sqlalchemy.orm import selectinload
 
 from qhana_plugin_registry.api.models.plugins import (
     PluginsPageArgumentsSchema,
@@ -170,7 +171,9 @@ class PluginsRootView(MethodView):
         )
 
         plugins: List[RAMP] = DB.session.execute(
-            pagination_info.page_items_query
+            pagination_info.page_items_query.options(
+                selectinload(RAMP.data_consumed), selectinload(RAMP.data_produced)
+            )
         ).scalars()
 
         embedded_responses = (
