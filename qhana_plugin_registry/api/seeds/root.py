@@ -44,7 +44,6 @@ from ...db.db import DB
 from ...db.models.seeds import Seed
 from ...tasks.plugin_discovery import discover_plugins_from_seeds
 
-
 SEEDS_API = Blueprint(
     name="api-seeds",
     import_name=__name__,

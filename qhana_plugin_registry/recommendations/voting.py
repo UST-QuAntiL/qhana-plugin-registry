@@ -48,7 +48,7 @@ class VoteTuple(NamedTuple):
 
 
 def flatten_results(
-    results: Sequence[Tuple[str, Union[Vote, Sequence[Vote]]]]
+    results: Sequence[Tuple[str, Union[Vote, Sequence[Vote]]]],
 ) -> Iterator[VoteTuple]:
     for name, result in results:
         if (

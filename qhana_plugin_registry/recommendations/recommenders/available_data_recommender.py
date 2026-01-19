@@ -47,7 +47,7 @@ class AvailableDataRecommender(PluginRecommender):
 
 
 def extract_mimetypes(
-    data_item: Union[DataItemTuple, DataItem]
+    data_item: Union[DataItemTuple, DataItem],
 ) -> Tuple[Optional[str], Optional[str]]:
     if isinstance(data_item, (tuple, list)):
         return data_item[:2]
