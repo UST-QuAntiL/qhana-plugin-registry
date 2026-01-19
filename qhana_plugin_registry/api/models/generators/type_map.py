@@ -17,7 +17,7 @@
 from dataclasses import dataclass
 from typing import Optional, Sequence, Type
 
-from marshmallow.base import SchemaABC
+from marshmallow.schema import Schema
 
 
 @dataclass()
@@ -25,7 +25,7 @@ class ResourceMetadata:
     rel_type: str
     extra_link_rels: Sequence[str]
     endpoint: str
-    schema: Type[SchemaABC]
+    schema: Type[Schema]
     schema_id: str
     collection_endpoint: Optional[str]
 

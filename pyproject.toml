@@ -1,57 +1,58 @@
 [tool.poetry]
 name = "qhana_plugin_registry"
-version = "0.1.0"
+version = "0.1.1"
 description = "A template for Flask applications with SQLalchemy, Migrations and REST API"
 authors = ["University of Stuttgart", "Fabian Bühler"]
 license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-flask = { extras = ["dotenv"], version = "^3.0.0" }
-invoke = "^2.0.0"
-Flask-JWT-Extended = "^4.6.0"
-Flask-Cors = "^4.0.0"
+python = "^3.11"
+flask = { extras = ["dotenv"], version = "^3.1.0" }
+invoke = "^2.2.1"
+Flask-JWT-Extended = "^4.7.0"
+Flask-Cors = "^4.0.1"
 Flask-SQLAlchemy = "^3.1.1"
-SQLAlchemy = "^2.0.23"
-Flask-Migrate = "^4.0.5"
+SQLAlchemy = "^2.0.43"
+Flask-Migrate = "^4.1.0"
 flask-babel = "^4.0.0"
-flask-smorest = "^0.42.3"
-tomli = "^2.0.1"
-celery = "^5.2.2"
-redis = "^5.0.0"
-requests = "^2.31.0"
+flask-smorest = "^0.46.0"
+tomli = "^2.2.1"
+celery = "^5.6.2"
+redis = "^7.0.0"
+requests = "^2.32.5"
 typing-extensions = "^4.0.0"
-psycopg = { version = "^3.1.18", optional = true }
-PyMySQL = { version = "^1.1.0", optional = true }
+psycopg = { version = "^3.3.2", optional = true }
+PyMySQL = { version = "^1.1.2", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.0.0"
-flake8 = "^6.1.0"
-pytest = "^7.4.2"
+black = "^26.1.0"
+flake8 = "^7.3.0"
+pytest = "^9.0.2"
 flake8-docstrings = "^1.7.0"
-flake8-bugbear = "^24.0.0"
-Sphinx = "^7.2.6"
+flake8-bugbear = "^25.11.29"
+Sphinx = "^8.2.3"
+sphinx-click = "^6.0.0"
+myst-parser = "^4.0.0"
+pip-licenses-cli = { extras = ["spdx"], version = "^3.0.0" }
 sphinxcontrib-redoc = "^1.6.0"
-sphinx-click = "^5.1.0"
-sphinx-rtd-theme = "^2.0.0"
-myst-parser = "^2.0.0"
-pip-licenses = "^4.3.3"
-pydeps = "^1.10.24"
-hypothesis = "^6.68.2"
-# setuptools is required by sphinxcontrib-redoc
-setuptools = "^70.0.0"
-watchdog = "^4.0.1"
+sphinx-rtd-theme = "^3.1.0"
+pydeps = "^3.0.2"
+hypothesis = "^6.105.2"
+watchdog = "^6.0.0"
 
 [tool.poetry.extras]
 psycopg = ["psycopg"]
 PyMySQL = ["PyMySQL"]
 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.10"
+
 [tool.poetry.scripts]
 #flask = 'flask.cli:main'
 
 [tool.black]
-target-version = ["py310"]
+target-version = ["py311"]
 line-length = 90
 include = '\.pyi?$'
 
@@ -75,7 +76,7 @@ filterwarnings = [
 
 [tool.sphinx]
 copyright-year = 2022
-theme = "sphinx_rtd_theme"     # theme must be added to the requirements first!
+theme = "sphinx_rtd_theme"
 enable-autodoc = true
 enable-autosectionlabel = true
 # documentation for myst: <https://myst-parser.readthedocs.io/en/latest>
@@ -112,5 +113,5 @@ extensions = [
 
 
 [build-system]
-requires = ["poetry>=1.2.0"]
+requires = ["poetry>=2.1.0"]
 build-backend = "poetry.masonry.api"

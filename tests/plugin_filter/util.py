@@ -22,9 +22,10 @@ from qhana_plugin_registry.tasks.plugin_filter import (
 from hypothesis import strategies as st
 from packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
 import json
-from packaging.version import VERSION_PATTERN
+from packaging.version import VERSION_PATTERN, InvalidVersion
 from difflib import SequenceMatcher
 import re
+from hypothesis import assume
 
 
 @st.composite
@@ -132,7 +133,7 @@ def create_template_tab(
             "filterString": filter_string,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     template_tab_id = (
         tmp_db.session.query(TemplateTab.id)
         .filter(
@@ -172,7 +173,7 @@ def update_plugin_filter(
             "sortKey": template_tab.sort_key,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     apply_filter_for_tab.apply(args=(template_tab.id,))
     plugins = (
         tmp_db.session.query(TemplateTab)
@@ -205,6 +206,7 @@ def filter_matches_plugin(filter_dict: dict, plugin: RAMP) -> bool:
         case {"tag": tag}:
             return tag in (tag.tag for tag in plugin.tags)
         case {"version": version}:
+            assume(is_specifier_set(version))
             spec = SpecifierSet(version)
             return spec.contains(plugin.version)
         case {"type": plugin_type}:
@@ -237,7 +239,10 @@ def is_specifier_set(s: str) -> bool:
         True if the string is a valid PEP 440 specifier set, False otherwise.
     """
     try:
-        SpecifierSet(s)
+        spec = SpecifierSet(s)
+        spec.prereleases
     except InvalidSpecifier:
         return False
+    except InvalidVersion:
+        return False  # a version inside the specifier set is invalid
     return True

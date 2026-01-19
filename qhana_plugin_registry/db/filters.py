@@ -271,7 +271,7 @@ def filter_data_to_ramp_by_data_types(
         relation (DATA_RELATION_CONSUMED | DATA_RELATION_PRODUCED, optional): if set, filter by the relation column
         data_id_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.id.
         data_relation_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.relation.
-        data_required_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.reqired.
+        data_required_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.required.
         data_type_start_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.data_type_start.
         data_type_end_column (ColumnElement, optional): the column to apply the filter to (use only if aliases are used in the query). Defaults to DataToRAMP.data_type_end.
 
