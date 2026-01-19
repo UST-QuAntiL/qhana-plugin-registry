@@ -18,11 +18,12 @@ Submodules
 
    qhana_plugin_registry.util.logging
    qhana_plugin_registry.util.reverse_proxy_fix
+   qhana_plugin_registry.util.ui_templates
 
 Module contents
 ---------------
 
 .. automodule:: qhana_plugin_registry.util
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

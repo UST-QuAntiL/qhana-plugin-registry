@@ -15,5 +15,5 @@ Module contents
 
 .. automodule:: qhana_plugin_registry.api.seeds
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -17,12 +17,14 @@ Submodules
 
    qhana_plugin_registry.db.cli
    qhana_plugin_registry.db.db
+   qhana_plugin_registry.db.filters
    qhana_plugin_registry.db.pagination
+   qhana_plugin_registry.db.util
 
 Module contents
 ---------------
 
 .. automodule:: qhana_plugin_registry.db
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
