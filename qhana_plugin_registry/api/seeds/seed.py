@@ -56,7 +56,8 @@ class SeedView(MethodView):
         if found_seed:
             plugin_q = select(RAMP.id).where(RAMP.seed == found_seed)
             ramps = DB.session.execute(plugin_q).all()
-            DB.session.delete(ramps)
+            for ramp in ramps:
+                DB.session.delete(ramp)
 
             DB.session.delete(found_seed)
             DB.session.commit()
