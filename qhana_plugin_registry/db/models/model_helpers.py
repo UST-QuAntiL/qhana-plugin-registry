@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Self
 
 from sqlalchemy.sql import select
 from sqlalchemy.sql.elements import literal
@@ -25,7 +25,7 @@ class ExistsMixin:
     @classmethod
     def exists(cls, query_filter: Sequence[Any] = tuple()) -> bool:
         exists_q = select(literal(True)).select_from(cls).filter(*query_filter).exists()
-        return DB.session.execute(select(literal(True)).where(exists_q)).scalar()
+        return bool(DB.session.execute(select(literal(True)).where(exists_q)).scalar())
 
 
 @dataclass
@@ -47,7 +47,7 @@ class IdMixin:
             DB.session.commit()
 
     @classmethod
-    def get_by_id(cls, id_: int) -> Optional["IdMixin"]:
+    def get_by_id(cls, id_: int) -> Optional[Self]:
         """Get the object instance by the object id from the database. (None if not found)"""
         return DB.session.execute(select(cls).filter_by(id=id_)).scalar_one_or_none()
 
