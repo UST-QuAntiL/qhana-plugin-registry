@@ -1,10 +1,6 @@
-FROM python:3.10
+FROM python:3.12
 
 LABEL org.opencontainers.image.source="https://github.com/UST-QuAntiL/qhana-plugin-registry"
-
-# install git and remove caches again in same layer
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends git && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -41,7 +37,7 @@ ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait
 RUN chmod +x /wait
 
 
-RUN python -m pip install poetry gunicorn
+RUN python -m pip install poetry gunicorn poetry-plugin-export
 
 COPY --chown=gunicorn . /app
 

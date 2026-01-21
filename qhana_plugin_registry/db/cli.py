@@ -30,7 +30,6 @@ from ..util.logging import get_logger
 # make sure all models are imported for CLI to work properly
 from . import models  # noqa
 
-
 DB_CLI_BLP = Blueprint("db_cli", __name__, cli_group=None)
 DB_CLI = cast(AppGroup, DB_CLI_BLP.cli)  # expose as attribute for autodoc generation
 

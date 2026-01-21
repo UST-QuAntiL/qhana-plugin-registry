@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Module preparing the celery instance to be started as a worker. DO NOT IMPORT NORMALLY!"""
+
 from logging import getLogger
 
 from . import create_app

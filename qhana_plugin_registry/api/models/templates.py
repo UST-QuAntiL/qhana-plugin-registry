@@ -54,14 +54,22 @@ class TemplateTabSchema(ApiObjectSchema):
     name = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
     description = ma.fields.String(required=True, allow_none=False)
     icon = ma.fields.String(
-        required=False, allow_none=True, missing=None, validate=Length(max=64)
+        required=False,
+        allow_none=True,
+        load_default=None,
+        dump_default=None,
+        validate=Length(max=64),
     )
     location = ma.fields.String(required=True, allow_none=False, validate=Length(max=255))
-    sort_key = ma.fields.Integer(required=True, allow_none=False, default=0)
+    sort_key = ma.fields.Integer(required=True, allow_none=False, dump_default=0)
     group_key = ma.fields.String(
-        required=False, allow_none=False, missing="", validate=Length(max=32)
+        required=False,
+        allow_none=False,
+        load_default="",
+        dump_default="",
+        validate=Length(max=32),
     )
-    filter_string = ma.fields.String(required=True, allow_none=False, default="{}")
+    filter_string = ma.fields.String(required=True, allow_none=False, dump_default="{}")
     plugins = ma.fields.Nested(ApiLinkSchema)
 
     @staticmethod
@@ -106,7 +114,7 @@ class TemplateTabSchema(ApiObjectSchema):
                 )
 
     @ma.validates("filter_string")
-    def validate_filter_string(self, value):
+    def validate_filter_string(self, value, data_key):
         if value == "":
             return
         try:

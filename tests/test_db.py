@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from conftests import tmp_app, tmp_db
 from qhana_plugin_registry.db.models.plugins import RAMP, PluginTag, TagToRAMP
 
 

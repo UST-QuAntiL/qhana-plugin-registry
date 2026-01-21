@@ -7,9 +7,14 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   qhana_plugin_registry.api.env
    qhana_plugin_registry.api.models
    qhana_plugin_registry.api.plugins
+   qhana_plugin_registry.api.recommendations
    qhana_plugin_registry.api.seeds
+   qhana_plugin_registry.api.services
+   qhana_plugin_registry.api.template_tabs
+   qhana_plugin_registry.api.templates
 
 Submodules
 ----------
@@ -26,5 +31,5 @@ Module contents
 
 .. automodule:: qhana_plugin_registry.api
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

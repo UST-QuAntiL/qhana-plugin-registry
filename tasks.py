@@ -17,8 +17,9 @@ from os import execvpe as replace_process
 from os import urandom
 from pathlib import Path
 from re import match
-from typing import List, cast
+from typing import List, Optional, cast
 from platform import system
+from shutil import rmtree
 
 from dotenv import load_dotenv, set_key, unset_key
 from invoke import task
@@ -45,6 +46,7 @@ ALLOWED_LICENSES = [
     "Apache Software License",
     "BSD License",
     "BSD",
+    "BSD-3-Clause",
     "GNU Lesser General Public License v2 or later (LGPLv2+)",
     "GNU Library or Lesser General Public License (LGPL)",
     "GPLv3",
@@ -422,7 +424,13 @@ def start_docker(c):
 
 
 @task
-def doc(c, format_="html", all_=False, color=True):
+def doc(
+    c: Context,
+    format_: str = "html",
+    all_: bool = False,
+    color: bool = True,
+    clean: bool = False,
+):
     """Build the documentation.
 
     Args:
@@ -430,7 +438,11 @@ def doc(c, format_="html", all_=False, color=True):
         format_ (str, optional): the format to build. Defaults to "html".
         all (bool, optional): build all files new. Defaults to False.
         color (bool, optional): color output. Defaults to True.
+        clean (bool, optional): try to clean up the build directory before building. Defaults to False.
     """
+    if clean:
+        for file_ in Path("./docs/_build").glob("*"):
+            rmtree(file_, ignore_errors=True)
     cmd = ["sphinx-build", "-b", format_]
     if all_:
         cmd.append("-a")
@@ -444,7 +456,7 @@ def doc(c, format_="html", all_=False, color=True):
 
 
 @task
-def browse_doc(c):
+def browse_doc(c: Context):
     """Open the documentation in the browser.
 
     Args:
@@ -461,7 +473,7 @@ def browse_doc(c):
 
 
 @task
-def doc_index(c, filter_=""):
+def doc_index(c: Context, filter_: str = ""):
     """Search the index of referencable sphinx targets in the documentation.
 
     Args:
@@ -476,15 +488,16 @@ def doc_index(c, filter_=""):
         filter_ = filter_.lower()
 
     with c.cd(str(Path("./docs"))):
-        output: Result = c.run(
+        output: Optional[Result] = c.run(
             join(["python", "-m", "sphinx.ext.intersphinx", "_build/objects.inv"]),
             echo=True,
             hide="stdout",
         )
+        stdout = output.stdout if output else ""
         print(
             "".join(
                 l
-                for l in output.stdout.splitlines(True)
+                for l in stdout.splitlines(True)
                 if (l and not l[0].isspace()) or (not filter_) or (filter_ in l.lower())
             ),
         )
@@ -492,12 +505,12 @@ def doc_index(c, filter_=""):
 
 @task
 def list_licenses(
-    c,
-    format_="json",
-    include_installed=False,
-    summary=False,
-    short=False,
-    echo=False,
+    c: Context,
+    format_: str = "json",
+    include_installed: bool = False,
+    summary: bool = False,
+    short: bool = False,
+    echo: bool = False,
 ):
     """List licenses of dependencies.
 
@@ -513,12 +526,13 @@ def list_licenses(
     """
     packages: List[str] = []
     if not include_installed:
-        packages_output: Result = c.run(
+        packages_output: Optional[Result] = c.run(
             join(["poetry", "export", "--dev", "--without-hashes"]),
             echo=False,
             hide="both",
         )
-        packages = [p.split("=", 1)[0] for p in packages_output.stdout.splitlines() if p]
+        packages_stdout = packages_output.stdout if packages_output else ""
+        packages = [p.split("=", 1)[0] for p in packages_stdout.splitlines() if p]
     cmd: List[str] = [
         "pip-licenses",
         "--format",
@@ -550,7 +564,7 @@ def list_licenses(
 
 
 @task
-def update_licenses(c, include_installed=False):
+def update_licenses(c: Context, include_installed: bool = False):
     """Update the licenses template to include all licenses.
 
     By default only the direct (and transitive) dependencies of the project are included.
@@ -561,12 +575,13 @@ def update_licenses(c, include_installed=False):
     """
     packages: List[str] = []
     if not include_installed:
-        packages_output: Result = c.run(
+        packages_output: Optional[Result] = c.run(
             join(["poetry", "export", "--dev", "--without-hashes"]),
             echo=False,
             hide="both",
         )
-        packages = [p.split("=", 1)[0] for p in packages_output.stdout.splitlines() if p]
+        packages_stdout = packages_output.stdout if packages_output else ""
+        packages = [p.split("=", 1)[0] for p in packages_stdout.splitlines() if p]
     cmd: List[str] = [
         "pip-licenses",
         "--format",
@@ -587,16 +602,22 @@ def update_licenses(c, include_installed=False):
             "--packages",
             *packages,
         ]
-    c.run(
+    result = c.run(
         join(cmd),
         echo=True,
         hide="err",
         warn=True,
     )
+    if "not in allow-only licenses was found" in result.stderr:
+        raise ValueError(
+            "Encountered an unknown licence. Please check the licences of new or updated packages or update the ALLOWED_LICENCES.\n"
+            + "\n--- COMMAND OUTPUT ---\n"
+            + result.stderr
+        )
 
 
 @task(update_licenses)
-def update_dependencies(c):
+def update_dependencies(c: Context):
     """Update dependencies that are derived from the pyproject.toml dependencies (e.g. doc dependencies and licenses).
 
     Args:

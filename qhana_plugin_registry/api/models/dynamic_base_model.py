@@ -15,7 +15,7 @@
 from typing import Any
 
 import marshmallow as ma
-from marshmallow.base import SchemaABC
+from marshmallow.schema import Schema
 from marshmallow.utils import is_collection
 
 from . import base_models as bm
@@ -24,7 +24,7 @@ from .generators import type_map as tm
 
 
 class DynamicApiResponseSchema(bm.ApiResponseSchema):
-    data = ma.fields.Method("dump_data", reqired=True, allow_none=False, dump_only=True)
+    data = ma.fields.Method("dump_data", required=True, allow_none=False, dump_only=True)
 
     def dump_data(self, obj: Any) -> Any:
         attr: Any = super().get_attribute(obj, "data", None)
@@ -32,6 +32,6 @@ class DynamicApiResponseSchema(bm.ApiResponseSchema):
         assert not many, "Collections are not supported!"
         attr_type = type(attr)
         schema = tm.TYPE_TO_METADATA[attr_type].schema
-        if issubclass(schema, SchemaABC):
+        if issubclass(schema, Schema):
             schema = schema()
         return schema.dump(rh.ApiObjectGenerator.get_api_object(attr))

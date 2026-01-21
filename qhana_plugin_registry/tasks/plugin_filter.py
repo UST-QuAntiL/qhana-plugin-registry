@@ -17,7 +17,7 @@ from difflib import SequenceMatcher
 from celery.utils.log import get_task_logger
 from packaging.specifiers import InvalidSpecifier
 from packaging.specifiers import SpecifierSet
-from packaging.version import Version
+from packaging.version import Version, InvalidVersion
 
 from ..celery import CELERY
 from ..db.models.templates import TemplateTab
@@ -71,10 +71,15 @@ def get_plugins_from_filter(
             except InvalidSpecifier:
                 TASK_LOGGER.warning(f"Invalid version specifier: '{version}'")
                 return set()
+
+            def match_version(v: str):
+                try:
+                    return Version(v) in specifier
+                except InvalidVersion:
+                    return False
+
             return {
-                p_id
-                for p_id, p in plugin_mapping.items()
-                if Version(p.version) in specifier
+                p_id for p_id, p in plugin_mapping.items() if match_version(p.version)
             }
         case {"name": name}:
             plugin_ids = set()
