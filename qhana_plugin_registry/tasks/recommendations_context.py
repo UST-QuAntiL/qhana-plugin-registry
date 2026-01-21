@@ -102,10 +102,16 @@ def fetch_step_details(
     ramp_id: Optional[int] = None
     try:
         ramp_q = select(RAMP.id).filter(
-            RAMP.plugin_type == step_data["processorName"],
+            RAMP.plugin_id == step_data["processorName"],
             RAMP.version == step_data["processorVersion"],
         )
         ramp_id: Optional[int] = DB.session.execute(ramp_q).scalar_one_or_none()
+        if ramp_id is None:
+            # try to find plugin with a different version
+            ramp_q = select(RAMP.id).filter(
+                RAMP.plugin_id == step_data["processorName"],
+            )
+            ramp_id: Optional[int] = DB.session.execute(ramp_q).scalar_one_or_none()
     except KeyError:
         pass
     result_context: RecommendationContext
