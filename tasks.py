@@ -628,7 +628,8 @@ def update_dependencies(c: Context):
             [
                 "poetry",
                 "export",
-                "--dev",
+                "--with",
+                "dev",
                 "--without-hashes",
                 "--format",
                 "requirements.txt",
