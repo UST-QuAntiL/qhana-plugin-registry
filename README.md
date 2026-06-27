@@ -2,8 +2,8 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GitHub license](https://img.shields.io/github/license/UST-QuAntiL/qhana-plugin-registry)](https://github.com/UST-QuAntiL/qhana-plugin-registry/blob/main/LICENSE)
-![Python: >= 3.10](https://img.shields.io/badge/python-^3.10-blue)
-[![Documentation Status](https://readthedocs.org/projects/qhana-plugin-registry/badge/?version=latest)](https://qhana-plugin-registry.readthedocs.io/en/latest/?badge=latest)
+![Python: >= 3.11](https://img.shields.io/badge/python-%5E3.11-blue)
+[![Documentation Status](https://app.readthedocs.org/projects/qhana-plugin-registry/badge/?version=latest)](https://qhana-plugin-registry.readthedocs.io/en/latest/?badge=latest)
 
 This package uses Poetry `>=1.2` ([documentation](https://python-poetry.org/docs/)).
 
