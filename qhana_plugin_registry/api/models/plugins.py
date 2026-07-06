@@ -199,6 +199,13 @@ class EntryPointSchema(MaBaseSchema):
             "description": "The URL of the micro frontend that corresponds to the REST entry point resource."
         },
     )
+    schema_href = ma.fields.Url(
+        required=False,
+        allow_none=False,
+        metadata={
+            "description": "The URL of the api schema that describes the allowed input to the REST entry point resource."
+        },
+    )
     plugin_dependencies = ma.fields.List(
         ma.fields.Nested(
             PluginDependencyMetadataSchema,
@@ -223,6 +230,13 @@ class EntryPointSchema(MaBaseSchema):
             metadata={"description": "A list of possible data outputs."},
         )
     )
+
+    @ma.post_dump()
+    def remove_empty_attributes(self, data: Dict[str, Any], **kwargs):
+        """Remove empty attributes from serialized entry points."""
+        if not data["schemaHref"]:
+            del data["schemaHref"]
+        return data
 
 
 class PluginSchema(ApiObjectSchema):
@@ -305,6 +319,7 @@ class PluginDependencyMetadata:
 class EntryPoint:
     href: str
     ui_href: str
+    schema_href: str
     data_input: List[InputDataMetadata] = field(default_factory=list)
     data_output: List[DataMetadata] = field(default_factory=list)
     plugin_dependencies: List[PluginDependencyMetadata] = field(default_factory=list)
