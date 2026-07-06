@@ -151,6 +151,7 @@ class TemplateTabsRootView(MethodView):
             location=tab_data["location"],
             group_key=tab_data["group_key"],
             filter_string=tab_data["filter_string"],
+            meta=tab_data["meta"],
         )
         DB.session.add(created_tab)
         DB.session.commit()

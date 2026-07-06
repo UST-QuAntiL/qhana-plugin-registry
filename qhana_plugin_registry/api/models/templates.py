@@ -70,6 +70,9 @@ class TemplateTabSchema(ApiObjectSchema):
         validate=Length(max=32),
     )
     filter_string = ma.fields.String(required=True, allow_none=False, dump_default="{}")
+    metadata = ma.fields.Raw(
+        attribute="meta", required=True, allow_none=False, dump_default={}
+    )
     plugins = ma.fields.Nested(ApiLinkSchema)
 
     @staticmethod
@@ -133,6 +136,22 @@ class TemplateTabSchema(ApiObjectSchema):
             if data.get("location", "").startswith("workspace"):
                 raise ma.ValidationError(
                     "Tab goups cannot be used in the experiment workspace!", "group_key"
+                )
+
+    @ma.validates("metadata")
+    def validate_metadata(self, value, data_key):
+        if not isinstance(value, dict):
+            raise ma.ValidationError("Metadata must be a json object!", "metadata")
+        for key, val in value.items():
+            if not isinstance(key, str):
+                raise ma.ValidationError(
+                    f"Keys in the metadata object must be strings! (got: >{key}<, expected: >{repr(str(key))}<)",
+                    "metadata",
+                )
+            if not isinstance(val, (str, float, int, bool)):
+                raise ma.ValidationError(
+                    f"Values in the metadata object must be strings, numbers or booleans! (Value for key '{key}' was '{type(val)}')",
+                    "metadata",
                 )
 
 
