@@ -31,8 +31,9 @@ if system() == "Windows":
 else:
     from shlex import join
 
-load_dotenv(".flaskenv")
+# load .env first to ensure the env vars in there are prioritized over .flaskenv
 load_dotenv(".env")
+load_dotenv(".flaskenv")
 
 MODULE_NAME = "qhana_plugin_registry"
 CELERY_WORKER = f"{MODULE_NAME}.celery_worker:CELERY"

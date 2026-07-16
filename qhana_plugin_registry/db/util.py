@@ -134,6 +134,10 @@ def update_plugin_data(
             seed_query = select(Seed).where(Seed.url == seed_url)
             seed = DB.session.execute(seed_query).scalar_one()
 
+        schema_url = ""
+        if "schemaHref" in entry_point:
+            schema_url = urljoin(base=url, url=entry_point["schemaHref"])
+
         found_plugin = RAMP(
             seed=seed,
             # plugin identifier
@@ -150,6 +154,7 @@ def update_plugin_data(
             # entry point data
             entry_url=urljoin(base=url, url=entry_point["href"]),
             ui_url=urljoin(base=url, url=entry_point["uiHref"]),
+            schema_url=schema_url,
             data=_prepare_plugin_data(entry_point),
             dependencies=_prepare_dependencies(entry_point),
         )

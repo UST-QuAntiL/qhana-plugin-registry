@@ -23,7 +23,6 @@ from .constants import (
     COLLECTION_REL,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
-    NAV_REL,
     POST_REL,
     PAGE_REL,
     PLUGIN_ID_KEY,
@@ -55,7 +54,10 @@ class PluginPageKeyGenerator(KeyGenerator, resource_type=RAMP, page=True):
 
 class PluginPageLinkGenerator(LinkGenerator, resource_type=RAMP, page=True):
     def generate_link(
-        self, resource: PageResource, *, query_params: Optional[Dict[str, str]]
+        self,
+        resource: PageResource,
+        *,
+        query_params: Dict[str, str] | None = None,
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
@@ -175,6 +177,7 @@ class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
         entry_point = EntryPoint(
             href=resource.entry_url,
             ui_href=resource.ui_url,
+            schema_href=resource.schema_url,
             data_input=input_data,
             data_output=output_data,
             plugin_dependencies=[],  # FIXME, better conversion
@@ -195,7 +198,11 @@ class PluginApiObjectGenerator(ApiObjectGenerator, resource_type=RAMP):
 
 class PluginApiResponseGenerator(ApiResponseGenerator, resource_type=RAMP):
     def generate_api_response(
-        self, resource: RAMP, *, link_to_relations: Optional[Iterable[str]], **kwargs
+        self,
+        resource: RAMP,
+        *,
+        link_to_relations: Iterable[str] | None = None,
+        **kwargs,
     ) -> Optional[ApiResponse]:
         meta = TYPE_TO_METADATA[RAMP]
         link_to_relations = (

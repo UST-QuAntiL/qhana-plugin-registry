@@ -101,6 +101,7 @@ class RAMP(IdMixin, NameDescriptionMixin, ExistsMixin):
     url: str = field(default="", metadata={"sa": Column(sql.String(2048))})
     entry_url: str = field(default="", metadata={"sa": Column(sql.Text())})
     ui_url: str = field(default="", metadata={"sa": Column(sql.Text())})
+    schema_url: str = field(default="", metadata={"sa": Column(sql.Text())})
     schema: Dict[str, Any] = field(
         default_factory=lambda: {"type": "object"}, metadata={"sa": Column(sql.JSON())}
     )

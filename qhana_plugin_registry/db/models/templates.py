@@ -198,6 +198,10 @@ class TemplateTab(IdMixin, ExistsMixin, NameDescriptionMixin):
     location: str = field(default="workspace", metadata={"sa": Column(sql.String(255))})
     group_key: str = field(default="", metadata={"sa": Column(sql.String(32))})
     filter_string: str = field(default="", metadata={"sa": Column(sql.Text())})
+    meta: dict[str, str | float | int | bool] = field(
+        default_factory=dict,
+        metadata={"sa": Column(sql.JSON(), server_default="{}", nullable=False)},
+    )
 
     _plugins: List["RampToTemplateTab"] = field(
         init=False,

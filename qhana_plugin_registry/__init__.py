@@ -29,6 +29,7 @@ from flask_cors import CORS
 from tomli import load as load_toml
 
 from . import api, babel, celery, db, licenses
+from .util.cli_check import is_cli
 from .util.config import DebugConfig, ProductionConfig
 from .util.config.from_env import load_config_from_env
 from .util.reverse_proxy_fix import apply_reverse_proxy_fix
@@ -131,7 +132,8 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
             default_logging_handler.setFormatter(formatter)
             default_logging_handler.setLevel(log_severity)
             root = getLogger()
-            root.addHandler(default_logging_handler)
+            if not is_cli():
+                root.addHandler(default_logging_handler)
             app.logger.removeHandler(default_logging_handler)
 
     logger: Logger = app.logger
