@@ -67,7 +67,10 @@ class TemplateTabPageKeyGenerator(KeyGenerator, resource_type=TemplateTab, page=
 
 class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, page=True):
     def generate_link(
-        self, resource: CollectionResource, *, query_params: Optional[Dict[str, str]] = None
+        self,
+        resource: CollectionResource,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, UiTemplate)
         if query_params is None:
