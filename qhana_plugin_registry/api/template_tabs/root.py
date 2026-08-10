@@ -20,6 +20,7 @@ from typing import List, cast, Optional, Union
 from flask.views import MethodView
 from flask_smorest import abort
 from flask_smorest import Blueprint
+from celery.result import AsyncResult
 
 from ..models.base_models import (
     CollectionResourceSchema,
@@ -156,7 +157,12 @@ class TemplateTabsRootView(MethodView):
         DB.session.add(created_tab)
         DB.session.commit()
         DB.session.refresh(created_tab)
-        apply_filter_for_tab.delay(created_tab.id)
+        task: AsyncResult = apply_filter_for_tab.delay(created_tab.id)
+        try:
+            # wait 3 seconds for background task before creating the response
+            task.wait(timeout=3, propagate=False)
+        except Exception:
+            pass  # expected timeout error; ignore all other errors
 
         DB.session.refresh(found_template)
         extra_embedded = []
