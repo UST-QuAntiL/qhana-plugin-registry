@@ -99,8 +99,9 @@ class TemplateTabView(MethodView):
         found_tab.location = template_tab_data["location"]
         found_tab.group_key = template_tab_data["group_key"]
         found_tab.filter_string = template_tab_data["filter_string"]
-        found_tab.meta = template_tab_data["meta"]
+        found_tab.meta = template_tab_data.get("meta", {})
 
+        DB.session.add(found_tab)
         DB.session.commit()
         apply_filter_for_tab.delay(found_tab.id)
 

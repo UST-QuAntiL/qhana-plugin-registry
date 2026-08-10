@@ -67,7 +67,7 @@ class TemplateTabPageKeyGenerator(KeyGenerator, resource_type=TemplateTab, page=
 
 class TemplateTabPageLinkGenerator(LinkGenerator, resource_type=TemplateTab, page=True):
     def generate_link(
-        self, resource: CollectionResource, *, query_params: Optional[Dict[str, str]]
+        self, resource: CollectionResource, *, query_params: Optional[Dict[str, str]] = None
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, UiTemplate)
         if query_params is None:
@@ -256,6 +256,7 @@ class TemplateTabApiObjectGenerator(ApiObjectGenerator, resource_type=TemplateTa
             group_key=resource.group_key,
             sort_key=resource.sort_key,
             filter_string=resource.filter_string,
+            meta=resource.meta,
             plugins=plugin_link,
         )
 
@@ -267,7 +268,7 @@ class TemplateTabDataApiResponseGenerator(
         self,
         resource: TemplateTab,
         *,
-        link_to_relations: Optional[Iterable[str]],
+        link_to_relations: Iterable[str] | None = None,
         **kwargs,
     ) -> Optional[ApiResponse]:
         meta = TYPE_TO_METADATA[TemplateTab]

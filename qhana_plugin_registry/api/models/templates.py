@@ -71,7 +71,7 @@ class TemplateTabSchema(ApiObjectSchema):
     )
     filter_string = ma.fields.String(required=True, allow_none=False, dump_default="{}")
     metadata = ma.fields.Raw(
-        attribute="meta", required=True, allow_none=False, dump_default={}
+        attribute="meta", required=False, allow_none=False, dump_default={}
     )
     plugins = ma.fields.Nested(ApiLinkSchema)
 
@@ -179,6 +179,7 @@ class TemplateTabData(BaseApiObject):
     group_key: str
     sort_key: int
     filter_string: str
+    meta: dict[str, str | float | int | bool]
     plugins: ApiLink
 
 
