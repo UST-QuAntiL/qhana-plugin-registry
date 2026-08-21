@@ -168,6 +168,9 @@ class TemplateSchema(ApiObjectSchema):
     groups = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
     )
+    tabs = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
+    )
 
 
 @dataclass
@@ -194,3 +197,4 @@ class TemplateData(BaseApiObject):
     description: str
     tags: Sequence[str]
     groups: Sequence[ApiLink]
+    tabs: Sequence[ApiLink]

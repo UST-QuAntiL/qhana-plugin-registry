@@ -247,6 +247,7 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
             for loc, name in group_locations.items()
         )
         group_links = [l for g in groups if (l := LinkGenerator.get_link_of(g))]
+        tab_links = [l for t in resource.tabs if (l := LinkGenerator.get_link_of(t))]
 
         return TemplateData(
             self=self_link,
@@ -254,6 +255,7 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
             description=resource.description,
             tags=[t.tag for t in resource.tags],
             groups=group_links,
+            tabs=tab_links,
         )
 
 

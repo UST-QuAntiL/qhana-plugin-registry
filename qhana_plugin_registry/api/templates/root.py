@@ -146,7 +146,7 @@ class TemplatesRootView(MethodView):
             name=template_data["name"],
             description=template_data["description"],
             tags=TemplateTag.get_or_create_all(tags),
-            tabs=[],  # TODO: figure out tabs
+            tabs=[],
         )
         DB.session.add(created_template)
         DB.session.commit()
