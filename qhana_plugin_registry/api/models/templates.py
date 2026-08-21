@@ -48,6 +48,7 @@ class TemplatePageArgumentsSchema(CursorPageArgumentsSchema):
 
 class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
     group = ma.fields.String(allow_none=True, load_only=True)
+    tab = ma.fields.String(allow_none=True, load_only=True)
 
 
 class TemplateTabSchema(ApiObjectSchema):

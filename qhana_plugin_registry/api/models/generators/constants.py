@@ -75,6 +75,7 @@ PLUGIN_ID_KEY = "pluginId"
 ITEM_COUNT_QUERY_KEY = "item-count"
 
 TEMPLATE_GROUP_QUERY_KEY = "group"
+TEMPLATE_GROUP_TAB_QUERY_KEY = "tab"
 
 
 # key defaults

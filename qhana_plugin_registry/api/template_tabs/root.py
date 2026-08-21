@@ -73,11 +73,24 @@ class TemplateTabsRootView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message="Template not found.")
 
         group: Optional[str] = kwargs.get("group", None)
+        tab_query: Optional[str] = kwargs.get("tab", None)
+
+        if group and tab_query:
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message="The 'group' and 'tab' query params cannot be specified at the same time!",
+            )
 
         tabs: List[TemplateTab]
 
         if group:
             tabs = [t for t in found_template.tabs if t.location == group]
+        elif tab_query:
+            tabs = [
+                t
+                for t in found_template.tabs
+                if f"{t.location}.{t.group_key}" == tab_query
+            ]
         else:
             tabs = list(found_template.tabs)
         tabs = sorted(tabs, key=lambda t: t.sort_key)
@@ -121,6 +134,8 @@ class TemplateTabsRootView(MethodView):
 
         if group:
             query_params["group"] = group
+        if tab_query:
+            query_params["tab"] = tab_query
 
         return ApiResponseGenerator.get_api_response(
             resource,
