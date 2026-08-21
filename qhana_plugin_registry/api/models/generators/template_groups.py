@@ -22,6 +22,8 @@ from .constants import (
     API_SPEC_RESOURCE,
     COLLECTION_REL,
     UP_REL,
+    NAV_REL,
+    TEMPLATE_TAB_REL_TYPE,
     TEMPLATE_GROUP_QUERY_KEY,
 )
 from .type_map import TYPE_TO_METADATA
@@ -65,12 +67,20 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
         if query_params is None:
             query_params = {TEMPLATE_GROUP_QUERY_KEY: resource.location}
         else:
-            query_params[TEMPLATE_GROUP_QUERY_KEY] = resource.location
+            if "tab" not in query_params:
+                # special case to support the link creation of TemplateGroupTabLinkGenerator
+                query_params[TEMPLATE_GROUP_QUERY_KEY] = resource.location
 
         if resource.name:
             name = resource.name
         else:
             name = f"Tab Group: {resource.location}"
+
+        resource_key = KeyGenerator.generate_key(resource, query_params=query_params)
+
+        if "tab" in query_params:
+            name = None
+            del resource_key[f"?{TEMPLATE_GROUP_QUERY_KEY}"]
 
         return ApiLink(
             href=url_for(
@@ -81,7 +91,7 @@ class TemplateGroupLinkGenerator(LinkGenerator, resource_type=TemplateGroupRaw):
             ),
             rel=(COLLECTION_REL,),
             resource_type=meta.rel_type,
-            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
+            resource_key=resource_key,
             schema=f"{url_for(API_SPEC_RESOURCE, _external=True)}#/components/schemas/{TemplateGroupSchema.schema_name()}",
             name=name,
         )
@@ -103,6 +113,29 @@ class TemplateGroupUpLinkGenerator(
         return link
 
 
+class TemplateGroupTabLinkGenerator(
+    LinkGenerator, resource_type=TemplateGroupRaw, relation=TEMPLATE_TAB_REL_TYPE
+):
+    def generate_link(
+        self,
+        resource: TemplateGroupRaw,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[ApiLink]:
+        if resource.group_tab:
+            # if we have the exact tab, link directly to the correct resource
+            link = LinkGenerator.get_link_of(resource.group_tab)
+            assert link is not None
+            link.rel = (NAV_REL, *link.rel)
+            return link
+        if "." not in resource.location:
+            return None  # only nested locations can have a tab representing the group
+        link = LinkGenerator.get_link_of(resource, query_params={"tab": resource.location})
+        assert link is not None
+        link.rel = (TEMPLATE_TAB_REL_TYPE, NAV_REL, *link.rel)
+        return link
+
+
 class TemplateGroupApiObjectGenerator(ApiObjectGenerator, resource_type=TemplateGroupRaw):
     def generate_api_object(
         self,
@@ -120,11 +153,17 @@ class TemplateGroupApiObjectGenerator(ApiObjectGenerator, resource_type=Template
             link for tab in resource.items if (link := LinkGenerator.get_link_of(tab))
         ]
 
+        group_tab = None
+
+        if resource.group_tab:
+            group_tab = LinkGenerator.get_link_of(resource.group_tab)
+
         return TemplateGroupData(
             self=self_link,
             collection_size=len(items),
             items=items,
             location=resource.location,
+            group_tab=group_tab
         )
 
 

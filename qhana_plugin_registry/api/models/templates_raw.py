@@ -22,4 +22,5 @@ class TemplateGroupRaw:
     template: UiTemplate
     location: str
     name: Optional[str]
+    group_tab: Optional[TemplateTab]
     items: Sequence[TemplateTab]

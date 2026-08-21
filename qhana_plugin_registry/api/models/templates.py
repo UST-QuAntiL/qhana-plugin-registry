@@ -158,7 +158,10 @@ class TemplateTabSchema(ApiObjectSchema):
 
 class TemplateGroupSchema(CollectionResourceSchema):
     location = ma.fields.String(
-        required=True, allow_none=False, dump_only=True, validate=Length(max=255)
+        required=False, allow_none=False, dump_only=True, validate=Length(max=255)
+    )
+    group_tab = ma.fields.Nested(
+        ApiLinkSchema, required=False, allow_none=False, dump_only=True
     )
 
 
@@ -190,6 +193,7 @@ class TemplateTabData(BaseApiObject):
 @dataclass
 class TemplateGroupData(CollectionResource):
     location: str
+    group_tab: ApiLink | None
 
 
 @dataclass

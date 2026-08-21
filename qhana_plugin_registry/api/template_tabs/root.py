@@ -36,7 +36,11 @@ from ..models.request_helpers import (
     CollectionResource,
 )
 from ..models.templates_raw import TemplateGroupRaw
-from ..models.templates import TemplateTabSchema, TemplateTabCollectionArgumentsSchema
+from ..models.templates import (
+    TemplateTabSchema,
+    TemplateTabCollectionArgumentsSchema,
+    TemplateGroupSchema,
+)
 from ...db.db import DB
 from ...db.models.templates import TemplateTab, UiTemplate
 from ...tasks.plugin_filter import apply_filter_for_tab
@@ -57,7 +61,7 @@ class TemplateTabsRootView(MethodView):
         TemplateTabCollectionArgumentsSchema, location="query", as_kwargs=True
     )
     @TEMPLATE_TABS_API.response(
-        HTTPStatus.OK, get_api_response_schema(CollectionResourceSchema)
+        HTTPStatus.OK, get_api_response_schema(TemplateGroupSchema)
     )
     def get(self, template_id: str, **kwargs):
         """Get a list of templates."""
@@ -104,17 +108,28 @@ class TemplateTabsRootView(MethodView):
 
         if group:
             group_name = None
+            group_tab = None
             if "." in group:
                 *group_tab_group, group_key = group.split(".")
                 group_location = ".".join(group_tab_group)
                 for tab in found_template.tabs:
                     if tab.location == group_location and tab.group_key == group_key:
                         group_name = tab.name
+                        group_tab = tab
                         break
+
+            if group_tab:
+                group_tab_response = ApiResponseGenerator.get_api_response(
+                    EmbeddedResource(group_tab)
+                )
+                if group_tab_response:
+                    embedded_items.append(group_tab_response)
+
             resource = TemplateGroupRaw(
                 template=found_template,
                 location=group,
                 name=group_name,
+                group_tab=group_tab,
                 items=tabs,
             )
         else:

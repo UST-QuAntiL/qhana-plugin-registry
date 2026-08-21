@@ -111,7 +111,7 @@ def populate_metadata():
     )
     TYPE_TO_METADATA[TemplateGroupRaw] = ResourceMetadata(
         rel_type=c.TEMPLATE_TAB_REL_TYPE,
-        extra_link_rels=c.TEMPLATE_TAB_EXTRA_LINK_RELATIONS,
+        extra_link_rels=c.TEMPLATE_TAB_GROUP_EXTRA_LINK_RELATIONS,
         endpoint="",
         schema=TemplateGroupSchema,
         schema_id=TemplateGroupSchema.schema_name(),
