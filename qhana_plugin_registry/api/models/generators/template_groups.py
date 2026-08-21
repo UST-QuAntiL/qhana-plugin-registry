@@ -130,7 +130,9 @@ class TemplateGroupTabLinkGenerator(
             return link
         if "." not in resource.location:
             return None  # only nested locations can have a tab representing the group
-        link = LinkGenerator.get_link_of(resource, query_params={"tab": resource.location})
+        link = LinkGenerator.get_link_of(
+            resource, query_params={"tab": resource.location}
+        )
         assert link is not None
         link.rel = (TEMPLATE_TAB_REL_TYPE, NAV_REL, *link.rel)
         return link
@@ -163,7 +165,7 @@ class TemplateGroupApiObjectGenerator(ApiObjectGenerator, resource_type=Template
             collection_size=len(items),
             items=items,
             location=resource.location,
-            group_tab=group_tab
+            group_tab=group_tab,
         )
 
 
