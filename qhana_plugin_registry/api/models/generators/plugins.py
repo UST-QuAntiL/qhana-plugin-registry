@@ -26,6 +26,7 @@ from .constants import (
     POST_REL,
     PAGE_REL,
     PLUGIN_ID_KEY,
+    PLUGIN_NAME_QUERY,
     ROOT_RESOURCE_DUMMY,
     UP_REL,
 )
@@ -110,6 +111,7 @@ class PluginKeyGenerator(KeyGenerator, resource_type=RAMP):
         parent_key = KeyGenerator.generate_key(PageResource(RAMP, page_number=1))
         key.update(parent_key)
         key[PLUGIN_ID_KEY] = str(resource.id)
+        key[f"?{PLUGIN_NAME_QUERY}"] = resource.plugin_id
         return key
 
 

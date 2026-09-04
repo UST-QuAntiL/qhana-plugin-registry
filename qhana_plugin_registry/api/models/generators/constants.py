@@ -69,6 +69,7 @@ TEMPLATE_TAB_ID_KEY = "uiTemplateTabId"
 SEED_ID_KEY = "seedId"
 
 PLUGIN_ID_KEY = "pluginId"
+PLUGIN_NAME_QUERY = "name"
 
 
 # query keys
