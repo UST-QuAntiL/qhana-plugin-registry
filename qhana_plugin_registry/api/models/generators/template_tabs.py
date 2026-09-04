@@ -18,36 +18,37 @@ from typing import Dict, Iterable, Optional
 
 from flask import url_for
 
-from .constants import (
-    API_SPEC_RESOURCE,
-    COLLECTION_REL,
-    CREATE_REL,
-    UPDATE_REL,
-    DELETE_REL,
-    ITEM_COUNT_DEFAULT,
-    ITEM_COUNT_QUERY_KEY,
-    NAV_REL,
-    POST_REL,
-    PUT_REL,
-    ROOT_RESOURCE_DUMMY,
-    TEMPLATE_TAB_ID_KEY,
-    UP_REL,
-    PLUGIN_REL_TYPE,
-)
-from .type_map import TYPE_TO_METADATA
+from ....db.models.plugins import RAMP
+from ....db.models.templates import TemplateTab, UiTemplate
 from ..base_models import ApiLink, ApiResponse, CursorPageSchema
 from ..request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
+    CollectionResource,
     KeyGenerator,
     LinkGenerator,
-    CollectionResource,
     PageResource,
 )
 from ..templates import TemplateTabData
 from ..templates_raw import TemplateGroupRaw
-from ....db.models.templates import TemplateTab, UiTemplate
-from ....db.models.plugins import RAMP
+from .constants import (
+    API_SPEC_RESOURCE,
+    COLLECTION_REL,
+    CREATE_REL,
+    DELETE_REL,
+    ITEM_COUNT_DEFAULT,
+    ITEM_COUNT_QUERY_KEY,
+    NAV_REL,
+    PLUGIN_REL_TYPE,
+    POST_REL,
+    PUT_REL,
+    ROOT_RESOURCE_DUMMY,
+    TEMPLATE_GROUP_TAB_QUERY_KEY,
+    TEMPLATE_TAB_ID_KEY,
+    UP_REL,
+    UPDATE_REL,
+)
+from .type_map import TYPE_TO_METADATA
 
 # Template Page ################################################################
 
@@ -126,7 +127,7 @@ class TemplateTabPageCreateTemplateLinkGenerator(
         return link
 
 
-# Template #####################################################################
+# Template Tab #################################################################
 
 
 class TemplateTabKeyGenerator(KeyGenerator, resource_type=TemplateTab):
@@ -134,8 +135,15 @@ class TemplateTabKeyGenerator(KeyGenerator, resource_type=TemplateTab):
         assert isinstance(resource, TemplateTab)
         template = resource.template
         assert template is not None
-        parent_resource = TemplateGroupRaw(template, resource.location, None, [])
-        parent_key = KeyGenerator.generate_key(parent_resource)
+        # template group injects ?group into key
+        parent_resource = TemplateGroupRaw(template, resource.location, None, None, [])
+        query_params = None
+        if resource.group_key:
+            # also inject ?tab into key for tabs establishing a tab group
+            query_params = {
+                TEMPLATE_GROUP_TAB_QUERY_KEY: f"{resource.location}.{resource.group_key}"
+            }
+        parent_key = KeyGenerator.generate_key(parent_resource, query_params=query_params)
         key.update(parent_key)
         key[TEMPLATE_TAB_ID_KEY] = str(resource.id)
         return key
@@ -176,7 +184,7 @@ class TemplateTabUpLinkGenerator(
     ) -> Optional[ApiLink]:
         template = resource.template
         assert template is not None
-        parent_resource = TemplateGroupRaw(template, resource.location, None, [])
+        parent_resource = TemplateGroupRaw(template, resource.location, None, None, [])
         return LinkGenerator.get_link_of(
             parent_resource,
             extra_relations=(UP_REL,),

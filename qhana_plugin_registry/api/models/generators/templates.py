@@ -227,7 +227,7 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
 
         assert self_link is not None
 
-        group_locations: Dict[str, Optional[str]] = {
+        group_locations: Dict[str, Optional[TemplateTab]] = {
             t.location: None for t in resource.tabs
         }
 
@@ -235,18 +235,20 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
             if t.group_key:
                 group = f"{t.location}.{t.group_key}"
                 if group in group_locations:
-                    group_locations[group] = t.name
+                    group_locations[group] = t
 
         groups = (
             TemplateGroupRaw(
                 template=resource,
                 location=loc,
-                name=name,
+                name=tab.name if tab else None,
+                group_tab=tab,
                 items=[],
             )
-            for loc, name in group_locations.items()
+            for loc, tab in group_locations.items()
         )
         group_links = [l for g in groups if (l := LinkGenerator.get_link_of(g))]
+        tab_links = [l for t in resource.tabs if (l := LinkGenerator.get_link_of(t))]
 
         return TemplateData(
             self=self_link,
@@ -254,6 +256,7 @@ class TemplateApiObjectGenerator(ApiObjectGenerator, resource_type=UiTemplate):
             description=resource.description,
             tags=[t.tag for t in resource.tags],
             groups=group_links,
+            tabs=tab_links,
         )
 
 

@@ -45,11 +45,11 @@ class TemplateView(MethodView):
             abort(
                 HTTPStatus.BAD_REQUEST, message="The template id is in the wrong format!"
             )
-        found_service = UiTemplate.get_by_id(int(template_id))
-        if not found_service:
+        found_template = UiTemplate.get_by_id(int(template_id))
+        if not found_template:
             abort(HTTPStatus.NOT_FOUND, message="Template not found.")
 
-        return ApiResponseGenerator.get_api_response(found_service)
+        return ApiResponseGenerator.get_api_response(found_template)
 
     @TEMPLATES_API.arguments(TemplateSchema(exclude=("self", "groups")))
     @TEMPLATES_API.response(

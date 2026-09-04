@@ -48,6 +48,7 @@ class TemplatePageArgumentsSchema(CursorPageArgumentsSchema):
 
 class TemplateTabCollectionArgumentsSchema(MaBaseSchema):
     group = ma.fields.String(allow_none=True, load_only=True)
+    tab = ma.fields.String(allow_none=True, load_only=True)
 
 
 class TemplateTabSchema(ApiObjectSchema):
@@ -157,7 +158,10 @@ class TemplateTabSchema(ApiObjectSchema):
 
 class TemplateGroupSchema(CollectionResourceSchema):
     location = ma.fields.String(
-        required=True, allow_none=False, dump_only=True, validate=Length(max=255)
+        required=False, allow_none=False, dump_only=True, validate=Length(max=255)
+    )
+    group_tab = ma.fields.Nested(
+        ApiLinkSchema, required=False, allow_none=False, dump_only=True
     )
 
 
@@ -166,6 +170,9 @@ class TemplateSchema(ApiObjectSchema):
     description = ma.fields.String(required=True, allow_none=False)
     tags = ma.fields.List(ma.fields.String(), required=True, allow_none=False)
     groups = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
+    )
+    tabs = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema), required=True, allow_none=False, dump_only=True
     )
 
@@ -186,6 +193,7 @@ class TemplateTabData(BaseApiObject):
 @dataclass
 class TemplateGroupData(CollectionResource):
     location: str
+    group_tab: ApiLink | None
 
 
 @dataclass
@@ -194,3 +202,4 @@ class TemplateData(BaseApiObject):
     description: str
     tags: Sequence[str]
     groups: Sequence[ApiLink]
+    tabs: Sequence[ApiLink]
